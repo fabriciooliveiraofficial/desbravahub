@@ -51,7 +51,17 @@ jobs:
           remote_user: ${{ secrets.SSH_USER }}
           remote_port: ${{ secrets.SSH_PORT }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          args: --exclude '.git*' --exclude '.github*' --exclude 'tests' --exclude 'phpunit.xml' --exclude '.env'
+          # The --exclude pattern must be precise to avoid deletion on remote
+          args: >-
+            --exclude '.git*' 
+            --exclude '.github*' 
+            --exclude 'tests' 
+            --exclude 'phpunit.xml' 
+            --exclude '.env'
+            --exclude '.env.*'
+            --exclude 'public/server-diag.php'
+            --exclude 'public/test-api.php'
+            --exclude 'public/fix-permissions.php'
 
       - name: Post-Deployment Steps
         uses: appleboy/ssh-action@master

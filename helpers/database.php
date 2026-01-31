@@ -42,8 +42,13 @@ function db(): PDO
     );
 
     // Sync database session timezone with application timezone
-    $tz = config('app.timezone', 'America/Sao_Paulo');
-    $GLOBALS['__db_connection']->exec("SET time_zone = '{$tz}'");
+    try {
+        $tz = config('app.timezone', 'America/Sao_Paulo');
+        $GLOBALS['__db_connection']->exec("SET time_zone = '{$tz}'");
+    } catch (PDOException $e) {
+        // Silently fail if timezone is not supported by the database server
+        error_log("Database: Failed to set timezone '{$tz}': " . $e->getMessage());
+    }
 
     return $GLOBALS['__db_connection'];
 }
