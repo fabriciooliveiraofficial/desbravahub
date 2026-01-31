@@ -20,6 +20,9 @@ jobs:
       - name: Install Dependencies
         run: composer install --prefer-dist --no-progress
 
+      - name: Prepare Test Environment
+        run: cp .env.testing .env
+
       - name: Run Tests
         run: vendor/bin/phpunit --testdox
 
