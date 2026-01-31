@@ -1,0 +1,41 @@
+# Dependencies
+/vendor/
+/node_modules/
+
+# Environment
+.env
+.env.*
+# Exclude sensitive server configs
+.env.server
+.env.sftp
+!.env.example
+
+# Logs and Debug
+*.log
+debug_*.php
+check_*.php
+test_*.php
+vapid_debug.php
+debug_output_local.txt
+debug_missions.txt
+debug_service.txt
+debug_output.txt
+
+# OS/IDEs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# App Storage
+/storage/*.log
+/storage/cache/*
+/storage/sessions/*
+/storage/views/*
+/public/assets/uploads/*
+
+# Artifacts/Zip
+*.zip
+*.rar
+*.pdf
+/DesbravaHub-v00001.zip

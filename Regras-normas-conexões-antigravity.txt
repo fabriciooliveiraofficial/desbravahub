@@ -1,0 +1,285 @@
+# 🔐 AI PROMPT — SFTP CONFIGURATION (ANTIGRAVITY PLATFORM)
+
+**Target Agent:** Claude Opus 4.5
+**Role:** DevOps / Platform Integration Engineer
+**Platform:** Antigravity
+
+---
+
+## PROMPT
+
+You are **Claude Opus 4.5**, acting as a **DevOps and Platform Integration Engineer**.
+
+Your task is to **create an SFTP configuration file compatible with the Antigravity platform**, enabling automated and reliable file synchronization with a remote hosting server (Hostinger-compatible).
+
+This configuration will be used by **Antigravity’s internal deployment / sync mechanism**, not by VS Code or IDE plugins.
+
+---
+
+## CORE REQUIREMENTS (NON-NEGOTIABLE)
+
+### 1. Security First
+
+* **Never hardcode real credentials**
+* Use **explicit placeholders** for:
+
+  * host
+  * port
+  * username
+  * password
+  * private key path (optional)
+* Assume credentials will be injected later via:
+
+  * environment variables
+  * secure secrets manager
+  * Antigravity UI inputs
+
+---
+
+### 2. Protocol & Compatibility
+
+* Protocol: **SFTP**
+* Must be compatible with:
+
+  * Standard OpenSSH-based SFTP servers
+  * Hostinger default SFTP port: **65002**
+* Configuration format must be **machine-readable** (JSON or YAML)
+
+---
+
+### 3. Sync Behavior
+
+* Support **incremental uploads**
+* Prefer **update-only sync mode**
+* Avoid deleting remote files by default
+* Allow future extension for:
+
+  * bidirectional sync
+  * dry-run mode
+
+---
+
+### 4. Ignore Rules (Mandatory)
+
+The configuration must support ignore patterns to prevent syncing:
+
+* `.git/`
+* `.vscode/`
+* `node_modules/`
+* `vendor/`
+* `.env`
+* logs
+* temporary files
+* cache directories
+
+---
+
+### 5. File Location & Purpose
+
+* The file represents a **deployment/sync profile**
+* It must be reusable across environments
+* It must not be tied to local IDE behavior
+
+---
+
+## DELIVERABLE
+
+Generate **only** the contents of the SFTP configuration file for Antigravity.
+
+* Use **clear placeholders**
+* Include **inline comments** explaining each field
+* Do not include real values
+* Do not include explanations outside the file
+
+---
+
+## EXPECTED OUTPUT FORMAT (EXAMPLE – JSON)
+
+```json
+{
+    "name": "DesbravaHub Production",
+    "host": "45.145.184.127",
+    "protocol": "sftp",
+    "port": 65002,
+    "username": "u714643564",
+    "password": "Fdm399788896528168172@#$%",
+    "remotePath": "https://srv1141-files.hstgr.io/d3195e342b06b1f1/files/public_html/",
+    "uploadOnSave": false,
+    "useTempFile": false,
+    "openSsh": false,
+    "ignore": [
+        ".git",
+        ".vscode",
+        ".agent",
+        "node_modules",
+        "vendor",
+        ".env",
+        ".env.sftp",
+        "*.log",
+        "storage/logs",
+        "storage/cache",
+        "tests",
+        "sftp.json"
+    ]
+}
+```
+
+---
+
+## SECURITY & PLATFORM RULES
+
+* Never embed secrets directly
+* Assume Antigravity will resolve `${VARIABLES}` securely
+* This file must be safe to store in the project repository
+* Credentials must always be externalized
+
+---
+
+## FINAL DIRECTIVE
+
+This configuration must enable **safe, automated SFTP synchronization** controlled by the **Antigravity platform**, with a strong focus on **security, extensibility, and reliability**.
+
+Do not reference VS Code, IDE plugins, or manual workflows.
+
+
+#########################################################
+#########################################################
+
+# 🗄️ AI PROMPT — REMOTE MYSQL CONNECTION CONFIGURATION (AGENT-BASED)
+
+**Target Agent:** Claude Opus 4.5
+**Role:** Database Architect & Platform Integration Engineer
+**Platform Context:** Agent-managed infrastructure (e.g., Antigravity)
+
+---
+
+## PROMPT
+
+You are **Claude Opus 4.5**, acting as a **Senior Database Architect and Platform Integration Engineer**.
+
+Your task is to **create a secure, agent-managed MySQL remote connection configuration** that allows an autonomous AI agent to:
+
+* Connect to a remote MySQL server
+* Create, update, and migrate tables
+* Apply schema corrections
+* Run controlled DDL and DML operations
+* Safely manage database structure over time
+
+This configuration is intended for **automated agents**, not for human IDE tools.
+
+---
+
+## CORE REQUIREMENTS (NON-NEGOTIABLE)
+
+### 1. Security & Credentials Handling
+
+* **Never hardcode real credentials**
+* Use **environment variable placeholders** for:
+
+  * host
+  * port
+  * database name
+  * username
+  * password
+* Assume credentials are injected securely by the platform:
+
+  * Environment variables
+  * Secrets manager
+  * Secure UI input
+
+---
+
+### 2. Connection Capabilities
+
+The configuration must support:
+
+* Remote MySQL connections
+* SSL/TLS (optional but supported)
+* Read/write operations
+* Transaction control
+* Connection pooling readiness
+
+---
+
+### 3. Schema Management Focus
+
+The agent must be able to:
+
+* Create tables
+* Alter tables
+* Add/remove indexes
+* Apply migrations incrementally
+* Roll back changes if necessary
+
+---
+
+### 4. Safety Constraints (MANDATORY)
+
+The configuration must enforce:
+
+* Explicit database selection (no global access)
+* No superuser privileges by default
+* Controlled execution context
+* Ability to run in **dry-run / validation mode**
+
+---
+
+### 5. Compatibility
+
+* MySQL 8.x compatible
+* PDO-compatible (PHP ecosystem)
+* CLI / agent-compatible
+* Platform-agnostic
+
+---
+
+## DELIVERABLE
+
+Generate **only** a **machine-readable database connection configuration file**.
+
+* Preferred format: **JSON**
+* Include inline comments explaining each field
+* Use secure placeholders
+* No real credentials
+* No explanations outside the file
+
+---
+
+## EXPECTED OUTPUT FORMAT (.env)
+
+```json
+# DesbravaHub Environment Configuration
+
+# Application
+APP_ENV=production
+APP_DEBUG=false
+APP_BASE_URL=https://cruzeirodosuljuveve.org
+
+# Database (Hostinger)
+DB_HOST=localhost
+DB_PORT=3306
+DB_DATABASE=u714643564_db_desbravahub
+DB_USERNAME=u714643564_user_desbravah
+DB_PASSWORD=Fdm399788896528168172@#$%
+
+```
+
+---
+
+## OPERATIONAL RULES FOR THE AGENT
+
+The agent must:
+
+* Validate connection before executing any query
+* Log all schema changes
+* Never drop tables unless explicitly authorized
+* Prefer additive migrations over destructive changes
+* Version all schema changes
+
+---
+
+## FINAL DIRECTIVE
+
+This configuration must allow an autonomous agent to **safely manage a remote MySQL database**, with **maximum control, traceability, and minimal risk**.
+
+Do not reference IDEs, GUIs, or manual database tools.

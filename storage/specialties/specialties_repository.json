@@ -1,0 +1,1336 @@
+{
+    "version": "3.0.0",
+    "last_updated": "2024-12-14",
+    "source": "Manual de Especialidades de Desbravadores - Compilado por Gerson Boiko dos Santos",
+    "total_specialties": 166,
+    "specialties": [
+        {
+            "id": "miss_001",
+            "name": "Arte de Contar Histórias Cristãs",
+            "category_id": "cat_missionary",
+            "badge_icon": "📖",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "miss_002",
+            "name": "Asseio e Cortesia Cristã",
+            "category_id": "cat_missionary",
+            "badge_icon": "✨",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "miss_003",
+            "name": "Aventuras por Cristo",
+            "category_id": "cat_missionary",
+            "badge_icon": "✝️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "miss_004",
+            "name": "Aventuras por Cristo - Avançado",
+            "category_id": "cat_missionary",
+            "badge_icon": "✝️",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "miss_005",
+            "name": "Cidadania Cristã",
+            "category_id": "cat_missionary",
+            "badge_icon": "🏛️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "miss_006",
+            "name": "Colportagem",
+            "category_id": "cat_missionary",
+            "badge_icon": "📚",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "miss_007",
+            "name": "Estudo de Línguas",
+            "category_id": "cat_missionary",
+            "badge_icon": "🗣️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "miss_008",
+            "name": "Etnologia Missionária",
+            "category_id": "cat_missionary",
+            "badge_icon": "🌍",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "miss_009",
+            "name": "Evangelismo Pessoal",
+            "category_id": "cat_missionary",
+            "badge_icon": "💬",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "miss_010",
+            "name": "Liderança de Juvenis",
+            "category_id": "cat_missionary",
+            "badge_icon": "👑",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "miss_011",
+            "name": "Mordomia",
+            "category_id": "cat_missionary",
+            "badge_icon": "💰",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "miss_012",
+            "name": "Temperança",
+            "category_id": "cat_missionary",
+            "badge_icon": "💪",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "miss_013",
+            "name": "Testemunho Juvenil",
+            "category_id": "cat_missionary",
+            "badge_icon": "🙌",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "miss_014",
+            "name": "Vida Familiar",
+            "category_id": "cat_missionary",
+            "badge_icon": "👨‍👩‍👧‍👦",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "arts_001",
+            "name": "Bordado em Ponto Cruz",
+            "category_id": "cat_arts",
+            "badge_icon": "🧵",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "arts_002",
+            "name": "Crochê",
+            "category_id": "cat_arts",
+            "badge_icon": "🧶",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "arts_003",
+            "name": "Crochê - Avançado",
+            "category_id": "cat_arts",
+            "badge_icon": "🧶",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "arts_004",
+            "name": "Decoração de Bolos",
+            "category_id": "cat_arts",
+            "badge_icon": "🎂",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "arts_005",
+            "name": "Filatelia",
+            "category_id": "cat_arts",
+            "badge_icon": "📮",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "arts_006",
+            "name": "Letreiros e Cartazes",
+            "category_id": "cat_arts",
+            "badge_icon": "🪧",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "arts_007",
+            "name": "Modelagem e Fabricação de Sabão",
+            "category_id": "cat_arts",
+            "badge_icon": "🧼",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "arts_008",
+            "name": "Numismática",
+            "category_id": "cat_arts",
+            "badge_icon": "🪙",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "arts_009",
+            "name": "Origami",
+            "category_id": "cat_arts",
+            "badge_icon": "🦢",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "arts_010",
+            "name": "Ornamentação com Flores",
+            "category_id": "cat_arts",
+            "badge_icon": "💐",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "arts_011",
+            "name": "Pintura em Tecido",
+            "category_id": "cat_arts",
+            "badge_icon": "👕",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "arts_012",
+            "name": "Tricô",
+            "category_id": "cat_arts",
+            "badge_icon": "🧶",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "arts_013",
+            "name": "Tricô - Avançado",
+            "category_id": "cat_arts",
+            "badge_icon": "🧶",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "prof_001",
+            "name": "Alvenaria",
+            "category_id": "cat_professional",
+            "badge_icon": "🧱",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "prof_002",
+            "name": "Barbearia",
+            "category_id": "cat_professional",
+            "badge_icon": "✂️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "prof_003",
+            "name": "Carpintaria",
+            "category_id": "cat_professional",
+            "badge_icon": "🪚",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "prof_004",
+            "name": "Comunicações",
+            "category_id": "cat_professional",
+            "badge_icon": "📡",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "prof_005",
+            "name": "Contabilidade I",
+            "category_id": "cat_professional",
+            "badge_icon": "📊",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "prof_006",
+            "name": "Datilografia",
+            "category_id": "cat_professional",
+            "badge_icon": "⌨️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "prof_007",
+            "name": "Eletricidade",
+            "category_id": "cat_professional",
+            "badge_icon": "⚡",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "prof_008",
+            "name": "Evangelismo",
+            "category_id": "cat_professional",
+            "badge_icon": "🎤",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "prof_009",
+            "name": "Informática",
+            "category_id": "cat_professional",
+            "badge_icon": "💻",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "prof_010",
+            "name": "Jornalismo",
+            "category_id": "cat_professional",
+            "badge_icon": "📰",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "prof_011",
+            "name": "Magistério",
+            "category_id": "cat_professional",
+            "badge_icon": "👩‍🏫",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "prof_012",
+            "name": "Marcenaria",
+            "category_id": "cat_professional",
+            "badge_icon": "🪵",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "prof_013",
+            "name": "Pintura de Paredes Exteriores",
+            "category_id": "cat_professional",
+            "badge_icon": "🖌️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "prof_014",
+            "name": "Pintura de Paredes Interiores",
+            "category_id": "cat_professional",
+            "badge_icon": "🎨",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "prof_015",
+            "name": "Vendas",
+            "category_id": "cat_professional",
+            "badge_icon": "🛒",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "sci_001",
+            "name": "Alerta Vermelho",
+            "category_id": "cat_science",
+            "badge_icon": "🚨",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "sci_002",
+            "name": "Enfermagem Básica",
+            "category_id": "cat_science",
+            "badge_icon": "👩‍⚕️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "sci_003",
+            "name": "Física",
+            "category_id": "cat_science",
+            "badge_icon": "⚛️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "sci_004",
+            "name": "Ótica",
+            "category_id": "cat_science",
+            "badge_icon": "👓",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "sci_005",
+            "name": "Primeiros Socorros - Básico",
+            "category_id": "cat_science",
+            "badge_icon": "🏥",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "sci_006",
+            "name": "Primeiros Socorros",
+            "category_id": "cat_science",
+            "badge_icon": "🏥",
+            "level": "intermediate",
+            "requirements": []
+        },
+        {
+            "id": "sci_007",
+            "name": "Primeiros Socorros - Avançado",
+            "category_id": "cat_science",
+            "badge_icon": "🏥",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "sci_008",
+            "name": "Química",
+            "category_id": "cat_science",
+            "badge_icon": "🧪",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "sci_009",
+            "name": "Reanimação Cardiopulmonar",
+            "category_id": "cat_science",
+            "badge_icon": "❤️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "sci_010",
+            "name": "Resgate Básico",
+            "category_id": "cat_science",
+            "badge_icon": "🚑",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "sci_011",
+            "name": "Saúde e Cura",
+            "category_id": "cat_science",
+            "badge_icon": "💊",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_001",
+            "name": "Algas Marinhas",
+            "category_id": "cat_nature",
+            "badge_icon": "🌊",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_002",
+            "name": "Anfíbios",
+            "category_id": "cat_nature",
+            "badge_icon": "🐸",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_003",
+            "name": "Animais Domésticos",
+            "category_id": "cat_nature",
+            "badge_icon": "🐕",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_004",
+            "name": "Aracnídeos",
+            "category_id": "cat_nature",
+            "badge_icon": "🕷️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_005",
+            "name": "Arbustos",
+            "category_id": "cat_nature",
+            "badge_icon": "🌲",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_006",
+            "name": "Areia",
+            "category_id": "cat_nature",
+            "badge_icon": "🏖️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_007",
+            "name": "Árvores",
+            "category_id": "cat_nature",
+            "badge_icon": "🌳",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_008",
+            "name": "Árvores - Avançado",
+            "category_id": "cat_nature",
+            "badge_icon": "🌳",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "nat_009",
+            "name": "Astronomia",
+            "category_id": "cat_nature",
+            "badge_icon": "🔭",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_010",
+            "name": "Astronomia - Avançado",
+            "category_id": "cat_nature",
+            "badge_icon": "🔭",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "nat_011",
+            "name": "Aves",
+            "category_id": "cat_nature",
+            "badge_icon": "🐦",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_012",
+            "name": "Aves - Avançado",
+            "category_id": "cat_nature",
+            "badge_icon": "🐦",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "nat_013",
+            "name": "Aves de Estimação",
+            "category_id": "cat_nature",
+            "badge_icon": "🦜",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_014",
+            "name": "Aves Domésticas",
+            "category_id": "cat_nature",
+            "badge_icon": "🐔",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_015",
+            "name": "Cactos",
+            "category_id": "cat_nature",
+            "badge_icon": "🌵",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_016",
+            "name": "Cães",
+            "category_id": "cat_nature",
+            "badge_icon": "🐕",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_017",
+            "name": "Cães - Cuidado e Treinamento",
+            "category_id": "cat_nature",
+            "badge_icon": "🐕",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "nat_018",
+            "name": "Climatologia",
+            "category_id": "cat_nature",
+            "badge_icon": "🌤️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_019",
+            "name": "Climatologia - Avançado",
+            "category_id": "cat_nature",
+            "badge_icon": "🌤️",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "nat_020",
+            "name": "Conchas e Moluscos",
+            "category_id": "cat_nature",
+            "badge_icon": "🐚",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_021",
+            "name": "Conchas e Moluscos - Avançado",
+            "category_id": "cat_nature",
+            "badge_icon": "🐚",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "nat_022",
+            "name": "Conservação Ambiental",
+            "category_id": "cat_nature",
+            "badge_icon": "♻️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_023",
+            "name": "Ecologia",
+            "category_id": "cat_nature",
+            "badge_icon": "🌍",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_024",
+            "name": "Ecologia - Avançado",
+            "category_id": "cat_nature",
+            "badge_icon": "🌍",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "nat_025",
+            "name": "Flores",
+            "category_id": "cat_nature",
+            "badge_icon": "🌸",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_026",
+            "name": "Flores - Avançado",
+            "category_id": "cat_nature",
+            "badge_icon": "🌸",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "nat_027",
+            "name": "Fósseis",
+            "category_id": "cat_nature",
+            "badge_icon": "🦴",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_028",
+            "name": "Fungos",
+            "category_id": "cat_nature",
+            "badge_icon": "🍄",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_029",
+            "name": "Gatos",
+            "category_id": "cat_nature",
+            "badge_icon": "🐱",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_030",
+            "name": "Geologia",
+            "category_id": "cat_nature",
+            "badge_icon": "⛰️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_031",
+            "name": "Geologia - Avançado",
+            "category_id": "cat_nature",
+            "badge_icon": "⛰️",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "nat_032",
+            "name": "Gramíneas",
+            "category_id": "cat_nature",
+            "badge_icon": "🌾",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_033",
+            "name": "Insetos",
+            "category_id": "cat_nature",
+            "badge_icon": "🐛",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_034",
+            "name": "Insetos - Avançado",
+            "category_id": "cat_nature",
+            "badge_icon": "🐛",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "nat_035",
+            "name": "Invertebrados Marinhos",
+            "category_id": "cat_nature",
+            "badge_icon": "🦑",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_036",
+            "name": "Líquens e Musgos",
+            "category_id": "cat_nature",
+            "badge_icon": "🌿",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_037",
+            "name": "Mamíferos",
+            "category_id": "cat_nature",
+            "badge_icon": "🦁",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_038",
+            "name": "Mamíferos - Avançado",
+            "category_id": "cat_nature",
+            "badge_icon": "🦁",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "nat_039",
+            "name": "Mamíferos Marinhos",
+            "category_id": "cat_nature",
+            "badge_icon": "🐋",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_040",
+            "name": "Mariposas e Borboletas",
+            "category_id": "cat_nature",
+            "badge_icon": "🦋",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_041",
+            "name": "Orquídeas",
+            "category_id": "cat_nature",
+            "badge_icon": "🌺",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_042",
+            "name": "Pegadas de Animais",
+            "category_id": "cat_nature",
+            "badge_icon": "🐾",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_043",
+            "name": "Peixes",
+            "category_id": "cat_nature",
+            "badge_icon": "🐟",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_044",
+            "name": "Pequenos Animais de Estimação",
+            "category_id": "cat_nature",
+            "badge_icon": "🐹",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_045",
+            "name": "Plantas Caseiras",
+            "category_id": "cat_nature",
+            "badge_icon": "🪴",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_046",
+            "name": "Plantas Silvestres Comestíveis",
+            "category_id": "cat_nature",
+            "badge_icon": "🥬",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_047",
+            "name": "Répteis",
+            "category_id": "cat_nature",
+            "badge_icon": "🦎",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_048",
+            "name": "Rochas e Minerais",
+            "category_id": "cat_nature",
+            "badge_icon": "🪨",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_049",
+            "name": "Rochas e Minerais - Avançado",
+            "category_id": "cat_nature",
+            "badge_icon": "🪨",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "nat_050",
+            "name": "Samambaias",
+            "category_id": "cat_nature",
+            "badge_icon": "🌿",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_051",
+            "name": "Sementes",
+            "category_id": "cat_nature",
+            "badge_icon": "🌱",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "nat_052",
+            "name": "Sementes - Avançado",
+            "category_id": "cat_nature",
+            "badge_icon": "🌱",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "rec_001",
+            "name": "Acampamento I",
+            "category_id": "cat_recreation",
+            "badge_icon": "⛺",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_002",
+            "name": "Acampamento II",
+            "category_id": "cat_recreation",
+            "badge_icon": "⛺",
+            "level": "intermediate",
+            "requirements": []
+        },
+        {
+            "id": "rec_003",
+            "name": "Acampamento III",
+            "category_id": "cat_recreation",
+            "badge_icon": "⛺",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "rec_004",
+            "name": "Acampamento IV",
+            "category_id": "cat_recreation",
+            "badge_icon": "⛺",
+            "level": "master",
+            "requirements": []
+        },
+        {
+            "id": "rec_005",
+            "name": "Arte de Acampar",
+            "category_id": "cat_recreation",
+            "badge_icon": "🏕️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_006",
+            "name": "Atletismo",
+            "category_id": "cat_recreation",
+            "badge_icon": "🏃",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_007",
+            "name": "Ciclismo",
+            "category_id": "cat_recreation",
+            "badge_icon": "🚴",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_008",
+            "name": "Ciclismo - Avançado",
+            "category_id": "cat_recreation",
+            "badge_icon": "🚴",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "rec_009",
+            "name": "Excursionismo Pedestre",
+            "category_id": "cat_recreation",
+            "badge_icon": "🥾",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_010",
+            "name": "Excursionismo Pedestre com Mochila",
+            "category_id": "cat_recreation",
+            "badge_icon": "🎒",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_011",
+            "name": "Fogueiras e Cozinha ao Ar Livre",
+            "category_id": "cat_recreation",
+            "badge_icon": "🔥",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_012",
+            "name": "Ginástica Acrobática",
+            "category_id": "cat_recreation",
+            "badge_icon": "🤸",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_013",
+            "name": "Liderança Campestre",
+            "category_id": "cat_recreation",
+            "badge_icon": "🏕️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_014",
+            "name": "Liderança Campestre - Avançado",
+            "category_id": "cat_recreation",
+            "badge_icon": "🏕️",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "rec_015",
+            "name": "Liderança na Selva",
+            "category_id": "cat_recreation",
+            "badge_icon": "🌴",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_016",
+            "name": "Mergulho Livre",
+            "category_id": "cat_recreation",
+            "badge_icon": "🤿",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_017",
+            "name": "Natação Principiante I",
+            "category_id": "cat_recreation",
+            "badge_icon": "🏊",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_018",
+            "name": "Natação Principiante II",
+            "category_id": "cat_recreation",
+            "badge_icon": "🏊",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_019",
+            "name": "Natação Intermediário I",
+            "category_id": "cat_recreation",
+            "badge_icon": "🏊",
+            "level": "intermediate",
+            "requirements": []
+        },
+        {
+            "id": "rec_020",
+            "name": "Natação Intermediário II",
+            "category_id": "cat_recreation",
+            "badge_icon": "🏊",
+            "level": "intermediate",
+            "requirements": []
+        },
+        {
+            "id": "rec_021",
+            "name": "Natação Avançado",
+            "category_id": "cat_recreation",
+            "badge_icon": "🏊",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "rec_022",
+            "name": "Nós",
+            "category_id": "cat_recreation",
+            "badge_icon": "🪢",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_023",
+            "name": "Ordem Unida",
+            "category_id": "cat_recreation",
+            "badge_icon": "🎖️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_024",
+            "name": "Ordem Unida - Avançado",
+            "category_id": "cat_recreation",
+            "badge_icon": "🎖️",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "rec_025",
+            "name": "Orientação",
+            "category_id": "cat_recreation",
+            "badge_icon": "🧭",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_026",
+            "name": "Pioneirismo",
+            "category_id": "cat_recreation",
+            "badge_icon": "🏗️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "rec_027",
+            "name": "Pipas",
+            "category_id": "cat_recreation",
+            "badge_icon": "🪁",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "reg_001",
+            "name": "Arte em Fantoches",
+            "category_id": "cat_regional",
+            "badge_icon": "🎭",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "reg_002",
+            "name": "Arte em Fantoches - Avançado",
+            "category_id": "cat_regional",
+            "badge_icon": "🎭",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "reg_003",
+            "name": "Cuidado de Bebês",
+            "category_id": "cat_regional",
+            "badge_icon": "👶",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "reg_004",
+            "name": "Higiene Oral",
+            "category_id": "cat_regional",
+            "badge_icon": "🦷",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "reg_005",
+            "name": "Ervas",
+            "category_id": "cat_regional",
+            "badge_icon": "🌿",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "reg_006",
+            "name": "Telecartofilia",
+            "category_id": "cat_regional",
+            "badge_icon": "📞",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "reg_007",
+            "name": "Telecartofilia - Avançado",
+            "category_id": "cat_regional",
+            "badge_icon": "📞",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "dom_001",
+            "name": "Acolchoamento",
+            "category_id": "cat_domestic",
+            "badge_icon": "🛏️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "dom_002",
+            "name": "Arte Culinária",
+            "category_id": "cat_domestic",
+            "badge_icon": "👨‍🍳",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "dom_003",
+            "name": "Arte Culinária - Avançado",
+            "category_id": "cat_domestic",
+            "badge_icon": "👨‍🍳",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "dom_004",
+            "name": "Congelamento de Alimentos",
+            "category_id": "cat_domestic",
+            "badge_icon": "❄️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "dom_005",
+            "name": "Costura Básica",
+            "category_id": "cat_domestic",
+            "badge_icon": "🧵",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "dom_006",
+            "name": "Corte e Costura",
+            "category_id": "cat_domestic",
+            "badge_icon": "✂️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "dom_007",
+            "name": "Corte e Costura - Avançado",
+            "category_id": "cat_domestic",
+            "badge_icon": "✂️",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "dom_008",
+            "name": "Cuidados da Casa",
+            "category_id": "cat_domestic",
+            "badge_icon": "🏠",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "dom_009",
+            "name": "Desidratação de Alimentos",
+            "category_id": "cat_domestic",
+            "badge_icon": "☀️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "dom_010",
+            "name": "Nutrição",
+            "category_id": "cat_domestic",
+            "badge_icon": "🥗",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "dom_011",
+            "name": "Nutrição - Avançado",
+            "category_id": "cat_domestic",
+            "badge_icon": "🥗",
+            "level": "advanced",
+            "requirements": []
+        },
+        {
+            "id": "dom_012",
+            "name": "Panificação",
+            "category_id": "cat_domestic",
+            "badge_icon": "🍞",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "dom_013",
+            "name": "Técnicas de Fazer Conservas",
+            "category_id": "cat_domestic",
+            "badge_icon": "🫙",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "dom_014",
+            "name": "Técnicas de Lavanderia",
+            "category_id": "cat_domestic",
+            "badge_icon": "🧺",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "agri_001",
+            "name": "Agricultura",
+            "category_id": "cat_agriculture",
+            "badge_icon": "🌾",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "agri_002",
+            "name": "Apicultura",
+            "category_id": "cat_agriculture",
+            "badge_icon": "🐝",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "agri_003",
+            "name": "Avicultura",
+            "category_id": "cat_agriculture",
+            "badge_icon": "🐔",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "agri_004",
+            "name": "Criação de Cabras",
+            "category_id": "cat_agriculture",
+            "badge_icon": "🐐",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "agri_005",
+            "name": "Criação de Cavalos",
+            "category_id": "cat_agriculture",
+            "badge_icon": "🐴",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "agri_006",
+            "name": "Criação de Gado Leiteiro",
+            "category_id": "cat_agriculture",
+            "badge_icon": "🐄",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "agri_007",
+            "name": "Criação de Ovelhas",
+            "category_id": "cat_agriculture",
+            "badge_icon": "🐑",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "agri_008",
+            "name": "Criação de Pombos",
+            "category_id": "cat_agriculture",
+            "badge_icon": "🕊️",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "agri_009",
+            "name": "Floricultura",
+            "category_id": "cat_agriculture",
+            "badge_icon": "🌸",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "agri_010",
+            "name": "Jardinagem e Horticultura",
+            "category_id": "cat_agriculture",
+            "badge_icon": "🥬",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "agri_011",
+            "name": "Pecuária",
+            "category_id": "cat_agriculture",
+            "badge_icon": "🐮",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "agri_012",
+            "name": "Pomicultura",
+            "category_id": "cat_agriculture",
+            "badge_icon": "🍎",
+            "level": "basic",
+            "requirements": []
+        },
+        {
+            "id": "agri_013",
+            "name": "Pomicultura II - Frutas Pequenas",
+            "category_id": "cat_agriculture",
+            "badge_icon": "🍓",
+            "level": "basic",
+            "requirements": []
+        }
+    ]
+}

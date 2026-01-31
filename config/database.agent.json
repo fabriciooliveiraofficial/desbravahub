@@ -1,0 +1,89 @@
+{
+    "_comment": "DesbravaHub - Agent MySQL Connection Configuration",
+    "_version": "1.0.0",
+    "_purpose": "Remote database management for autonomous agents",
+    "connection": {
+        "driver": "mysql",
+        "host": "${DB_HOST}",
+        "port": "${DB_PORT}",
+        "database": "${DB_DATABASE}",
+        "username": "${DB_USERNAME}",
+        "password": "${DB_PASSWORD}",
+        "charset": "utf8mb4",
+        "collation": "utf8mb4_unicode_ci",
+        "timezone": "-03:00"
+    },
+    "pdo_options": {
+        "persistent": false,
+        "emulate_prepares": false,
+        "error_mode": "exception",
+        "default_fetch_mode": "assoc",
+        "stringify_fetches": false
+    },
+    "ssl": {
+        "enabled": false,
+        "verify_server_cert": true,
+        "ca_path": "${DB_SSL_CA_PATH}",
+        "cert_path": "${DB_SSL_CERT_PATH}",
+        "key_path": "${DB_SSL_KEY_PATH}"
+    },
+    "pool": {
+        "enabled": false,
+        "min_connections": 1,
+        "max_connections": 10,
+        "idle_timeout": 60
+    },
+    "safety": {
+        "allow_ddl": true,
+        "allow_dml": true,
+        "allow_drop": false,
+        "allow_truncate": false,
+        "require_transactions": true,
+        "require_where_clause": true,
+        "max_affected_rows": 1000,
+        "dry_run": false,
+        "log_all_queries": true
+    },
+    "migrations": {
+        "table": "migrations",
+        "directory": "./database/migrations",
+        "auto_run": false,
+        "versioned": true,
+        "backup_before_migrate": true
+    },
+    "schema_management": {
+        "allowed_operations": [
+            "CREATE TABLE",
+            "ALTER TABLE",
+            "CREATE INDEX",
+            "DROP INDEX",
+            "INSERT",
+            "UPDATE",
+            "DELETE",
+            "SELECT"
+        ],
+        "blocked_operations": [
+            "DROP TABLE",
+            "DROP DATABASE",
+            "TRUNCATE",
+            "GRANT",
+            "REVOKE"
+        ],
+        "require_explicit_database": true,
+        "prevent_cross_database_queries": true
+    },
+    "logging": {
+        "enabled": true,
+        "path": "./storage/logs/database.log",
+        "log_queries": true,
+        "log_slow_queries": true,
+        "slow_query_threshold_ms": 1000,
+        "log_errors": true,
+        "log_schema_changes": true
+    },
+    "validation": {
+        "test_connection_on_init": true,
+        "validate_schema_before_apply": true,
+        "require_migration_confirmation": false
+    }
+}

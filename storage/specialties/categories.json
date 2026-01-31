@@ -1,0 +1,77 @@
+{
+  "version": "2.0.0",
+  "last_updated": "2024-12-14",
+  "source": "Manual de Especialidades de Desbravadores - Compilado por Gerson Boiko dos Santos",
+  "categories": [
+    {
+      "id": "cat_missionary",
+      "name": "Atividades Missionárias",
+      "description": "Especialidades focadas em evangelismo, testemunho e serviço cristão",
+      "color": "#9b59b6",
+      "icon": "⛪"
+    },
+    {
+      "id": "cat_arts",
+      "name": "Artes e Habilidades Manuais",
+      "description": "Especialidades de artesanato, trabalhos manuais e expressão artística",
+      "color": "#e91e63",
+      "icon": "🎨"
+    },
+    {
+      "id": "cat_professional",
+      "name": "Atividades Profissionais",
+      "description": "Especialidades voltadas para habilidades profissionais e técnicas",
+      "color": "#607d8b",
+      "icon": "💼"
+    },
+    {
+      "id": "cat_science",
+      "name": "Ciência e Saúde",
+      "description": "Especialidades sobre ciências, saúde e primeiros socorros",
+      "color": "#00bcd4",
+      "icon": "🔬"
+    },
+    {
+      "id": "cat_nature",
+      "name": "Estudo da Natureza",
+      "description": "Especialidades sobre fauna, flora, ecologia e meio ambiente",
+      "color": "#4caf50",
+      "icon": "🌿"
+    },
+    {
+      "id": "cat_recreation",
+      "name": "Atividades Recreativas",
+      "description": "Especialidades de acampamento, esportes e atividades ao ar livre",
+      "color": "#ff9800",
+      "icon": "⛺"
+    },
+    {
+      "id": "cat_regional",
+      "name": "Atividades Regionais",
+      "description": "Especialidades específicas de regiões e culturas locais",
+      "color": "#795548",
+      "icon": "🗺️"
+    },
+    {
+      "id": "cat_domestic",
+      "name": "Atividades Domésticas",
+      "description": "Especialidades de culinária, costura e cuidados do lar",
+      "color": "#f44336",
+      "icon": "🏠"
+    },
+    {
+      "id": "cat_agriculture",
+      "name": "Atividades Agrícolas",
+      "description": "Especialidades de agricultura, criação de animais e horticultura",
+      "color": "#8bc34a",
+      "icon": "🌾"
+    },
+    {
+      "id": "cat_masters",
+      "name": "Mestrados",
+      "description": "Conjuntos avançados de especialidades para mestres",
+      "color": "#ffc107",
+      "icon": "🏅"
+    }
+  ]
+}

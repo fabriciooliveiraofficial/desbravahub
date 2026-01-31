@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide-Over Test</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00d9ff;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: linear-gradient(180deg, #e0e7ff 0%, #c7d2fe 50%, #a5b4fc 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #1e293b;
+            margin-top: 0;
+        }
+
+        .test-button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin: 10px 0;
+            display: block;
+            width: 100%;
+        }
+
+        .test-button:hover {
+            opacity: 0.9;
+        }
+
+        .diagnostic-output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        /* Slide-Over Styles - EXACT COPY from member.php */
+        .slide-over-backdrop {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            background: rgba(15, 23, 42, 0.6) !important;
+            backdrop-filter: blur(4px);
+            z-index: 99999 !important;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .slide-over-panel {
+            position: absolute !important;
+            right: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: 420px !important;
+            background: #fff !important;
+            height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.2);
+            animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .panel-header {
+            padding: 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            background: #fff;
+        }
+
+        .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: #fff;
+        }
+
+        .panel-footer {
+            padding: 20px 24px;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            gap: 12px;
+            background: #fff;
+            flex-shrink: 0;
+        }
+
+        .btn-close {
+           background: #f8fafc;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            cursor: pointer;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            background: #f1f5f9;
+            color: #64748b;
+            border: none;
+            border-radius: 14px;
+            padding: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Slide-Over Diagnostic Test</h1>
+        <p>Esta página testa se o slide-over está funcionando corretamente.</p>
+        
+        <button class="test-button" onclick="openSlideOver()">▶ Abrir Slide-Over</button>
+        <button class="test-button" onclick="runDiagnostics()">🔍 Executar Diagnósticos</button>
+        
+        <div id="diagnostics" class="diagnostic-output" style="display: none;"></div>
+    </div>
+
+    <!-- Container for slide-over -->
+    <div id="mission-slide-over-container"></div>
+
+    <script>
+        function openSlideOver() {
+            const container = document.getElementById('mission-slide-over-container');
+            container.innerHTML = `
+                <div class="slide-over-backdrop" onclick="closeSlideOver()">
+                    <div class="slide-over-panel" onclick="event.stopPropagation()">
+                        <div class="panel-header">
+                            <h2>🎯 Teste de Slide-Over</h2>
+                            <button class="btn-close" onclick="closeSlideOver()">
+                                <span class="material-icons-round">close</span>
+                            </button>
+                        </div>
+                        <div class="panel-body">
+                            <h3>✅ Sucesso!</h3>
+                            <p>Se você está vendo isso como uma gaveta lateral deslizando da direita com fundo escuro, o slide-over está funcionando!</p>
+                            <p><strong>Teste:</strong></p>
+                            <ul>
+                                <li>O painel apareceu da direita?</li>
+                                <li>Há um fundo escuro cobrindo o resto da tela?</li>
+                                <li>Você pode fechar clicando no X ou fora do painel?</li>
+                            </ul>
+                        </div>
+                        <div class="panel-footer">
+                            <button class="btn-secondary" onclick="closeSlideOver()">Fechar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeSlideOver() {
+            const container = document.getElementById('mission-slide-over-container');
+            const backdrop = container.querySelector('.slide-over-backdrop');
+            if (backdrop) {
+                backdrop.style.opacity = '0';
+                setTimeout(() => {
+                    container.innerHTML = '';
+                }, 300);
+            }
+        }
+
+        function runDiagnostics() {
+            const output = document.getElementById('diagnostics');
+            output.style.display = 'block';
+            
+            let log = '=== DIAGNÓSTICO ===\n\n';
+            
+            // Check container exists
+            const container = document.getElementById('mission-slide-over-container');
+            log += `✓ Container existe: ${!!container}\n`;
+            log += `Container ID: ${container?.id}\n\n`;
+            
+            // Open slide-over
+            openSlideOver();
+            
+            setTimeout(() => {
+                const backdrop = document.querySelector('.slide-over-backdrop');
+                const panel = document.querySelector('.slide-over-panel');
+                
+                log += '=== BACKDROP ===\n';
+                if (backdrop) {
+                    const styles = window.getComputedStyle(backdrop);
+                    log += `Position: ${styles.position}\n`;
+                    log += `Z-index: ${styles.zIndex}\n`;
+                    log += `Top: ${styles.top}\n`;
+                    log += `Left: ${styles.left}\n`;
+                    log += `Right: ${styles.right}\n`;
+                    log += `Bottom: ${styles.bottom}\n`;
+                    log += `Display: ${styles.display}\n`;
+                    log += `Background: ${styles.backgroundColor}\n\n`;
+                } else {
+                    log += '❌ BACKDROP NÃO ENCONTRADO!\n\n';
+                }
+                
+                log += '=== PANEL ===\n';
+                if (panel) {
+                    const styles = window.getComputedStyle(panel);
+                    log += `Position: ${styles.position}\n`;
+                    log += `Right: ${styles.right}\n`;
+                    log += `Top: ${styles.top}\n`;
+                    log += `Width: ${styles.width}\n`;
+                    log += `Height: ${styles.height}\n`;
+                    log += `Display: ${styles.display}\n`;
+                    log += `Flex-direction: ${styles.flexDirection}\n`;
+                    log += `Background: ${styles.backgroundColor}\n\n`;
+                } else {
+                    log += '❌ PANEL NÃO ENCONTRADO!\n\n';
+                }
+                
+                log += '=== STATUS ===\n';
+                log += `Elementos no container: ${container.children.length}\n`;
+                log += `HTML length: ${container.innerHTML.length} chars\n`;
+                
+                output.textContent = log;
+            }, 500);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pathfinder Sidebar Menu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: "#06b6d4", // Cyan-500 similar to the highlight
+                        "background-light": "#F3F4F6",
+                        "background-dark": "#0B1120", // Deep dark blue
+                        "sidebar-dark": "#111827", // Slightly lighter dark blue
+                        "sidebar-light": "#FFFFFF",
+                        "item-hover-dark": "#1F2937",
+                        "item-hover-light": "#F1F5F9",
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+<style>.custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.3);
+            border-radius: 20px;
+        }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.5);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 h-screen overflow-hidden flex justify-center">
+<div class="relative w-full max-w-md h-full bg-white dark:bg-black shadow-2xl overflow-hidden flex flex-col">
+<div aria-hidden="true" class="flex-1 p-6 space-y-4 opacity-50 pointer-events-none">
+<div class="h-8 w-1/3 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
+<div class="grid grid-cols-2 gap-4">
+<div class="h-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
+<div class="h-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
+</div>
+<div class="h-64 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
+</div>
+<div class="absolute inset-0 z-50 flex">
+<div class="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px]" onclick="console.log('Close menu')"></div>
+<div class="relative flex flex-col w-4/5 max-w-[300px] h-full bg-sidebar-light dark:bg-sidebar-dark shadow-2xl transition-transform duration-300 ease-out transform translate-x-0 border-r border-slate-200 dark:border-slate-800/50">
+<div class="flex items-center justify-between px-5 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800/50 shrink-0">
+<div class="flex flex-col">
+<div class="flex items-center gap-2.5">
+<div class="relative flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/20">
+<span class="material-icons-round text-white text-[20px]">bolt</span>
+</div>
+<h1 class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-300">
+                                Clube Demo
+                            </h1>
+</div>
+<div class="mt-2 ml-1">
+<span class="inline-flex items-center rounded-md bg-emerald-100 dark:bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 ring-1 ring-inset ring-emerald-600/20 dark:ring-emerald-500/20">
+                                Admin
+                            </span>
+</div>
+</div>
+<button class="p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+<span class="material-icons-round">close</span>
+</button>
+</div>
+<nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
+<a class="group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg text-white bg-primary shadow-lg shadow-cyan-500/20 transition-all" href="#">
+<span class="material-icons-round text-[20px]">dashboard</span>
+                        Dashboard
+                    </a>
+<div class="h-2"></div>
+<div class="space-y-1">
+<button class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-item-hover-light dark:hover:bg-item-hover-dark transition-colors group">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center w-5 h-5 rounded text-indigo-500 dark:text-indigo-400">
+<span class="material-icons-round text-[20px]">local_activity</span>
+</div>
+<span class="group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Activities</span>
+</div>
+<span class="material-icons-round text-slate-400 text-[18px] transform rotate-180">expand_more</span>
+</button>
+<div class="relative space-y-0.5 pl-3">
+<div class="absolute left-[22px] top-0 bottom-4 w-px bg-slate-200 dark:bg-slate-700/50"></div>
+<a class="relative flex items-center gap-3 rounded-lg pl-8 pr-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors" href="#">
+<span class="absolute left-[22px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border-2 border-pink-400 bg-transparent"></span>
+                                Legacy
+                            </a>
+<a class="relative flex items-center gap-3 rounded-lg pl-8 pr-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors" href="#">
+<span class="absolute left-[22px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border-2 border-orange-400 bg-transparent"></span>
+                                Specialties
+                            </a>
+<a class="relative flex items-center gap-3 rounded-lg pl-8 pr-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors" href="#">
+<span class="absolute left-[22px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border-2 border-blue-400 bg-transparent"></span>
+                                Attributions
+                            </a>
+<a class="relative flex items-center gap-3 rounded-lg pl-8 pr-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors" href="#">
+<span class="absolute left-[22px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border-2 border-yellow-400 bg-transparent"></span>
+                                Classes
+                            </a>
+<a class="relative flex items-center gap-3 rounded-lg pl-8 pr-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors" href="#">
+<span class="absolute left-[22px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border-2 border-green-400 bg-transparent"></span>
+                                Approvals
+                            </a>
+<a class="relative flex items-center gap-3 rounded-lg pl-8 pr-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors" href="#">
+<span class="absolute left-[22px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border-2 border-teal-400 bg-transparent"></span>
+                                Analytics
+                            </a>
+</div>
+</div>
+<div class="h-px bg-slate-100 dark:bg-slate-800/50 my-2 mx-2"></div>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 rounded-lg hover:bg-item-hover-light dark:hover:bg-item-hover-dark hover:text-slate-900 dark:hover:text-white transition-colors group" href="#">
+<span class="material-icons-round text-[20px] text-purple-500 group-hover:scale-110 transition-transform">group</span>
+                        Users
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 rounded-lg hover:bg-item-hover-light dark:hover:bg-item-hover-dark hover:text-slate-900 dark:hover:text-white transition-colors group" href="#">
+<span class="material-icons-round text-[20px] text-yellow-500 group-hover:scale-110 transition-transform">cottage</span>
+                        Units
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 rounded-lg hover:bg-item-hover-light dark:hover:bg-item-hover-dark hover:text-slate-900 dark:hover:text-white transition-colors group" href="#">
+<span class="material-icons-round text-[20px] text-amber-600 group-hover:scale-110 transition-transform">lock</span>
+                        Permissions
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 rounded-lg hover:bg-item-hover-light dark:hover:bg-item-hover-dark hover:text-slate-900 dark:hover:text-white transition-colors group" href="#">
+<span class="material-icons-round text-[20px] text-blue-500 group-hover:scale-110 transition-transform">mail</span>
+                        Email
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 rounded-lg hover:bg-item-hover-light dark:hover:bg-item-hover-dark hover:text-slate-900 dark:hover:text-white transition-colors group" href="#">
+<span class="material-icons-round text-[20px] text-slate-400 dark:text-slate-400 group-hover:scale-110 transition-transform">confirmation_number</span>
+                        Invites
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 rounded-lg hover:bg-item-hover-light dark:hover:bg-item-hover-dark hover:text-slate-900 dark:hover:text-white transition-colors group" href="#">
+<span class="material-icons-round text-[20px] text-sky-500 group-hover:scale-110 transition-transform">credit_card</span>
+                        Payments
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 rounded-lg hover:bg-item-hover-light dark:hover:bg-item-hover-dark hover:text-slate-900 dark:hover:text-white transition-colors group" href="#">
+<span class="material-icons-round text-[20px] text-amber-500 group-hover:scale-110 transition-transform">article</span>
+                        Proofs
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 rounded-lg hover:bg-item-hover-light dark:hover:bg-item-hover-dark hover:text-slate-900 dark:hover:text-white transition-colors group" href="#">
+<span class="material-icons-round text-[20px] text-blue-400 group-hover:scale-110 transition-transform">system_update_alt</span>
+                        Versions
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 rounded-lg hover:bg-item-hover-light dark:hover:bg-item-hover-dark hover:text-slate-900 dark:hover:text-white transition-colors group" href="#">
+<span class="material-icons-round text-[20px] text-rose-500 group-hover:scale-110 transition-transform">flag</span>
+                        Feature Flags
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 rounded-lg hover:bg-item-hover-light dark:hover:bg-item-hover-dark hover:text-slate-900 dark:hover:text-white transition-colors group" href="#">
+<span class="material-icons-round text-[20px] text-pink-500 group-hover:scale-110 transition-transform">campaign</span>
+                        Notifications
+<span class="ml-auto inline-flex items-center rounded-full bg-pink-100 dark:bg-pink-500/10 px-2 py-0.5 text-xs font-medium text-pink-700 dark:text-pink-400">3</span>
+</a>
+</nav>
+<div class="border-t border-slate-100 dark:border-slate-800/50 p-4 shrink-0 bg-sidebar-light dark:bg-sidebar-dark">
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors" href="#">
+<span class="material-icons-round text-[18px]">keyboard_backspace</span>
+                        Voltar ao App
+                    </a>
+</div>
+</div>
+</div>
+</div>
+
+</body></html>
