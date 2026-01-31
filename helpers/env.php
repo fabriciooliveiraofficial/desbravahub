@@ -22,29 +22,40 @@ function env_load(?string $path = null): void
         return;
     }
 
-    $envPath = $path ?? dirname(__DIR__) . '/.env';
+    // Use BASE_PATH if defined, otherwise calculate relative to this file
+    $basePath = defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__);
+    $envPath = $path ?? $basePath . '/.env';
 
-    if (!file_exists($envPath)) {
+    if (!file_exists($envPath) || !is_readable($envPath)) {
         $GLOBALS['__env_loaded'] = true;
+        error_log("Env: .env file not found or not readable at " . $envPath);
         return;
     }
 
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
+    if ($lines === false) {
+        $GLOBALS['__env_loaded'] = true;
+        error_log("Env: Failed to read .env file at " . $envPath);
+        return;
+    }
+
     foreach ($lines as $line) {
-        // Skip comments
-        if (strpos(trim($line), '#') === 0) {
+        $line = trim($line);
+        
+        // Skip comments and empty lines
+        if (empty($line) || str_starts_with($line, '#')) {
             continue;
         }
 
         // Parse key=value
-        if (strpos($line, '=') !== false) {
+        if (str_contains($line, '=')) {
             list($key, $value) = explode('=', $line, 2);
             $key = trim($key);
             $value = trim($value);
 
             // Remove surrounding quotes
-            if (preg_match('/^(["\'])(.*)\\1$/', $value, $matches)) {
+            if (preg_match('/^(["\'])(.*)\1$/', $value, $matches)) {
                 $value = $matches[2];
             }
 
@@ -58,10 +69,12 @@ function env_load(?string $path = null): void
             };
 
             $GLOBALS['__env_cache'][$key] = $value;
-
-            // Also set in $_ENV and putenv for compatibility
             $_ENV[$key] = $value;
-            putenv("$key=$value");
+            
+            // Only putenv strings
+            if (is_string($value) || is_numeric($value)) {
+                putenv("$key=$value");
+            }
         }
     }
 
