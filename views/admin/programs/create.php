@@ -257,7 +257,11 @@ $pageIcon = 'add_circle';
                                 <option value="">Sem categoria</option>
                                 <?php foreach ($categories as $cat): ?>
                                     <option value="<?= $cat['id'] ?>" style="color: <?= $cat['color'] ?>;">
-                                        <?php if (!str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
+                                        <?php if (str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
+                                            (📂)
+                                        <?php elseif (str_contains($cat['icon'] ?? '', ':')): ?>
+                                            (📂)
+                                        <?php else: ?>
                                             <?= $cat['icon'] ?> 
                                         <?php endif; ?>
                                         <?= htmlspecialchars($cat['name']) ?>

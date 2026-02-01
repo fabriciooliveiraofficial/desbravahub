@@ -42,7 +42,11 @@
                         <option value="">Sem categoria</option>
                         <?php foreach ($categories as $cat): ?>
                             <option value="<?= $cat['id'] ?>" data-type="<?= $cat['type'] ?? 'both' ?>">
-                                <?php if (!str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
+                                <?php if (str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
+                                    (📂)
+                                <?php elseif (str_contains($cat['icon'] ?? '', ':')): ?>
+                                    (📂)
+                                <?php else: ?>
                                     <?= $cat['icon'] ?> 
                                 <?php endif; ?>
                                 <?= htmlspecialchars($cat['name']) ?>
@@ -52,13 +56,15 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Ícone (emoji)</label>
-                    <div style="position: relative; display: flex; gap: 8px; align-items: center;">
-                        <input type="text" name="icon" id="programIcon" class="form-control" value="📘" maxlength="4" style="flex: 1;">
-                        <button type="button" id="programIconTrigger" style="background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer; padding: 0 12px; height: 42px; font-size: 1.2rem; transition: background 0.2s;" title="Escolher Emoji">
-                            😊
-                        </button>
-                        <div id="programIconPicker" style="display: none; position: absolute; top: 100%; right: 0; z-index: 200; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; overflow: hidden; margin-top: 4px; background: var(--bg-card);"></div>
+                    <label>Ícone do Programa</label>
+                    <input type="hidden" id="programIcon" name="icon" value="noto:blue-book">
+                    <div class="icon-picker-trigger" onclick="IconPicker.open('programIcon', 'programIconPreview', 'programIconText')" style="display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer; height: 42px;">
+                        <div id="programIconPreview">
+                            <iconify-icon icon="noto:blue-book" style="font-size: 1.5rem;"></iconify-icon>
+                        </div>
+                        <div class="icon-info" style="flex: 1;">
+                            <span id="programIconText" style="font-size: 0.85rem; color: var(--text-primary);">noto:blue-book</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -189,53 +195,8 @@
        filterCategories();
     }
     
-    // Emoji Picker Initialization
-    function initProgramIconPicker() {
-        const trigger = document.getElementById('programIconTrigger');
-        const container = document.getElementById('programIconPicker');
-        const input = document.getElementById('programIcon');
-
-        if (trigger && container && input) {
-            // Avoid double binding
-            if (trigger.dataset.pickerInitialized) return;
-            trigger.dataset.pickerInitialized = 'true';
-
-            trigger.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                if (container.style.display === 'none') {
-                    container.style.display = 'block';
-
-                    if (!container.querySelector('emoji-picker')) {
-                        const picker = document.createElement('emoji-picker');
-                        // Use browser theme or force light/dark if needed
-                        // picker.classList.add('light'); 
-                        container.appendChild(picker);
-
-                        picker.addEventListener('emoji-click', event => {
-                            input.value = event.detail.unicode;
-                            container.style.display = 'none';
-                        });
-                    }
-                } else {
-                    container.style.display = 'none';
-                }
-            });
-
-            document.addEventListener('click', (e) => {
-                if (container.style.display !== 'none' && !container.contains(e.target) && !trigger.contains(e.target)) {
-                    container.style.display = 'none';
-                }
-            });
-        }
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initProgramIconPicker);
-    } else {
-        initProgramIconPicker();
-    }
+    // Iconify Picker is handled via onclick="IconPicker.open"
+    // No need for initProgramIconPicker anymore
     
     // Close on click outside
     document.getElementById('createModal').addEventListener('click', function (e) {
@@ -283,3 +244,4 @@
         }
     }
 </script>
+<?php require_once BASE_PATH . '/views/admin/partials/icon_picker.php'; ?>

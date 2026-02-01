@@ -17,6 +17,7 @@ $completionRate = $stats['total_assignments'] > 0
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?> - <?= htmlspecialchars($tenant['name']) ?></title>
     <link rel="stylesheet" href="<?= asset_url('css/admin.css') ?>">
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <style>
         .admin-main {
             padding: 24px;
@@ -325,7 +326,13 @@ $completionRate = $stats['total_assignments'] > 0
                         <?php foreach ($categoryStats as $cat): ?>
                             <div class="category-row">
                                 <div class="category-icon" style="background: <?= htmlspecialchars($cat['color']) ?>20;">
-                                    <?= $cat['icon'] ?>
+                                    <?php if (str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
+                                        <i class="<?= htmlspecialchars($cat['icon']) ?>" style="color: <?= htmlspecialchars($cat['color']) ?>;"></i>
+                                    <?php elseif (str_contains($cat['icon'] ?? '', ':')): ?>
+                                        <iconify-icon icon="<?= htmlspecialchars($cat['icon']) ?>" style="color: <?= htmlspecialchars($cat['color']) ?>;"></iconify-icon>
+                                    <?php else: ?>
+                                        <?= $cat['icon'] ?>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="category-info">
                                     <div class="category-name"><?= htmlspecialchars($cat['name']) ?></div>
@@ -355,7 +362,15 @@ $completionRate = $stats['total_assignments'] > 0
                     <?php else: ?>
                         <?php foreach ($problemSteps as $step): ?>
                             <div class="problem-row">
-                                <span class="problem-icon"><?= $step['program_icon'] ?></span>
+                                <span class="problem-icon">
+                                    <?php if (str_starts_with($step['program_icon'] ?? '', 'fa-')): ?>
+                                        <i class="<?= htmlspecialchars($step['program_icon']) ?>"></i>
+                                    <?php elseif (str_contains($step['program_icon'] ?? '', ':')): ?>
+                                        <iconify-icon icon="<?= htmlspecialchars($step['program_icon']) ?>"></iconify-icon>
+                                    <?php else: ?>
+                                        <?= $step['program_icon'] ?>
+                                    <?php endif; ?>
+                                </span>
                                 <div class="program-info">
                                     <div class="program-name"><?= htmlspecialchars($step['title']) ?></div>
                                     <div class="program-meta"><?= htmlspecialchars($step['program_name']) ?></div>
@@ -378,7 +393,15 @@ $completionRate = $stats['total_assignments'] > 0
                     <?php else: ?>
                         <?php foreach ($topPrograms as $prog): ?>
                             <div class="program-row">
-                                <span class="program-icon"><?= $prog['icon'] ?></span>
+                                <span class="program-icon">
+                                    <?php if (str_starts_with($prog['icon'] ?? '', 'fa-')): ?>
+                                        <i class="<?= htmlspecialchars($prog['icon']) ?>"></i>
+                                    <?php elseif (str_contains($prog['icon'] ?? '', ':')): ?>
+                                        <iconify-icon icon="<?= htmlspecialchars($prog['icon']) ?>"></iconify-icon>
+                                    <?php else: ?>
+                                        <?= $prog['icon'] ?>
+                                    <?php endif; ?>
+                                </span>
                                 <div class="program-info">
                                     <div class="program-name"><?= htmlspecialchars($prog['name']) ?></div>
                                     <div class="program-meta">
@@ -420,7 +443,14 @@ $completionRate = $stats['total_assignments'] > 0
                                 <div class="completion-info">
                                     <div class="user-name"><?= htmlspecialchars($completion['user_name']) ?></div>
                                     <div class="completion-program">
-                                        <?= $completion['program_icon'] ?>         <?= htmlspecialchars($completion['program_name']) ?>
+                                     <?php if (str_starts_with($completion['program_icon'] ?? '', 'fa-')): ?>
+                                        <i class="<?= htmlspecialchars($completion['program_icon']) ?>"></i>
+                                    <?php elseif (str_contains($completion['program_icon'] ?? '', ':')): ?>
+                                        <iconify-icon icon="<?= htmlspecialchars($completion['program_icon']) ?>"></iconify-icon>
+                                    <?php else: ?>
+                                        <?= $completion['program_icon'] ?>
+                                    <?php endif; ?>
+                                    <?= htmlspecialchars($completion['program_name']) ?>
                                     </div>
                                 </div>
                                 <span class="completion-time">

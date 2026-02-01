@@ -317,7 +317,15 @@ $pageIcon = $category['icon'];
 <!-- Category Header -->
 <div class="category-header"
     style="background: linear-gradient(135deg, <?= $category['color'] ?>, <?= $category['color'] ?>dd);">
-    <span class="category-icon"><?= $category['icon'] ?></span>
+    <span class="category-icon">
+        <?php if (str_starts_with($category['icon'] ?? '', 'fa-')): ?>
+            <i class="<?= htmlspecialchars($category['icon']) ?>"></i>
+        <?php elseif (str_contains($category['icon'] ?? '', ':')): ?>
+            <iconify-icon icon="<?= htmlspecialchars($category['icon']) ?>"></iconify-icon>
+        <?php else: ?>
+            <?= $category['icon'] ?>
+        <?php endif; ?>
+    </span>
     <div class="category-info">
         <h1><?= htmlspecialchars($category['name']) ?></h1>
         <?php if (!empty($category['description'])): ?>
@@ -347,7 +355,15 @@ $pageIcon = $category['icon'];
     <div class="programs-grid"><?php foreach ($programs as $program): ?>
                     <div class="program-card">
                         <div class="program-header">
-                            <span class="program-badge"><?= $program['icon'] ?? '📘' ?></span>
+                            <span class="program-badge">
+                                <?php if (str_starts_with($program['icon'] ?? '', 'fa-')): ?>
+                                    <i class="<?= htmlspecialchars($program['icon']) ?>"></i>
+                                <?php elseif (str_contains($program['icon'] ?? '', ':')): ?>
+                                    <iconify-icon icon="<?= htmlspecialchars($program['icon']) ?>"></iconify-icon>
+                                <?php else: ?>
+                                    <?= $program['icon'] ?? '📘' ?>
+                                <?php endif; ?>
+                            </span>
                             <div class="program-title">
                                 <h3><?= htmlspecialchars($program['name']) ?></h3>
                                 <div class="program-meta">

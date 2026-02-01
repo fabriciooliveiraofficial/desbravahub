@@ -1082,6 +1082,8 @@ $pageIcon = 'school';
                 style="--cat-color: <?= $cat['color'] ?>;">
                 <?php if (str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
                     <i class="<?= htmlspecialchars($cat['icon']) ?>"></i>
+                <?php elseif (str_contains($cat['icon'] ?? '', ':')): ?>
+                    <iconify-icon icon="<?= htmlspecialchars($cat['icon']) ?>"></iconify-icon>
                 <?php else: ?>
                     <?= $cat['icon'] ?>
                 <?php endif; ?>
@@ -1096,6 +1098,8 @@ $pageIcon = 'school';
                     <span class="category-icon">
                         <?php if (str_starts_with($data['category']['icon'] ?? '', 'fa-')): ?>
                             <i class="<?= htmlspecialchars($data['category']['icon']) ?>" style="color: <?= htmlspecialchars($data['category']['color']) ?>;"></i>
+                        <?php elseif (str_contains($data['category']['icon'] ?? '', ':')): ?>
+                            <iconify-icon icon="<?= htmlspecialchars($data['category']['icon']) ?>" style="color: <?= htmlspecialchars($data['category']['color']) ?>;"></iconify-icon>
                         <?php else: ?>
                             <?= $data['category']['icon'] ?>
                         <?php endif; ?>
@@ -1138,6 +1142,8 @@ $pageIcon = 'school';
                                 <div class="specialty-badge">
                                     <?php if (str_starts_with($spec['badge_icon'] ?? '', 'fa-')): ?>
                                         <i class="<?= htmlspecialchars($spec['badge_icon']) ?>"></i>
+                                    <?php elseif (str_contains($spec['badge_icon'] ?? '', ':')): ?>
+                                        <iconify-icon icon="<?= htmlspecialchars($spec['badge_icon']) ?>"></iconify-icon>
                                     <?php else: ?>
                                         <?= $spec['badge_icon'] ?>
                                     <?php endif; ?>
@@ -1190,6 +1196,7 @@ $pageIcon = 'school';
     <?php endforeach; ?>
     <!-- End Content -->
 
+    <?php require BASE_PATH . '/views/admin/partials/icon_picker.php'; ?>
     <script>var tenantSlug = '<?= $tenant['slug'] ?>';</script>
 
 
@@ -1218,74 +1225,17 @@ $pageIcon = 'school';
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="specIcon">Emoji/Ícone</label>
-                            <div style="position: relative; display: flex; gap: 8px;">
-                                <input type="text" id="specIcon" name="badge_icon" value="📘" maxlength="5" style="flex: 1;">
-                                <button type="button" id="emojiTrigger" class="btn-secondary" style="padding: 0 12px; font-size: 1.2rem;">😊</button>
+                            <label for="specIcon">Ícone da Especialidade</label>
+                            <input type="hidden" id="specIcon" name="badge_icon" value="noto:blue-book">
+                            <div class="icon-picker-trigger" onclick="IconPicker.open('specIcon', 'specIconPreview', 'specIconText')">
+                                <div class="icon-preview" id="specIconPreview">
+                                    <iconify-icon icon="noto:blue-book" style="font-size: 1.5rem;"></iconify-icon>
+                                </div>
+                                <div class="icon-info">
+                                    <span class="icon-name" id="specIconText">noto:blue-book</span>
+                                    <span class="icon-action">Clique para alterar</span>
+                                </div>
                             </div>
-                            <div id="emojiPickerContainer"></div>
-
-
-                            <script type="module">
-                                function initEmojiPicker() {
-                                    const trigger = document.getElementById('emojiTrigger');
-                                    const input = document.getElementById('specIcon');
-                                    const container = document.getElementById('emojiPickerContainer');
-                                    
-                                    if (!trigger || !input || !container || trigger.dataset.pickerInitialized) return;
-                                    
-                                    trigger.dataset.pickerInitialized = 'true';
-                                    let pickerElement = null;
-
-                                    trigger.addEventListener('click', (e) => {
-                                        e.stopPropagation();
-                                        
-                                        // Toggle: if picker exists, remove it
-                                        if (pickerElement) {
-                                            pickerElement.remove();
-                                            pickerElement = null;
-                                            return;
-                                        }
-
-                                        // Create picker
-                                        pickerElement = document.createElement('emoji-picker');
-                                        pickerElement.style.position = 'absolute';
-                                        pickerElement.style.zIndex = '1000';
-                                        pickerElement.style.right = '0';
-                                        pickerElement.style.top = '40px';
-                                        container.appendChild(pickerElement);
-
-                                        // Listen for emoji selection
-                                        pickerElement.addEventListener('emoji-click', event => {
-                                            input.value = event.detail.unicode;
-                                            pickerElement.remove();
-                                            pickerElement = null;
-                                        });
-
-                                        // Close when clicking outside
-                                        function closePicker(event) {
-                                            if (pickerElement && !pickerElement.contains(event.target) && event.target !== trigger) {
-                                                pickerElement.remove();
-                                                pickerElement = null;
-                                                document.removeEventListener('click', closePicker);
-                                            }
-                                        }
-                                        setTimeout(() => document.addEventListener('click', closePicker), 0);
-                                    });
-                                }
-
-                                // Run on HTMX load (handles both initial and swaps)
-                                if (typeof htmx !== 'undefined') {
-                                    htmx.onLoad(() => initEmojiPicker());
-                                }
-                                // Also run immediately if DOM is already loaded
-                                if (document.readyState === 'loading') {
-                                    document.addEventListener('DOMContentLoaded', initEmojiPicker);
-                                } else {
-                                    initEmojiPicker();
-                                }
-                            </script>
-                            <div class="form-hint">Digite um emoji para representar</div>
                         </div>
                     </div>
 
@@ -1441,18 +1391,29 @@ $pageIcon = 'school';
 
             // Populate modal
             const modalBadge = document.getElementById('modalBadge');
-            if (data.badge_icon && data.badge_icon.startsWith('fa-')) {
-                modalBadge.innerHTML = `<i class="${data.badge_icon}"></i>`;
+            const icon = data.badge_icon || '📘';
+            
+            if (icon.startsWith('fa-')) {
+                modalBadge.innerHTML = `<i class="${icon}"></i>`;
+            } else if (icon.includes(':')) {
+                modalBadge.innerHTML = `<iconify-icon icon="${icon}"></iconify-icon>`;
             } else {
-                modalBadge.textContent = data.badge_icon || '📘';
+                modalBadge.textContent = icon;
             }
             document.getElementById('modalTitle').textContent = data.name;
             document.getElementById('modalDescription').textContent = data.description || 'Sem descrição disponível.';
 
             // Tags
-            const categoryIconHtml = (data.category_icon && data.category_icon.startsWith('fa-')) 
-                ? `<i class="${data.category_icon}"></i>` 
-                : (data.category_icon || '📂');
+            const categoryIcon = data.category_icon || '📂';
+            let categoryIconHtml = '';
+            
+            if (categoryIcon.startsWith('fa-')) {
+                categoryIconHtml = `<i class="${categoryIcon}"></i>`;
+            } else if (categoryIcon.includes(':')) {
+                categoryIconHtml = `<iconify-icon icon="${categoryIcon}"></iconify-icon>`;
+            } else {
+                categoryIconHtml = categoryIcon;
+            }
                 
             const tagsHtml = `
                 <span class="modal-tag">${categoryIconHtml} ${data.category_name}</span>

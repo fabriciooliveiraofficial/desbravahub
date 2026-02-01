@@ -22,7 +22,15 @@
                 <?php foreach ($activities as $activity): ?>
                     <tr>
                         <td style="text-align: center;">
-                            <span style="font-size: 1.5rem;"><?= $activity['badge_icon'] ?? '📘' ?></span>
+                            <span style="font-size: 1.5rem;">
+                                <?php if (str_starts_with($activity['badge_icon'] ?? '', 'fa-')): ?>
+                                    <i class="<?= htmlspecialchars($activity['badge_icon']) ?>"></i>
+                                <?php elseif (str_contains($activity['badge_icon'] ?? '', ':')): ?>
+                                    <iconify-icon icon="<?= htmlspecialchars($activity['badge_icon']) ?>"></iconify-icon>
+                                <?php else: ?>
+                                    <?= $activity['badge_icon'] ?? '📘' ?>
+                                <?php endif; ?>
+                            </span>
                         </td>
                         <td>
                             <div style="display: flex; align-items: center; gap: 8px;">
@@ -102,15 +110,31 @@
                         $categories = \App\Services\SpecialtyService::getCategories();
                         foreach ($categories as $cat):
                             ?>
-                            <option value="<?= $cat['id'] ?>"><?= $cat['icon'] ?>     <?= htmlspecialchars($cat['name']) ?>
+                            <option value="<?= $cat['id'] ?>">
+                                <?php if (str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
+                                    <i class="<?= htmlspecialchars($cat['icon']) ?>"></i>
+                                <?php elseif (str_contains($cat['icon'] ?? '', ':')): ?>
+                                    <iconify-icon icon="<?= htmlspecialchars($cat['icon']) ?>"></iconify-icon>
+                                <?php else: ?>
+                                    <?= $cat['icon'] ?>
+                                <?php endif; ?>
+                                <?= htmlspecialchars($cat['name']) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Ícone (Emoji)</label>
-                    <input type="text" name="badge_icon" class="form-control" value="📘" maxlength="5">
+                    <label>Ícone da Especialidade</label>
+                    <input type="hidden" id="actIcon" name="badge_icon" value="noto:blue-book">
+                    <div class="icon-picker-trigger" onclick="IconPicker.open('actIcon', 'actIconPreview', 'actIconText')" style="display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer;">
+                        <div id="actIconPreview">
+                            <iconify-icon icon="noto:blue-book" style="font-size: 1.5rem;"></iconify-icon>
+                        </div>
+                        <div class="icon-info">
+                            <span id="actIconText" style="font-size: 0.9rem; color: var(--text-primary);">noto:blue-book</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -162,6 +186,8 @@
 </div>
 
 
+
+<?php require BASE_PATH . '/views/admin/partials/icon_picker.php'; ?>
 <script>
     var toast = window.toast = window.toast || new (window.ToastNotification || ToastNotification)();
 
