@@ -1080,12 +1080,12 @@ $pageIcon = 'school';
         <?php foreach ($categories as $cat): ?>
             <button class="tab-btn" data-category="<?= $cat['id'] ?>" onclick="filterByCategory('<?= $cat['id'] ?>')"
                 style="--cat-color: <?= $cat['color'] ?>;">
-                <?php if (str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
-                    <i class="<?= htmlspecialchars($cat['icon']) ?>"></i>
-                <?php elseif (str_contains($cat['icon'] ?? '', ':')): ?>
+                <?php if (str_contains($cat['icon'] ?? '', ':')): ?>
                     <iconify-icon icon="<?= htmlspecialchars($cat['icon']) ?>"></iconify-icon>
+                <?php elseif (str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
+                    <i class="<?= htmlspecialchars($cat['icon']) ?>"></i>
                 <?php else: ?>
-                    <?= $cat['icon'] ?>
+                    <?= $cat['icon'] ?: '📘' ?>
                 <?php endif; ?>
                 <?= htmlspecialchars($cat['name']) ?>
             </button>
@@ -1393,12 +1393,12 @@ $pageIcon = 'school';
             const modalBadge = document.getElementById('modalBadge');
             const icon = data.badge_icon || '📘';
             
-            if (icon.startsWith('fa-')) {
-                modalBadge.innerHTML = `<i class="${icon}"></i>`;
-            } else if (icon.includes(':')) {
+            if (icon.includes(':')) {
                 modalBadge.innerHTML = `<iconify-icon icon="${icon}"></iconify-icon>`;
+            } else if (icon.startsWith('fa-')) {
+                modalBadge.innerHTML = `<i class="${icon}"></i>`;
             } else {
-                modalBadge.textContent = icon;
+                modalBadge.textContent = icon || '📘';
             }
             document.getElementById('modalTitle').textContent = data.name;
             document.getElementById('modalDescription').textContent = data.description || 'Sem descrição disponível.';

@@ -556,6 +556,9 @@ $pageIcon = '📂';
 <header class="page-toolbar">
     <div class="page-info">
         <h2 class="header-title">📂 Categorias</h2>
+        <span style="font-size: 0.8rem; margin-left: 10px; opacity: 0.5;">
+            Script Test: <iconify-icon icon="mdi:check-decagram" style="color: #00ff88; vertical-align: middle;"></iconify-icon>
+        </span>
     </div>
     <div class="actions-group">
         <button class="btn-toolbar primary" onclick="openModal()">
@@ -579,12 +582,12 @@ $pageIcon = '📂';
             <div class="category-card" data-id="<?= $cat['id'] ?>">
                 <div class="category-header">
                     <div class="category-icon" style="background: <?= htmlspecialchars($cat['color']) ?>20;">
-                        <?php if (str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
-                            <i class="<?= htmlspecialchars($cat['icon']) ?>" style="color: <?= htmlspecialchars($cat['color']) ?>;"></i>
-                        <?php elseif (str_contains($cat['icon'] ?? '', ':')): ?>
+                        <?php if (str_contains($cat['icon'] ?? '', ':')): ?>
                             <iconify-icon icon="<?= htmlspecialchars($cat['icon']) ?>" style="color: <?= htmlspecialchars($cat['color']) ?>; font-size: 1.5rem;"></iconify-icon>
+                        <?php elseif (str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
+                            <i class="<?= htmlspecialchars($cat['icon']) ?>" style="color: <?= htmlspecialchars($cat['color']) ?>;"></i>
                         <?php else: ?>
-                            <?= $cat['icon'] ?>
+                            <span style="font-size: 1.5rem;"><?= $cat['icon'] ?: '📁' ?></span>
                         <?php endif; ?>
                     </div>
                     <div class="category-info">

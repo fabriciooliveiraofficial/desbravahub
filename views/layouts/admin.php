@@ -30,6 +30,18 @@
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
+    <style>
+        /* Helper for Iconify visibility */
+        iconify-icon {
+            display: inline-block !important;
+            width: 1em;
+            height: 1em;
+            min-width: 1em;
+            min-height: 1em;
+            vertical-align: middle;
+        }
+    </style>
+
     <script>
         // Global Autocomplete Setup
         window.setupAutocomplete = function(inputId, dropdownId, warningId, searchUrl) {
@@ -115,7 +127,18 @@
     </script>
     <script src="<?= asset_url('js/toast.js') ?>"></script>
     <script src="<?= asset_url('js/uas.js') ?>"></script>
-    <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+
+    <style>
+        /* Helper for Iconify visibility */
+        iconify-icon {
+            display: inline-block !important;
+            width: 1em;
+            height: 1em;
+            min-width: 1em;
+            min-height: 1em;
+            vertical-align: middle;
+        }
+    </style>
 
 
     <style>
@@ -226,5 +249,13 @@
     .toast-error { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
     .toast-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
     </style>
+    <!-- Iconify Script at the end of body -->
+    <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+    <script>
+        // Diagnostic for Iconify
+        window.addEventListener('load', () => {
+            console.log('Iconify check:', typeof IconifyIcon !== 'undefined' ? 'READY' : 'FAILED');
+        });
+    </script>
 </body>
 </html>
