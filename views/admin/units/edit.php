@@ -872,6 +872,20 @@ $title = $isEdit ? 'Editar Unidade' : 'Nova Unidade';
 
     // ============ Modern Icon Picker Logic (Iconify) ============
     var iconCategories = {
+        'Aventura & Insígnias (Game Icons)': [
+            'game-icons:shield', 'game-icons:trophy', 'game-icons:swords', 'game-icons:crossed-swords',
+            'game-icons:flame', 'game-icons:mountain-cave', 'game-icons:compass', 'game-icons:forest-camp',
+            'game-icons:lion', 'game-icons:wolf-head', 'game-icons:eagle-emblem', 'game-icons:snake',
+            'game-icons:gorilla', 'game-icons:bear-head', 'game-icons:shark-jaws', 'game-icons:dragon-head',
+            'game-icons:fleur-de-lys', 'game-icons:rank-3', 'game-icons:walking-boot', 'game-icons:tent'
+        ],
+        'Animais & Objetos (HD Emojis)': [
+            'noto:lion', 'noto:tiger', 'noto:eagle', 'noto:wolf',
+            'noto:bear', 'noto:elephant', 'noto:fox', 'noto:panda',
+            'noto:fire', 'noto:evergreen-tree', 'noto:mountain', 'noto:wrapped-gift',
+            'noto:trophy', 'noto:sports-medal', 'noto:check-mark-button', 'noto:flag-for-brazil',
+            'noto:automobile', 'noto:camping', 'noto:tent', 'noto:compass'
+        ],
         'Lucide (Premium)': [
             'lucide:tent', 'lucide:mountain', 'lucide:compass', 'lucide:map',
             'lucide:flame', 'lucide:leaf', 'lucide:tree-pine', 'lucide:waves',
@@ -885,20 +899,6 @@ $title = $isEdit ? 'Editar Unidade' : 'Nova Unidade';
             'ph:cloud-sun-thin', 'ph:sun-thin', 'ph:moon-thin', 'ph:star-thin',
             'ph:heart-thin', 'ph:shield-thin', 'ph:award-thin', 'ph:medal-thin',
             'ph:student-thin', 'ph:book-thin', 'ph:pencil-circle-thin', 'ph:paint-brush-thin'
-        ],
-        'Solar (Linear)': [
-            'solar:tent-linear', 'solar:mountains-linear', 'solar:compass-linear', 'solar:map-linear',
-            'solar:fire-linear', 'solar:leaf-linear', 'solar:tree-linear', 'solar:water-linear',
-            'solar:cloud-sun-linear', 'solar:sun-linear', 'solar:moon-linear', 'solar:star-linear',
-            'solar:heart-linear', 'solar:shield-linear', 'solar:cup-linear', 'solar:medal-ribbons-star-linear',
-            'solar:diploma-linear', 'solar:book-linear', 'solar:pen-linear', 'solar:paint-roller-linear'
-        ],
-        'Tabler (Outline)': [
-            'tabler:tent', 'tabler:mountain', 'tabler:compass', 'tabler:map-2',
-            'tabler:flame', 'tabler:leaf', 'tabler:tree', 'tabler:waves-rect',
-            'tabler:cloud-sun', 'tabler:sun', 'tabler:moon', 'tabler:star',
-            'tabler:heart', 'tabler:shield', 'tabler:award', 'tabler:medal-2',
-            'tabler:school', 'tabler:book-2', 'tabler:pencil', 'tabler:brush'
         ]
     };
 
@@ -919,19 +919,20 @@ $title = $isEdit ? 'Editar Unidade' : 'Nova Unidade';
         const filterLower = filter.toLowerCase();
         
         if (filter.length > 2) {
-            container.innerHTML = '<div style="text-align:center;padding:20px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Buscando na nuvem...</div>';
+            container.innerHTML = '<div style="text-align:center;padding:20px;color:#fff;"><i class="fa-solid fa-circle-notch fa-spin"></i> Vasculhando 150.000 ícones...</div>';
             try {
-                // Search across multiple modern libraries via Iconify API
-                const libraries = ['lucide', 'ph', 'tabler', 'solar', 'carbon'];
-                const response = await fetch(`https://api.iconify.design/search?query=${filterLower}&limit=64&prefixes=${libraries.join(',')}`);
+                // Search across ALL libraries (removed prefixes restriction)
+                // Limit increased to 150 for better variety
+                const response = await fetch(`https://api.iconify.design/search?query=${filterLower}&limit=150`);
                 const data = await response.json();
                 
                 if (data.icons && data.icons.length > 0) {
-                    let html = '<div class="icon-category-title">Resultados da Busca</div><div class="icon-grid">';
+                    let html = '<div class="icon-category-title">Resultados (Múltiplas Bibliotecas)</div><div class="icon-grid">';
                     data.icons.forEach(icon => {
                         const isSelected = icon === selectedIcon ? 'selected' : '';
                         html += `<div class="icon-item ${isSelected}" onclick="selectIcon('${icon}')" title="${icon}">
                             <iconify-icon icon="${icon}"></iconify-icon>
+                            <span style="font-size: 6px; position: absolute; bottom: 2px; opacity: 0.5;">${icon.split(':')[0]}</span>
                         </div>`;
                     });
                     html += '</div>';
