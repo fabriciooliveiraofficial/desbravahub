@@ -365,8 +365,6 @@ $pageIcon = 'add_circle';
             toast.className = 'toast ' + type + ' show';
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
 
         function openProgramIconPicker() {
             IconPicker.open(document.getElementById('program-icon').value, (icon) => {

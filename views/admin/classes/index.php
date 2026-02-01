@@ -641,9 +641,7 @@ $pageIcon = 'school';
         if (confirmCallback) { confirmCallback(result); confirmCallback = null; }
     }
 </script>
-        if (confirmCallback) { confirmCallback(result); confirmCallback = null; }
-    }
-
+<script>
     function openClassIconPicker() {
         const currentIcon = document.getElementById('classIcon').value;
         IconPicker.open(currentIcon, (selectedIcon) => {

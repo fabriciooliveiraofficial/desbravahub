@@ -344,9 +344,46 @@
         },
         searchTimeout: null,
 
-        open: function(initialIcon, onSelectCallback) {
-            this.callback = onSelectCallback;
-            this.selectedIcon = initialIcon || 'lucide:star';
+        open: function(initialIcon, onSelectCallback, textIdOrPreviewId = null) {
+            // Handle legacy ID-based call: IconPicker.open(inputId, previewId, [textId])
+            // OR IconPicker.open(initialIcon, previewId, [textId]) where initialIcon is the icon string
+            if (typeof onSelectCallback === 'string') {
+                const inputId = initialIcon; 
+                const previewId = onSelectCallback;
+                const textId = textIdOrPreviewId;
+
+                const inputEl = document.getElementById(inputId);
+                const initialIconVal = inputEl ? inputEl.value : (this.selectedIcon || 'lucide:star');
+
+                this.callback = (selectedIcon) => {
+                    if (inputEl) {
+                        inputEl.value = selectedIcon;
+                        // Fire change event for reactive systems
+                        inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    
+                    const previewEl = document.getElementById(previewId);
+                    if (previewEl) {
+                        if (selectedIcon.includes(':')) {
+                            previewEl.innerHTML = `<iconify-icon icon="${selectedIcon}" style="font-size:1.5rem"></iconify-icon>`;
+                        } else if (selectedIcon.startsWith('fa-')) {
+                            previewEl.innerHTML = `<i class="${selectedIcon}"></i>`;
+                        } else {
+                            previewEl.textContent = selectedIcon;
+                        }
+                    }
+
+                    const textEl = document.getElementById(textId);
+                    if (textEl) textEl.textContent = selectedIcon;
+                };
+                
+                this.selectedIcon = initialIconVal;
+            } else {
+                // New callback-based API
+                this.callback = onSelectCallback;
+                this.selectedIcon = initialIcon || 'lucide:star';
+            }
+            
             this.renderGrid();
             
             // Update preview in footer
