@@ -556,9 +556,6 @@ $pageIcon = '📂';
 <header class="page-toolbar">
     <div class="page-info">
         <h2 class="header-title">📂 Categorias</h2>
-        <span style="font-size: 0.8rem; margin-left: 10px; opacity: 0.5;">
-            Script Test: <iconify-icon icon="mdi:check-decagram" style="color: #00ff88; vertical-align: middle;"></iconify-icon>
-        </span>
     </div>
     <div class="actions-group">
         <button class="btn-toolbar primary" onclick="openModal()">
