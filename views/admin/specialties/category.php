@@ -459,11 +459,28 @@ $pageTitle = $category['name'] . ' - Especialidades';
     <nav class="breadcrumb">
         <a href="<?= base_url($tenant['slug'] . '/admin/especialidades') ?>">📚 Catálogo</a>
         <span class="breadcrumb-separator">›</span>
-        <span class="breadcrumb-current"><?= $category['icon'] ?> <?= htmlspecialchars($category['name']) ?></span>
+        <span class="breadcrumb-current">
+            <?php if (str_starts_with($category['icon'] ?? '', 'fa-')): ?>
+                <i class="<?= htmlspecialchars($category['icon']) ?>"></i>
+            <?php elseif (str_contains($category['icon'] ?? '', ':')): ?>
+                <iconify-icon icon="<?= htmlspecialchars($category['icon']) ?>"></iconify-icon>
+            <?php else: ?>
+                <?= $category['icon'] ?>
+            <?php endif; ?>
+            <?= htmlspecialchars($category['name']) ?>
+        </span>
     </nav>
 
     <div class="category-header" style="background: <?= htmlspecialchars($category['color']) ?>;">
-        <span class="category-icon"><?= $category['icon'] ?></span>
+        <span class="category-icon">
+            <?php if (str_starts_with($category['icon'] ?? '', 'fa-')): ?>
+                <i class="<?= htmlspecialchars($category['icon']) ?>"></i>
+            <?php elseif (str_contains($category['icon'] ?? '', ':')): ?>
+                <iconify-icon icon="<?= htmlspecialchars($category['icon']) ?>"></iconify-icon>
+            <?php else: ?>
+                <?= $category['icon'] ?>
+            <?php endif; ?>
+        </span>
         <div class="category-info">
             <h1><?= htmlspecialchars($category['name']) ?></h1>
             <p><?= htmlspecialchars($category['description'] ?? '') ?></p>
@@ -553,7 +570,17 @@ $pageTitle = $category['name'] . ' - Especialidades';
                     data-spec='<?= htmlspecialchars(json_encode($spec, JSON_UNESCAPED_UNICODE), ENT_QUOTES, "UTF-8") ?>'
                     onclick="openSpecialtyModal(this)">
                     <div class="specialty-header">
-                        <span class="specialty-badge"><?= $spec['badge_icon'] ?? '📚' ?></span>
+                        <span class="specialty-badge">
+                            <?php 
+                                $icon = $spec['badge_icon'] ?? '📚';
+                                if (str_starts_with($icon, 'fa-')): ?>
+                                <i class="<?= htmlspecialchars($icon) ?>"></i>
+                            <?php elseif (str_contains($icon, ':')): ?>
+                                <iconify-icon icon="<?= htmlspecialchars($icon) ?>"></iconify-icon>
+                            <?php else: ?>
+                                <?= $icon ?>
+                            <?php endif; ?>
+                        </span>
                         <div class="specialty-title">
                             <h3><?= htmlspecialchars($spec['name']) ?></h3>
                             <div class="specialty-meta">
@@ -644,7 +671,16 @@ $pageTitle = $category['name'] . ' - Especialidades';
                 currentSpecId = specData.id;
 
                 // Populate modal
-                document.getElementById('modalBadge').textContent = specData.badge_icon || '📚';
+                const icon = specData.badge_icon || '📚';
+                const badgeEl = document.getElementById('modalBadge');
+                if (icon.startsWith('fa-')) {
+                    badgeEl.innerHTML = `<i class="${icon}"></i>`;
+                } else if (icon.includes(':')) {
+                    badgeEl.innerHTML = `<iconify-icon icon="${icon}"></iconify-icon>`;
+                } else {
+                    badgeEl.textContent = icon;
+                }
+                
                 document.getElementById('modalName').textContent = specData.name;
                 document.getElementById('modalLevel').textContent = specData.level || 'basic';
                 document.getElementById('modalDesc').textContent = specData.description || 'Sem descrição';

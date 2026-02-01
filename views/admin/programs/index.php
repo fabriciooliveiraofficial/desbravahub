@@ -697,7 +697,13 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
                     <option value="">Todas as Categorias</option>
                     <?php foreach ($categories as $cat): ?>
                         <option value="<?= $cat['id'] ?>" <?= ($categoryId ?? '') == $cat['id'] ? 'selected' : '' ?>>
-                            <?= $cat['icon'] ?>     <?= htmlspecialchars($cat['name']) ?>
+                             <?php
+                                $icon = $cat['icon'] ?? '📚';
+                                if(str_starts_with($icon, 'fa-')) echo '📂'; 
+                                else if(str_contains($icon, ':')) echo '📂';
+                                else echo $icon;
+                            ?> 
+                            <?= htmlspecialchars($cat['name']) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -733,7 +739,15 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
                 <?php foreach ($programs as $program): ?>
                     <div class="specialty-card">
                         <div class="specialty-header">
-                            <div class="specialty-badge"><?= $program['icon'] ?></div>
+                            <div class="specialty-badge">
+                                <?php if (str_starts_with($program['icon'] ?? '', 'fa-')): ?>
+                                    <i class="<?= htmlspecialchars($program['icon']) ?>"></i>
+                                <?php elseif (str_contains($program['icon'] ?? '', ':')): ?>
+                                    <iconify-icon icon="<?= htmlspecialchars($program['icon']) ?>"></iconify-icon>
+                                <?php else: ?>
+                                    <?= $program['icon'] ?>
+                                <?php endif; ?>
+                            </div>
                             <div class="specialty-title">
                                 <h3><?= htmlspecialchars($program['name']) ?></h3>
                                 <div class="specialty-meta">
