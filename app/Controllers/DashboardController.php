@@ -37,7 +37,25 @@ class DashboardController
         $tenant = App::tenant();
 
         // Dados do progresso
-        $progress = $this->progressionService->getUserProgress($user['id']);
+        $progressData = $this->progressionService->getUserProgress($user['id']);
+        
+        // Update and get streak
+        $streak = $this->progressionService->updateStreak($user['id']);
+        $progressData['streak'] = $streak;
+
+        // Count Insignias (Achievements)
+        $insigniaCount = (int) db_fetch_column(
+            "SELECT COUNT(*) FROM user_achievements WHERE user_id = ? AND tenant_id = ?",
+            [$user['id'], $tenant['id']]
+        );
+
+        // Get Next Event
+        $nextEvent = db_fetch_one(
+            "SELECT * FROM events 
+             WHERE tenant_id = ? AND status = 'upcoming' AND start_datetime > NOW()
+             ORDER BY start_datetime ASC LIMIT 1",
+            [$tenant['id']]
+        );
 
         // Atividades disponíveis
         $activities = $this->activityService->getAvailableForUser($user['id']);
@@ -115,13 +133,15 @@ class DashboardController
         View::render('dashboard/index', [
             'user' => $user,
             'tenant' => $tenant,
-            'progress' => $progress,
+            'progress' => $progressData,
             'inProgress' => $inProgress,
             'available' => $available,
             'recentAchievements' => $recentAchievements,
             'leaderboard' => $leaderboard,
             'unreadCount' => $unreadCount,
-            'newAchievements' => $newAchievements
+            'newAchievements' => $newAchievements,
+            'insigniaCount' => $insigniaCount,
+            'nextEvent' => $nextEvent
         ], 'member');
     }
 

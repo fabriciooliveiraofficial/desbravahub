@@ -462,7 +462,7 @@ class InvitationController
         }
 
         $role = $user['role_name'] ?? '';
-        if (!in_array($role, ['admin', 'director', 'associate_director', 'counselor'])) {
+        if (!in_array($role, ['admin', 'director', 'associate_director', 'counselor', 'instructor'])) {
             http_response_code(403);
             echo "Acesso negado.";
             exit;

@@ -265,4 +265,58 @@ class ProgressionService
 
         return $achievements;
     }
+
+    /**
+     * Update user's daily login streak
+     */
+    public function updateStreak(int $userId): int
+    {
+        $tenantId = App::tenantId();
+
+        try {
+            $user = db_fetch_one(
+                "SELECT current_streak, last_streak_date FROM users WHERE id = ? AND tenant_id = ?",
+                [$userId, $tenantId]
+            );
+        } catch (\Exception $e) {
+            // Check if columns exist, if not, create them (Auto-migration)
+            if (strpos($e->getMessage(), 'Unknown column') !== false) {
+                db_query("ALTER TABLE users ADD COLUMN current_streak INT UNSIGNED NOT NULL DEFAULT 0 AFTER level_id");
+                db_query("ALTER TABLE users ADD COLUMN last_streak_date DATE NULL AFTER current_streak");
+                
+                $user = db_fetch_one(
+                    "SELECT current_streak, last_streak_date FROM users WHERE id = ? AND tenant_id = ?",
+                    [$userId, $tenantId]
+                );
+            } else {
+                throw $e;
+            }
+        }
+
+        if (!$user) {
+            return 0;
+        }
+
+        $today = date('Y-m-d');
+        $yesterday = date('Y-m-d', strtotime('-1 day'));
+        $lastDate = $user['last_streak_date'];
+        $streak = (int)$user['current_streak'];
+
+        if ($lastDate === $today) {
+            return $streak; // Already updated today
+        }
+
+        if ($lastDate === $yesterday) {
+            $streak++; // Continued streak
+        } else {
+            $streak = 1; // Streak broken or new
+        }
+
+        db_update('users', [
+            'current_streak' => $streak,
+            'last_streak_date' => $today
+        ], 'id = ?', [$userId]);
+
+        return $streak;
+    }
 }

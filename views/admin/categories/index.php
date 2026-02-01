@@ -550,18 +550,9 @@ $pageIcon = '📂';
         }
     }
     /* ============ Icon Picker ============ */
-    .icon-picker-trigger {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 16px;
-        background: var(--bg-dark);
-        border: 2px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        cursor: pointer;
-        transition: var(--transition-bounce);
-        width: 100%;
-    }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 
     .icon-picker-trigger:hover {
         border-color: rgba(6, 182, 212, 0.3);
@@ -803,6 +794,8 @@ $pageIcon = '📂';
                     <div class="category-icon" style="background: <?= htmlspecialchars($cat['color']) ?>20;">
                         <?php if (str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
                             <i class="<?= htmlspecialchars($cat['icon']) ?>" style="color: <?= htmlspecialchars($cat['color']) ?>;"></i>
+                        <?php elseif (str_contains($cat['icon'] ?? '', ':')): ?>
+                            <iconify-icon icon="<?= htmlspecialchars($cat['icon']) ?>" style="color: <?= htmlspecialchars($cat['color']) ?>; font-size: 1.5rem;"></iconify-icon>
                         <?php else: ?>
                             <?= $cat['icon'] ?>
                         <?php endif; ?>
@@ -866,7 +859,7 @@ $pageIcon = '📂';
                         <div class="form-group">
                             <label>Ícone</label>
                             <input type="hidden" id="catIcon" name="icon" value="fa-solid fa-folder">
-                            <button type="button" class="icon-picker-trigger" onclick="openIconPicker()">
+                            <button type="button" class="icon-picker-trigger" onclick="openCategoryIconPicker()">
                                 <div class="icon-picker-preview" id="iconPreview">
                                     <i class="fa-solid fa-folder"></i>
                                 </div>
@@ -1039,9 +1032,36 @@ $pageIcon = '📂';
             }
         }
 
-        // ============ Font Awesome Icon Picker ============
-        const iconCategories = {
-            'Geral': [
+        function openCategoryIconPicker() {
+            const currentIcon = document.getElementById('catIcon').value;
+            IconPicker.open(currentIcon, (selectedIcon) => {
+                document.getElementById('catIcon').value = selectedIcon;
+                
+                // Handle preview based on icon type
+                const previewEl = document.getElementById('iconPreview');
+                const textEl = document.getElementById('iconText');
+                
+                if(selectedIcon.startsWith('fa-')) {
+                   previewEl.innerHTML = `<i class="${selectedIcon}"></i>`;
+                } else if(selectedIcon.includes(':')) {
+                   previewEl.innerHTML = `<iconify-icon icon="${selectedIcon}" style="font-size:1.5rem"></iconify-icon>`;
+                } else {
+                   previewEl.textContent = selectedIcon;
+                }
+                textEl.textContent = selectedIcon;
+            });
+        }
+        
+        // Overwrite editCategory to handle preview
+        const originalEditCategory = editCategory;
+        editCategory = function(cat) {
+            originalEditCategory(cat);
+            if(cat.icon && cat.icon.includes(':') && !cat.icon.startsWith('fa-')) {
+                 document.getElementById('iconPreview').innerHTML = `<iconify-icon icon="${cat.icon}" style="font-size:1.5rem"></iconify-icon>`;
+            }
+        };
+    </script>
+    <?php require_once BASE_PATH . '/views/admin/partials/icon_picker.php'; ?>
                 'fa-solid fa-folder', 'fa-solid fa-star', 'fa-solid fa-heart', 'fa-solid fa-bookmark',
                 'fa-solid fa-flag', 'fa-solid fa-circle', 'fa-solid fa-square', 'fa-solid fa-check',
                 'fa-solid fa-xmark', 'fa-solid fa-plus', 'fa-solid fa-minus', 'fa-solid fa-bolt'

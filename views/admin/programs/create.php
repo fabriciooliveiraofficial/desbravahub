@@ -267,8 +267,14 @@ $pageIcon = 'add_circle';
                         </div>
 
                         <div class="form-group">
-                            <label>Ícone (emoji)</label>
-                            <input type="text" name="icon" class="form-control" value="📘" maxlength="4">
+                            <label>Ícone</label>
+                            <div class="input-wrapper" style="display:flex; gap:8px;">
+                                <input type="hidden" name="icon" id="program-icon" value="noto:blue-book">
+                                <button type="button" class="form-control" onclick="openProgramIconPicker()" style="flex:1; display:flex; align-items:center; gap:10px; cursor:pointer;">
+                                    <iconify-icon id="program-icon-preview" icon="noto:blue-book" style="font-size:1.5rem;"></iconify-icon>
+                                    <span id="program-icon-text">noto:blue-book</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -355,7 +361,18 @@ $pageIcon = 'add_circle';
             toast.className = 'toast ' + type + ' show';
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function openProgramIconPicker() {
+            IconPicker.open(document.getElementById('program-icon').value, (icon) => {
+                document.getElementById('program-icon').value = icon;
+                document.getElementById('program-icon-preview').setAttribute('icon', icon);
+                document.getElementById('program-icon-text').textContent = icon;
+            });
+        }
     </script>
+    <?php require_once BASE_PATH . '/views/admin/partials/icon_picker.php'; ?>
 </body>
 
 </html>

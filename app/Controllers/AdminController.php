@@ -395,7 +395,7 @@ class AdminController
         $user = App::user();
         $roleName = $user['role_name'] ?? '';
 
-        if (!in_array($roleName, ['admin', 'director', 'associate_director'])) {
+        if (!in_array($roleName, ['admin', 'director', 'associate_director', 'counselor', 'instructor'])) {
             http_response_code(403);
             echo "Acesso negado";
             exit;
@@ -418,9 +418,9 @@ class AdminController
             return;
         }
 
-        // Also check counselor for some basic admin access
-        if ($roleName === 'counselor') {
-            return; // Counselors can access admin pages
+        // Also check counselor and instructor for some basic admin access
+        if (in_array($roleName, ['counselor', 'instructor'])) {
+            return; // Leadership can access admin pages
         }
 
         if (!can($permission)) {

@@ -6,7 +6,7 @@ $pageTitle = 'Catálogo de Classes';
 $pageIcon = 'school';
 ?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+
 <style>
     /* ============ Mirror Styles from Specialty Repository ============ */
     @media (max-width: 768px) {
@@ -281,6 +281,8 @@ $pageIcon = 'school';
         <button class="tab-btn" data-category="<?= $cat['id'] ?>" onclick="filterByCategory('<?= $cat['id'] ?>')" style="--cat-color: <?= $cat['color'] ?>;">
             <?php if (str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
                 <i class="<?= htmlspecialchars($cat['icon']) ?>"></i>
+            <?php elseif (str_contains($cat['icon'] ?? '', ':')): ?>
+                <iconify-icon icon="<?= htmlspecialchars($cat['icon']) ?>"></iconify-icon>
             <?php else: ?>
                 <?= $cat['icon'] ?>
             <?php endif; ?>
@@ -295,6 +297,8 @@ $pageIcon = 'school';
             <span class="category-icon">
                 <?php if (str_starts_with($data['category']['icon'] ?? '', 'fa-')): ?>
                     <i class="<?= htmlspecialchars($data['category']['icon']) ?>" style="color: <?= htmlspecialchars($data['category']['color']) ?>;"></i>
+                <?php elseif (str_contains($data['category']['icon'] ?? '', ':')): ?>
+                    <iconify-icon icon="<?= htmlspecialchars($data['category']['icon']) ?>" style="color: <?= htmlspecialchars($data['category']['color']) ?>;"></iconify-icon>
                 <?php else: ?>
                     <?= $data['category']['icon'] ?>
                 <?php endif; ?>
@@ -322,6 +326,8 @@ $pageIcon = 'school';
                         <div class="class-badge">
                             <?php if (str_starts_with($spec['badge_icon'] ?? '', 'fa-')): ?>
                                 <i class="<?= htmlspecialchars($spec['badge_icon']) ?>"></i>
+                            <?php elseif (str_contains($spec['badge_icon'] ?? '', ':')): ?>
+                                <iconify-icon icon="<?= htmlspecialchars($spec['badge_icon']) ?>"></iconify-icon>
                             <?php else: ?>
                                 <?= $spec['badge_icon'] ?>
                             <?php endif; ?>
@@ -390,19 +396,29 @@ $pageIcon = 'school';
                             <option value="">Selecione...</option>
                             <?php foreach ($categories as $cat): ?>
                                 <option value="<?= $cat['id'] ?>">
-                                    <?= str_starts_with($cat['icon'] ?? '', 'fa-') ? '📂' : ($cat['icon'] ?? '📂') ?> 
+                                    <?php
+                                        $icon = $cat['icon'] ?? '📂';
+                                        if(str_starts_with($icon, 'fa-')) echo '📂'; // Fallback for select option text
+                                        else if(str_contains($icon, ':')) echo '📂';
+                                        else echo $icon;
+                                    ?> 
                                     <?= htmlspecialchars($cat['name']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="classIcon" style="display:block; margin-bottom:8px; font-weight:600;">Ícone (Emoji)</label>
-                        <div style="position: relative; display: flex; gap: 8px;">
-                            <input type="text" id="classIcon" name="icon" value="📘" maxlength="5" style="flex: 1; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:var(--text-main);">
-                            <button type="button" id="emojiTrigger" class="btn-toolbar" style="padding: 0 12px; font-size: 1.2rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px;">😊</button>
+                        <label for="classIcon" style="display:block; margin-bottom:8px; font-weight:600;">Ícone</label>
+                        <div class="input-wrapper">
+                            <input type="hidden" id="classIcon" name="icon" value="noto:blue-book">
+                            <button type="button" class="icon-picker-trigger" onclick="openClassIconPicker()">
+                                <div class="icon-picker-preview" id="classIconPreview">
+                                    <iconify-icon icon="noto:blue-book" style="font-size: 1.5rem;"></iconify-icon>
+                                </div>
+                                <span class="icon-picker-text" id="classIconText">noto:blue-book</span>
+                                <i class="fa-solid fa-chevron-down icon-picker-arrow"></i>
+                            </button>
                         </div>
-                        <div id="emojiPickerContainer"></div>
                     </div>
                 </div>
 
@@ -471,55 +487,7 @@ $pageIcon = 'school';
     </div>
 </div>
 
-<script type="module">
-    function initEmojiPicker() {
-        const trigger = document.getElementById('emojiTrigger');
-        const input = document.getElementById('classIcon');
-        const container = document.getElementById('emojiPickerContainer');
-        
-        if (!trigger || !input || !container || trigger.dataset.pickerInitialized) return;
-        
-        trigger.dataset.pickerInitialized = 'true';
-        let pickerElement = null;
 
-        trigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (pickerElement) {
-                pickerElement.remove();
-                pickerElement = null;
-                return;
-            }
-
-            pickerElement = document.createElement('emoji-picker');
-            pickerElement.style.position = 'absolute';
-            pickerElement.style.zIndex = '1000';
-            pickerElement.style.right = '0';
-            pickerElement.style.top = '40px';
-            container.appendChild(pickerElement);
-
-            pickerElement.addEventListener('emoji-click', event => {
-                input.value = event.detail.unicode;
-                pickerElement.remove();
-                pickerElement = null;
-            });
-
-            function closePicker(event) {
-                if (pickerElement && !pickerElement.contains(event.target) && event.target !== trigger) {
-                    pickerElement.remove();
-                    pickerElement = null;
-                    document.removeEventListener('click', closePicker);
-                }
-            }
-            setTimeout(() => document.addEventListener('click', closePicker), 0);
-        });
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initEmojiPicker);
-    } else {
-        initEmojiPicker();
-    }
-</script>
 
 <script>
     var tenantSlug = '<?= $tenant['slug'] ?>';
@@ -673,4 +641,17 @@ $pageIcon = 'school';
         if (confirmCallback) { confirmCallback(result); confirmCallback = null; }
     }
 </script>
-```
+        if (confirmCallback) { confirmCallback(result); confirmCallback = null; }
+    }
+
+    function openClassIconPicker() {
+        const currentIcon = document.getElementById('classIcon').value;
+        IconPicker.open(currentIcon, (selectedIcon) => {
+            document.getElementById('classIcon').value = selectedIcon;
+            document.getElementById('classIconPreview').innerHTML = `<iconify-icon icon="${selectedIcon}" style="font-size: 1.5rem;"></iconify-icon>`;
+            document.getElementById('classIconText').textContent = selectedIcon;
+        });
+    }
+</script>
+
+<?php require_once BASE_PATH . '/views/admin/partials/icon_picker.php'; ?>

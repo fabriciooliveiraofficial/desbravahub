@@ -104,7 +104,13 @@ $specialtyCategories = SpecialtyService::getCategories();
                         
                         <div class="form-group">
                             <label>Ícone/Badge</label>
-                            <input type="text" name="badge_icon" id="spec-icon" value="🏅" class="god-input" style="font-size: 1.5rem; text-align: center;">
+                            <div class="input-wrapper" style="display:flex; gap:8px;">
+                                <input type="hidden" name="badge_icon" id="spec-icon" value="game-icons:rank-3">
+                                <button type="button" class="god-input" onclick="openSpecIconPicker()" style="flex:1; display:flex; align-items:center; gap:10px; cursor:pointer;">
+                                    <iconify-icon id="spec-icon-preview" icon="game-icons:rank-3" style="font-size:1.5rem;"></iconify-icon>
+                                    <span id="spec-icon-text">game-icons:rank-3</span>
+                                </button>
+                            </div>
                         </div>
                         
                         <div class="form-group full-width">
@@ -232,7 +238,13 @@ $specialtyCategories = SpecialtyService::getCategories();
                     
                     <div class="form-group">
                         <label>Ícone</label>
-                        <input type="text" name="icon" id="class-icon" value="🌱" class="god-input" style="font-size: 1.5rem; text-align: center;">
+                        <div class="input-wrapper" style="display:flex; gap:8px;">
+                            <input type="hidden" name="icon" id="god-class-icon" value="noto:seedling">
+                            <button type="button" class="god-input" onclick="openGodClassIconPicker()" style="flex:1; display:flex; align-items:center; gap:10px; cursor:pointer;">
+                                <iconify-icon id="god-class-icon-preview" icon="noto:seedling" style="font-size:1.5rem;"></iconify-icon>
+                                <span id="god-class-icon-text">noto:seedling</span>
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -908,12 +920,30 @@ $specialtyCategories = SpecialtyService::getCategories();
     gap: 10px;
 }
 
-.review-requirement .req-type {
-    padding: 4px 8px;
-    background: rgba(14, 165, 233, 0.1);
     color: var(--god-blue);
     border-radius: 4px;
     font-size: 0.75rem;
     font-weight: 600;
 }
 </style>
+
+
+<?php require_once BASE_PATH . '/views/admin/partials/icon_picker.php'; ?>
+
+<script>
+function openSpecIconPicker() {
+    IconPicker.open(document.getElementById('spec-icon').value, (icon) => {
+        document.getElementById('spec-icon').value = icon;
+        document.getElementById('spec-icon-preview').setAttribute('icon', icon);
+        document.getElementById('spec-icon-text').textContent = icon;
+    });
+}
+
+function openGodClassIconPicker() {
+    IconPicker.open(document.getElementById('god-class-icon').value, (icon) => {
+        document.getElementById('god-class-icon').value = icon;
+        document.getElementById('god-class-icon-preview').setAttribute('icon', icon);
+        document.getElementById('god-class-icon-text').textContent = icon;
+    });
+}
+</script>

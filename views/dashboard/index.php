@@ -48,14 +48,16 @@
         <!-- Streak Card -->
         <div class="hud-stat-card">
             <div>
-                <div class="hud-stat-value" style="color: var(--accent-warning)">7</div>
+                <div class="hud-stat-value" style="color: var(--accent-warning)"><?= $progress['streak'] ?? 0 ?></div>
                 <div class="hud-stat-label">DIAS DE STREAK</div>
             </div>
             <i class="material-icons-round hud-stat-icon" style="color: var(--accent-warning)">local_fire_department</i>
             <div class="plate-data" style="border:0; padding:0; margin-top:8px">
                     <div class="data-point">
                     <span class="data-label">Status</span>
-                    <span class="hud-badge" style="color: var(--accent-warning); width: fit-content">ON FIRE</span>
+                    <span class="hud-badge" style="color: <?= ($progress['streak'] ?? 0) > 0 ? 'var(--accent-warning)' : 'var(--text-muted)' ?>; width: fit-content">
+                        <?= ($progress['streak'] ?? 0) > 0 ? 'ON FIRE' : 'REATIVAR' ?>
+                    </span>
                 </div>
             </div>
         </div>
@@ -63,7 +65,7 @@
         <!-- Achievements -->
         <div class="hud-stat-card">
             <div>
-                <div class="hud-stat-value" style="color: var(--accent-green)">12</div>
+                <div class="hud-stat-value" style="color: var(--accent-green)"><?= $insigniaCount ?></div>
                 <div class="hud-stat-label">INSÍGNIAS</div>
             </div>
             <i class="material-icons-round hud-stat-icon" style="color: var(--accent-green)">military_tech</i>
@@ -143,26 +145,35 @@
         </div>
         
         <div class="hud-grid">
-                <!-- Placeholder for events -->
-            <div class="tech-plate type-pending">
-                <div class="status-line" style="background: #f472b6;"></div>
-                <div class="plate-header">
-                    <div class="plate-content">
-                        <div class="plate-category">Reunião Regular</div>
-                        <h3 class="plate-title">Treinamento de Campo</h3>
+            <?php if ($nextEvent): ?>
+                <div class="tech-plate type-pending">
+                    <div class="status-line" style="background: #f472b6;"></div>
+                    <div class="plate-header">
+                        <div class="plate-content">
+                            <div class="plate-category"><?= htmlspecialchars($nextEvent['type'] ?? 'Evento') ?></div>
+                            <h3 class="plate-title"><?= htmlspecialchars($nextEvent['title']) ?></h3>
+                        </div>
+                        <i class="material-icons-round plate-icon">event</i>
                     </div>
-                    <i class="material-icons-round plate-icon">event</i>
+                    <div class="plate-data">
+                        <div class="data-point">
+                            <span class="data-label">Data</span>
+                            <span class="data-value"><?= date('d/m, H:i', strtotime($nextEvent['start_datetime'])) ?></span>
+                        </div>
+                        <div class="data-point" style="align-items: flex-end;">
+                            <span class="data-value"><?= htmlspecialchars($nextEvent['location'] ?? 'Sede Local') ?></span>
+                        </div>
+                    </div>
                 </div>
-                <div class="plate-data">
-                    <div class="data-point">
-                        <span class="data-label">Data</span>
-                        <span class="data-value">Domingo, 09:00</span>
-                    </div>
-                    <div class="data-point" style="align-items: flex-end;">
-                            <span class="data-value">Sede Local</span>
+            <?php else: ?>
+                <div class="tech-plate" style="border-color: rgba(244, 114, 182, 0.2); background: rgba(244, 114, 182, 0.05);">
+                    <div class="plate-header" style="justify-content: center; padding: 20px;">
+                        <div class="plate-content" style="text-align: center;">
+                            <div class="hud-subtitle">Nenhum evento agendado</div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            <?php endif; ?>
         </div>
     </section>
 </div>

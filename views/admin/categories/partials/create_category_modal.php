@@ -39,9 +39,17 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Ícone (emoji)</label>
-                    <input type="text" id="catIcon" name="icon" class="form-control" value="📚" maxlength="4"
-                        style="width: 100%; padding: 10px 14px; background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); font-size: 0.95rem;">
+                    <label>Ícone</label>
+                    <div class="input-wrapper">
+                        <input type="hidden" id="catIcon" name="icon" value="📚">
+                        <button type="button" class="icon-picker-trigger" onclick="openCategoryIconPicker()">
+                            <div class="icon-picker-preview" id="catIconPreview">
+                                <iconify-icon icon="noto:books" style="font-size: 1.5rem;"></iconify-icon>
+                            </div>
+                            <span class="icon-picker-text" id="catIconText">Selecionar ícone</span>
+                            <i class="fa-solid fa-chevron-down icon-picker-arrow"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -76,13 +84,27 @@
         document.getElementById('categoryId').value = '';
         document.getElementById('catName').value = '';
         document.getElementById('catType').value = 'specialty';
-        document.getElementById('catIcon').value = '📚';
+        
+        // Default Icon
+        document.getElementById('catIcon').value = 'noto:books';
+        document.getElementById('catIconPreview').innerHTML = '<iconify-icon icon="noto:books" style="font-size: 1.5rem;"></iconify-icon>';
+        document.getElementById('catIconText').textContent = 'noto:books';
+
         document.getElementById('catColor').value = '#00D9FF';
         document.getElementById('catDescription').value = '';
 
         const modal = document.getElementById('categoryModal');
         modal.style.display = 'flex';
         document.getElementById('catName').focus();
+    }
+    
+    function openCategoryIconPicker() {
+        const currentIcon = document.getElementById('catIcon').value;
+        IconPicker.open(currentIcon, (selectedIcon) => {
+            document.getElementById('catIcon').value = selectedIcon;
+            document.getElementById('catIconPreview').innerHTML = `<iconify-icon icon="${selectedIcon}" style="font-size: 1.5rem;"></iconify-icon>`;
+            document.getElementById('catIconText').textContent = selectedIcon;
+        });
     }
 
     function closeCategoryModal(e) {
@@ -133,3 +155,5 @@
         }
     }
 </script>
+
+<?php require_once BASE_PATH . '/views/admin/partials/icon_picker.php'; ?>
