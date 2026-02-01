@@ -30,8 +30,8 @@
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
-    <!-- Iconify Web Component (must be in head for proper element registration) -->
-    <script src="<?= asset_url('js/iconify-icon.min.js') ?>"></script>
+    <!-- Iconify Web Component (JSDelivr CDN for better global reliability) -->
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@2.1.0/dist/iconify-icon.min.js"></script>
 
     <style>
         /* Helper for Iconify visibility */
