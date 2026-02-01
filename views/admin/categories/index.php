@@ -694,7 +694,7 @@ $pageIcon = '📂';
 
     <script>
         var tenantSlug = tenantSlug || '<?= $tenant['slug'] ?>';
-        let editingId = null;
+        var editingId = editingId || null;
 
         function openModal(data = null) {
             editingId = null;
