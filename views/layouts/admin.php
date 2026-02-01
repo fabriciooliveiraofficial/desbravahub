@@ -30,6 +30,9 @@
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
+    <!-- Iconify Web Component (must be in head for proper element registration) -->
+    <script src="<?= asset_url('js/iconify-icon.min.js') ?>"></script>
+
     <style>
         /* Helper for Iconify visibility */
         iconify-icon {
@@ -249,17 +252,5 @@
     .toast-error { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
     .toast-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
     </style>
-    <!-- Iconify Script (Local copy for reliability) -->
-    <script src="<?= asset_url('js/iconify-icon.min.js') ?>"></script>
-    <script>
-        // Diagnostic for Iconify
-        window.addEventListener('load', () => {
-            const status = typeof IconifyIcon !== 'undefined' ? 'READY' : 'FAILED';
-            console.log('Iconify check:', status);
-            if (status === 'FAILED') {
-                console.error('Iconify failed to load. Icons will not render.');
-            }
-        });
-    </script>
 </body>
 </html>
