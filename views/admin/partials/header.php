@@ -27,7 +27,7 @@
                 <span class="user-name"><?= htmlspecialchars($user['name']) ?></span>
                 <span class="user-email"><?= htmlspecialchars($user['email']) ?></span>
             </div>
-            <a href="<?= base_url($tenant['slug'] . '/logout') ?>" class="btn-logout">Sair</a>
+            <a href="<?= base_url($tenant['slug'] . '/logout') ?>" class="btn-logout" hx-boost="false">Sair</a>
         </div>
     </div>
 </header>
