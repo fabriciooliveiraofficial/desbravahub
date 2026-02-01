@@ -115,7 +115,7 @@
     </script>
     <script src="<?= asset_url('js/toast.js') ?>"></script>
     <script src="<?= asset_url('js/uas.js') ?>"></script>
-    <script src="https://code.iconify.design/iconify-icon/2.0.0/iconify-icon.min.js"></script>
+    <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 
 
     <style>
