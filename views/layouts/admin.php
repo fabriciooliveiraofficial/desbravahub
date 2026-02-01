@@ -249,12 +249,16 @@
     .toast-error { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
     .toast-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
     </style>
-    <!-- Iconify Script at the end of body -->
-    <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+    <!-- Iconify Script (Local copy for reliability) -->
+    <script src="<?= asset_url('js/iconify-icon.min.js') ?>"></script>
     <script>
         // Diagnostic for Iconify
         window.addEventListener('load', () => {
-            console.log('Iconify check:', typeof IconifyIcon !== 'undefined' ? 'READY' : 'FAILED');
+            const status = typeof IconifyIcon !== 'undefined' ? 'READY' : 'FAILED';
+            console.log('Iconify check:', status);
+            if (status === 'FAILED') {
+                console.error('Iconify failed to load. Icons will not render.');
+            }
         });
     </script>
 </body>
