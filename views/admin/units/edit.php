@@ -886,6 +886,13 @@ $title = $isEdit ? 'Editar Unidade' : 'Nova Unidade';
             'ph:heart-thin', 'ph:shield-thin', 'ph:award-thin', 'ph:medal-thin',
             'ph:student-thin', 'ph:book-thin', 'ph:pencil-circle-thin', 'ph:paint-brush-thin'
         ],
+        'Solar (Linear)': [
+            'solar:tent-linear', 'solar:mountains-linear', 'solar:compass-linear', 'solar:map-linear',
+            'solar:fire-linear', 'solar:leaf-linear', 'solar:tree-linear', 'solar:water-linear',
+            'solar:cloud-sun-linear', 'solar:sun-linear', 'solar:moon-linear', 'solar:star-linear',
+            'solar:heart-linear', 'solar:shield-linear', 'solar:cup-linear', 'solar:medal-ribbons-star-linear',
+            'solar:diploma-linear', 'solar:book-linear', 'solar:pen-linear', 'solar:paint-roller-linear'
+        ],
         'Tabler (Outline)': [
             'tabler:tent', 'tabler:mountain', 'tabler:compass', 'tabler:map-2',
             'tabler:flame', 'tabler:leaf', 'tabler:tree', 'tabler:waves-rect',
@@ -961,8 +968,14 @@ $title = $isEdit ? 'Editar Unidade' : 'Nova Unidade';
     function selectIcon(iconClass) {
         selectedIcon = iconClass;
         document.querySelectorAll('.icon-item').forEach(el => el.classList.remove('selected'));
-        const activeItem = document.querySelector(`.icon-item[title="${iconClass}"]`);
-        if (activeItem) activeItem.classList.add('selected');
+        // Use a more robust selector since title might have special characters
+        const items = document.querySelectorAll('.icon-item');
+        items.forEach(item => {
+            if (item.getAttribute('title') === iconClass) {
+                item.classList.add('selected');
+                item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        });
         
         document.getElementById('selectedIconPreviewModal').innerHTML = `<iconify-icon icon="${selectedIcon}"></iconify-icon>`;
         document.getElementById('selectedIconName').textContent = selectedIcon;

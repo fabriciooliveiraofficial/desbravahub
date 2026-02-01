@@ -334,7 +334,9 @@
                     <div class="unit-card-content">
                         <div class="unit-header-modern">
                             <div class="unit-icon-glass">
-                                <?php if($unit['mascot'] && strpos($unit['mascot'], 'fa-') !== false): ?>
+                                <?php if($unit['mascot'] && strpos($unit['mascot'], ':') !== false): ?>
+                                    <iconify-icon icon="<?= htmlspecialchars($unit['mascot']) ?>"></iconify-icon>
+                                <?php elseif($unit['mascot'] && strpos($unit['mascot'], 'fa-') !== false): ?>
                                     <i class="<?= htmlspecialchars($unit['mascot']) ?>"></i>
                                 <?php elseif($unit['mascot']): ?>
                                     <?= htmlspecialchars(substr($unit['mascot'], 0, 2)) ?>
