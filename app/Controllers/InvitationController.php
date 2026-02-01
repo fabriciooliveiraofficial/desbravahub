@@ -8,10 +8,17 @@
 namespace App\Controllers;
 
 use App\Core\App;
+use App\Services\AuthService;
 use App\Services\EmailService;
 
 class InvitationController
 {
+    private AuthService $authService;
+
+    public function __construct()
+    {
+        $this->authService = new AuthService();
+    }
     /**
      * List all invitations
      */
@@ -346,9 +353,9 @@ class InvitationController
             'accepted_at' => date('Y-m-d H:i:s')
         ], 'id = ?', [$invitation['id']]);
 
-        // Log the user in
-        $_SESSION['user_id'] = $userId;
-        $_SESSION['tenant_id'] = $tenant['id'];
+        // Log the user in (Token-based)
+        $token = $this->authService->createSession($userId);
+        $this->authService->setAuthCookie($token);
 
         $_SESSION['flash_success'] = 'Conta criada com sucesso! Bem-vindo ao ' . $tenant['name'];
         header('Location: ' . base_url($tenant['slug'] . '/admin'));
@@ -734,7 +741,7 @@ class InvitationController
 
         if (!empty($errors)) {
             $error = implode(', ', $errors);
-            require BASE_PATH . '/views/auth/accept-invitation-member.php';
+            require BASE_PATH . '/views/auth/accept-member-invitation.php';
             return;
         }
 
@@ -769,9 +776,9 @@ class InvitationController
         // Update Invitation
         db_update('member_invitations', ['accepted_at' => date('Y-m-d H:i:s')], 'id = ?', [$invitation['id']]);
 
-        // Log in
-        $_SESSION['user_id'] = $userId;
-        $_SESSION['tenant_id'] = $tenant['id'];
+        // Log in (Token-based)
+        $token = $this->authService->createSession($userId);
+        $this->authService->setAuthCookie($token);
         
         $_SESSION['flash_success'] = 'Bem-vindo ao Clube!';
         header('Location: ' . base_url($tenant['slug'] . '/dashboard'));
