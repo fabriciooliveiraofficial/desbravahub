@@ -8,12 +8,12 @@
     <div class="header-inner">
         <!-- Logo Area -->
         <a href="<?= base_url($tenant['slug'] . '/dashboard') ?>" class="hud-brand">
-            <div class="hud-logo-icon">
-                <span class="material-icons-round">bolt</span>
+            <div class="hud-logo-icon" style="background: rgba(0, 217, 255, 0.1); border: 1px solid rgba(0, 217, 255, 0.3); box-shadow: 0 0 15px rgba(0, 217, 255, 0.2);">
+                <span class="material-icons-round" style="color: var(--accent-cyan); filter: drop-shadow(0 0 5px var(--accent-cyan));">bolt</span>
             </div>
             <div class="hud-brand-text">
-                <span class="brand-name"><?= htmlspecialchars($tenant['name']) ?></span>
-                <span class="brand-tagline">SYSTEM.ONLINE</span>
+                <span class="brand-name" style="font-weight: 900; letter-spacing: 0.1em;"><?= strtoupper(htmlspecialchars($tenant['name'])) ?></span>
+                <span class="brand-tagline" style="color: var(--accent-cyan); font-weight: 800; opacity: 0.8;">OPERATIONAL.UNIT</span>
             </div>
         </a>
 

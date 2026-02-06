@@ -263,11 +263,11 @@ $isPerfil = strpos($currentPath, '/perfil') !== false;
 }
 
 /* Color variations for each icon on hover (optional flair) */
-.dock-item:nth-child(1):hover .dock-icon-wrap { background: linear-gradient(135deg, #f97316, #fb923c); }
-.dock-item:nth-child(2):hover .dock-icon-wrap { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
-.dock-item:nth-child(3):hover .dock-icon-wrap { background: linear-gradient(135deg, #06b6d4, #22d3ee); }
-.dock-item:nth-child(4):hover .dock-icon-wrap { background: linear-gradient(135deg, #f472b6, #ec4899); }
-.dock-item:nth-child(5):hover .dock-icon-wrap { background: linear-gradient(135deg, #4ade80, #22c55e); }
+.dock-item:nth-child(1):hover .dock-icon-wrap { background: linear-gradient(135deg, #06b6d4, #22d3ee); } /* QG - Cyan */
+.dock-item:nth-child(2):hover .dock-icon-wrap { background: linear-gradient(135deg, #8b5cf6, #a78bfa); } /* Missões - Purple/Vibrant */
+.dock-item:nth-child(3):hover .dock-icon-wrap { background: linear-gradient(135deg, #f472b6, #ec4899); } /* Agenda - Pink */
+.dock-item:nth-child(4):hover .dock-icon-wrap { background: linear-gradient(135deg, #f97316, #fb923c); } /* Desafios - Orange */
+.dock-item:nth-child(5):hover .dock-icon-wrap { background: linear-gradient(135deg, #22c55e, #4ade80); } /* Perfil - Green */
 
 /* Keep active gradients consistent */
 .dock-item.active .dock-icon-wrap,
