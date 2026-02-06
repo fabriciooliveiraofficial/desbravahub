@@ -258,7 +258,7 @@ $feedback = $response['feedback'] ?? '';
 
                     <?php elseif ($q['type'] === 'single_choice'): ?>
                         <?php
-                        $options = json_decode($q['options'], true) ?? [];
+                        $options = json_decode($q['options'] ?? '[]', true) ?? [];
                         foreach ($options as $optIdx => $opt):
                             ?>
                             <label
@@ -270,7 +270,7 @@ $feedback = $response['feedback'] ?? '';
 
                     <?php elseif ($q['type'] === 'multiple_choice'): ?>
                         <?php
-                        $options = json_decode($q['options'], true) ?? [];
+                        $options = json_decode($q['options'] ?? '[]', true) ?? [];
                         $selectedAnswers = is_array($currentAnswer) ? $currentAnswer : [];
                         foreach ($options as $optIdx => $opt):
                             $isChecked = in_array($optIdx, $selectedAnswers);
