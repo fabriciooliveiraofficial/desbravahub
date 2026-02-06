@@ -12,326 +12,253 @@ $status = $response['status'] ?? 'not_started';
 $feedback = $response['feedback'] ?? '';
 ?>
 
-<style>
-    /* Scoped Reset */
-    .step-modal-scope * {
-        box-sizing: border-box;
-    }
-
-    .step-description {
-        color: #94a3b8; /* Slate-400 */
-        margin-bottom: 24px;
-        line-height: 1.6;
-        font-size: 0.95rem;
-    }
-
-    .question-item {
-        margin-bottom: 20px;
-        padding: 24px; /* Increased Padding */
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 16px;
-    }
-
-    .question-label {
-        font-weight: 500; /* Reduced from 600 */
-        margin-bottom: 12px;
-        display: block;
-        font-size: 0.95rem; /* Reduced from 1rem */
-        line-height: 1.6;
-        color: #f1f5f9; /* Slate-100 */
-        letter-spacing: 0.01em;
-    }
-
-    .question-input {
-        width: 100%;
-        padding: 12px 16px;
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        color: #e2e8f0;
-        font-size: 0.95rem;
-        transition: all 0.2s;
-        font-family: inherit;
-    }
-
-    .question-input:focus {
-        outline: none;
-        border-color: var(--accent-cyan);
-        background: rgba(0, 0, 0, 0.3);
-        box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.1);
-    }
-
-    textarea.question-input {
-        min-height: 120px;
-        resize: vertical;
-        line-height: 1.5;
-    }
-
-    .file-preview {
-        margin-top: 12px;
-        padding: 12px;
-        background: rgba(6, 182, 212, 0.1);
-        border-radius: 8px;
-        font-size: 0.9rem;
-        border: 1px solid rgba(6, 182, 212, 0.2);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #22d3ee;
-    }
-
-    .status-alert {
-        padding: 16px;
-        border-radius: 12px;
-        margin-bottom: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-
-    .status-submitted {
-        background: rgba(245, 158, 11, 0.1);
-        border: 1px solid rgba(245, 158, 11, 0.2);
-        color: #fbbf24;
-    }
-
-    .status-approved {
-        background: rgba(16, 185, 129, 0.1);
-        border: 1px solid rgba(16, 185, 129, 0.2);
-        color: #34d399;
-    }
-
-    .status-draft {
-        background: rgba(148, 163, 184, 0.1);
-        border: 1px solid rgba(148, 163, 184, 0.2);
-        color: #94a3b8;
-    }
-
-    .feedback-box {
-        background: rgba(0, 0, 0, 0.2);
-        padding: 12px;
-        border-radius: 8px;
-        margin-top: 8px;
-        font-size: 0.9rem;
-    }
-
-    .btn-submit {
-        width: 100%;
-        padding: 14px; /* Reduced from 16px */
-        background: linear-gradient(135deg, var(--accent-cyan), #2563eb);
-        border: none;
-        border-radius: 12px;
-        color: white;
-        font-weight: 600;
-        font-size: 1rem;
-        cursor: pointer;
-        margin-top: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-        transition: transform 0.2s, box-shadow 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-    }
-
-    .btn-submit:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
-    }
-
-    .btn-submit:active {
-        transform: translateY(0);
-    }
-
-    .btn-submit:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    .modal-actions {
-        display: flex;
-        gap: 12px;
-        margin-top: 12px;
-    }
-
-    @media (max-width: 480px) {
-        .modal-actions {
-            flex-direction: column;
-        }
-    }
-</style>
-
-<div class="step-modal-wrapper step-modal-scope" style="padding: 2px 24px 32px 24px;">
-
-    <?php if ($status === 'draft'): ?>
-        <div class="status-alert status-draft">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="material-icons-round">edit_note</span>
-                <strong>Rascunho</strong>
+<div class="tech-plate vibrant-cyan stagger-1" style="padding: 0; overflow: hidden; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+    <div class="status-line" style="width: 4px;"></div>
+    
+    <!-- Modal Header -->
+    <div style="padding: 24px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: flex-start;">
+        <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <span class="hud-badge" style="color: var(--accent-cyan); font-size: 0.6rem; border-color: rgba(0,217,255,0.3); background: rgba(0,217,255,0.05);">TREINAMENTO OPERACIONAL</span>
+                <?php if ($step['is_required'] ?? false): ?>
+                    <span style="font-size: 0.6rem; font-weight: 900; color: #f87171; letter-spacing: 0.1em; text-transform: uppercase;">[REQUISITO MANDATÓRIO]</span>
+                <?php endif; ?>
             </div>
-            <p style="margin: 0; font-size: 0.9rem; opacity: 0.8;">Sua resposta está salva, mas ainda não foi enviada para avaliação.</p>
+            <h2 style="font-size: 1.4rem; margin: 0; color: #fff; line-height: 1.2; font-weight: 800; letter-spacing: -0.02em;"><?= htmlspecialchars($step['title']) ?></h2>
         </div>
-    <?php elseif ($status === 'submitted'): ?>
-        <div class="status-alert status-submitted">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="material-icons-round">hourglass_top</span>
-                <strong>Aguardando aprovação</strong>
-            </div>
-            <p style="margin: 0; font-size: 0.9rem; opacity: 0.8;">Sua resposta foi enviada e está sendo analisada.</p>
-        </div>
-    <?php elseif ($status === 'approved'): ?>
-        <div class="status-alert status-approved">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="material-icons-round">check_circle</span>
-                <strong>Aprovado!</strong>
-            </div>
-            <p style="margin: 0; font-size: 0.9rem; opacity: 0.8;">Este requisito foi concluído com sucesso.</p>
-        </div>
-    <?php elseif ($status === 'rejected'): ?>
-        <div class="status-alert status-rejected">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="material-icons-round">error</span>
-                <strong>Revisão necessária</strong>
-            </div>
-            <?php if ($feedback): ?>
-                <div class="feedback-box">
-                    <strong>Feedback:</strong> <?= htmlspecialchars($feedback) ?>
+        <button type="button" onclick="closeStepModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; cursor: pointer; padding: 6px; border-radius: 8px; transition: all 0.2s;">
+            <i class="material-icons-round" style="font-size: 1.2rem;">close</i>
+        </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div id="modal-content-area" style="padding: 24px; max-height: 65vh; overflow-y: auto;">
+        
+        <?php if (!empty($step['description'])): ?>
+            <div class="tech-plate" style="background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.05); padding: 20px; margin-bottom: 30px; border-radius: 12px; position: relative;">
+                <div style="font-size: 0.65rem; color: var(--accent-cyan); text-transform: uppercase; font-weight: 900; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; letter-spacing: 0.1em;">
+                    <i class="material-icons-round" style="font-size: 1rem;">terminal</i> Briefing da Missão
                 </div>
-            <?php endif; ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if (!empty($step['description'])): ?>
-        <div class="step-description">
-            <?= nl2br(htmlspecialchars($step['description'])) ?>
-        </div>
-    <?php endif; ?>
-
-    <form onsubmit="event.preventDefault(); submitStepForm(<?= $step['id'] ?>, this);" enctype="multipart/form-data">
-
-        <?php if (empty($questions)): ?>
-            <!-- Outdoor or manual step - just text/file/url submission -->
-            <div class="question-item">
-                <label class="question-label">📝 Sua resposta</label>
-                <textarea name="response_text" class="question-input"
-                    placeholder="Descreva como você completou este requisito..."><?= htmlspecialchars($existingText) ?></textarea>
+                <div style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6;">
+                    <?= nl2br(htmlspecialchars($step['description'])) ?>
+                </div>
             </div>
+        <?php endif; ?>
 
-            <div class="question-item">
-                <label class="question-label">🔗 Link (opcional)</label>
-                <input type="url" name="response_url" class="question-input" placeholder="https://..."
-                    value="<?= htmlspecialchars($existingUrl) ?>">
+        <!-- Status Displays -->
+        <?php if ($status === 'approved'): ?>
+            <div class="tech-plate vibrant-green" style="padding: 18px; margin-bottom: 30px; display: flex; align-items: center; gap: 16px; border-radius: 12px;">
+                <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.2); display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons-round" style="color: #22c55e; font-size: 2rem; filter: drop-shadow(0 0 8px #22c55e);">verified</i>
+                </div>
+                <div>
+                    <div style="font-weight: 900; color: #fff; font-size: 0.95rem; letter-spacing: 0.05em;">SINCRONIZAÇÃO CONCLUÍDA</div>
+                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">Os dados foram validados e aprovados pelo QG.</div>
+                </div>
             </div>
-
-            <div class="question-item">
-                <label class="question-label">📎 Arquivo de prova (opcional)</label>
-                <input type="file" name="response_file" class="question-input" style="padding: 10px;">
-                <?php if ($existingFile): ?>
-                    <div class="file-preview">
-                        📄 Arquivo atual: <a href="<?= $existingFile ?>" target="_blank" style="color: inherit; text-decoration: underline;">Ver arquivo</a>
+        <?php elseif ($status === 'submitted'): ?>
+            <div class="tech-plate vibrant-orange" style="padding: 18px; margin-bottom: 30px; display: flex; align-items: center; gap: 16px; border-radius: 12px;">
+                <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.2); display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons-round" style="color: #f97316; font-size: 2rem; filter: drop-shadow(0 0 8px #f97316);">hourglass_empty</i>
+                </div>
+                <div>
+                    <div style="font-weight: 900; color: #fff; font-size: 0.95rem; letter-spacing: 0.05em;">DADOS EM ANÁLISE</div>
+                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">Aguardando processamento do monitoramento central.</div>
+                </div>
+            </div>
+        <?php elseif ($status === 'rejected'): ?>
+            <div class="tech-plate vibrant-red" style="padding: 18px; margin-bottom: 30px; border-radius: 12px;">
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+                    <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); display: flex; align-items: center; justify-content: center;">
+                        <i class="material-icons-round" style="color: #ef4444; font-size: 2rem; filter: drop-shadow(0 0 8px #ef4444);">gpp_maybe</i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 900; color: #fff; font-size: 0.95rem; letter-spacing: 0.05em;">REVISÃO SOLICITADA</div>
+                        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">Amostra de dados inconsistente com os padrões.</div>
+                    </div>
+                </div>
+                <?php if ($feedback): ?>
+                    <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 12px; font-size: 0.9rem; color: #fecaca; line-height: 1.4;">
+                        <strong style="color: #ef4444; font-size: 0.7rem; text-transform: uppercase; display: block; margin-bottom: 4px;">Mensagem do Instrutor:</strong>
+                        <?= htmlspecialchars($feedback) ?>
                     </div>
                 <?php endif; ?>
             </div>
-        <?php else: ?>
-            <!-- Questions -->
-            <?php foreach ($questions as $q): ?>
-                <div class="question-item">
-                    <label class="question-label"><?= htmlspecialchars($q['question_text']) ?></label>
+        <?php endif; ?>
 
-                    <?php 
-                    // Extract existing answer for this specific question if it's JSON
-                    $currentAnswer = '';
-                    $decoded = json_decode($existingText, true);
-                    if (is_array($decoded) && isset($decoded[$q['id']])) {
-                        $currentAnswer = $decoded[$q['id']];
-                    } elseif (!is_array($decoded) && count($questions) === 1) {
-                        // Fallback for legacy single-text answers
-                        $currentAnswer = $existingText;
-                    }
-                    ?>
+        <form onsubmit="event.preventDefault(); submitStepForm(<?= $step['id'] ?>, this);" enctype="multipart/form-data" 
+              style="<?= ($status === 'approved' || $status === 'submitted') ? 'opacity: 0.7; pointer-events: none;' : '' ?>">
+            
+            <?php if (empty($questions)): ?>
+                <div style="margin-bottom: 24px;">
+                    <label class="hud-stat-label" style="display: block; margin-bottom: 12px; color: #fff;">RELATÓRIO DE EXECUÇÃO</label>
+                    <textarea name="response_text" class="hud-input" style="min-height: 120px; resize: none;"
+                        placeholder="Descreva detalhadamente como o requisito foi cumprido..."><?= htmlspecialchars($existingText) ?></textarea>
+                </div>
 
-                    <?php if ($q['type'] === 'text'): ?>
-                        <textarea name="answers[<?= $q['id'] ?>]" class="question-input"
-                            placeholder="Sua resposta..."><?= htmlspecialchars($currentAnswer) ?></textarea>
+                <div style="margin-bottom: 24px;">
+                    <label class="hud-stat-label" style="display: block; margin-bottom: 12px; color: #fff;">EVIDÊNCIA EXTERNA (Opcional)</label>
+                    <div style="position: relative;">
+                        <i class="material-icons-round" style="position: absolute; left: 16px; top: 14px; color: var(--hud-text-dim); font-size: 1.2rem;">link</i>
+                        <input type="url" name="response_url" class="hud-input" style="padding-left: 48px;" placeholder="https://youtube.com/watch?v=..."
+                            value="<?= htmlspecialchars($existingUrl) ?>">
+                    </div>
+                </div>
 
-                    <?php elseif ($q['type'] === 'single_choice'): ?>
-                        <?php
-                        $options = json_decode($q['options'] ?? '[]', true) ?? [];
-                        foreach ($options as $optIdx => $opt):
-                            ?>
-                            <label
-                                style="display: block; margin: 8px 0; cursor: pointer; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid transparent; transition: border 0.2s;">
-                                <input type="radio" name="answers[<?= $q['id'] ?>]" value="<?= $optIdx ?>" <?= $currentAnswer == $optIdx ? 'checked' : '' ?> style="margin-right: 10px;">
-                                <?= htmlspecialchars($opt) ?>
-                            </label>
-                        <?php endforeach; ?>
-
-                    <?php elseif ($q['type'] === 'multiple_choice'): ?>
-                        <?php
-                        $options = json_decode($q['options'] ?? '[]', true) ?? [];
-                        $selectedAnswers = is_array($currentAnswer) ? $currentAnswer : [];
-                        foreach ($options as $optIdx => $opt):
-                            $isChecked = in_array($optIdx, $selectedAnswers);
-                            ?>
-                            <label
-                                style="display: block; margin: 8px 0; cursor: pointer; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid transparent; transition: border 0.2s;">
-                                <input type="checkbox" name="answers[<?= $q['id'] ?>][]" value="<?= $optIdx ?>" <?= $isChecked ? 'checked' : '' ?>
-                                    style="margin-right: 10px;">
-                                <?= htmlspecialchars($opt) ?>
-                            </label>
-                        <?php endforeach; ?>
-
-                    <?php elseif ($q['type'] === 'true_false'): ?>
-                        <div style="display: flex; gap: 16px;">
-                            <label
-                                style="flex: 1; cursor: pointer; padding: 16px; background: rgba(0,255,136,0.1); border-radius: 12px; text-align: center; border: 2px solid <?= $currentAnswer === '0' ? 'var(--accent-green)' : 'transparent' ?>; transition: all 0.2s;">
-                                <input type="radio" name="answers[<?= $q['id'] ?>]" value="0" <?= $currentAnswer === '0' ? 'checked' : '' ?>
-                                    style="display: none;">
-                                <span style="font-size: 1.5rem; display: block; margin-bottom: 4px;">✅</span>
-                                Verdadeiro
-                            </label>
-                            <label
-                                style="flex: 1; cursor: pointer; padding: 16px; background: rgba(255,100,100,0.1); border-radius: 12px; text-align: center; border: 2px solid <?= $currentAnswer === '1' ? 'var(--accent-danger)' : 'transparent' ?>; transition: all 0.2s;">
-                                <input type="radio" name="answers[<?= $q['id'] ?>]" value="1" <?= $currentAnswer === '1' ? 'checked' : '' ?>
-                                    style="display: none;">
-                                <span style="font-size: 1.5rem; display: block; margin-bottom: 4px;">❌</span>
-                                Falso
-                            </label>
-                        </div>
-
-                    <?php elseif ($q['type'] === 'file_upload'): ?>
-                        <input type="file" name="response_file" class="question-input" style="padding: 10px;">
-                        <?php if ($status === 'submitted' || $status === 'approved'): ?>
-                             <!-- Link to file if stored separately, logic needed in controller if we want per-question files -->
-                             <p class="text-xs text-muted">Upload de arquivo (Gerenciado individualmente)</p>
-                        <?php endif; ?>
-
-                    <?php elseif ($q['type'] === 'url'): ?>
-                        <input type="url" name="answers[<?= $q['id'] ?>]" class="question-input" placeholder="https://..."
-                            value="<?= htmlspecialchars($currentAnswer) ?>">
-
-                    <?php elseif ($q['type'] === 'manual'): ?>
-                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 8px;">
-                            Este item requer aprovação manual. Descreva o que você fez:
-                        </p>
-                        <textarea name="answers[<?= $q['id'] ?>]" class="question-input"
-                            placeholder="Descreva como você completou este requisito..."><?= htmlspecialchars($currentAnswer) ?></textarea>
+                <div style="margin-bottom: 24px;">
+                    <label class="hud-stat-label" style="display: block; margin-bottom: 12px; color: #fff;">UPLOAD DE ARQUIVO</label>
+                    <div class="file-upload-zone" style="background: rgba(0,0,0,0.4); border: 1px dashed rgba(255,255,255,0.2); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                        <input type="file" name="response_file" onchange="this.parentElement.querySelector('.file-status').innerText = this.files[0].name" style="display: none;" id="file-input-modal">
+                        <label for="file-input-modal" style="cursor: pointer; display: block;">
+                            <i class="material-icons-round" style="font-size: 2.5rem; color: var(--accent-cyan); opacity: 0.5; margin-bottom: 8px;">cloud_upload</i>
+                            <div class="file-status" style="font-size: 0.9rem; color: var(--hud-text-dim);">Clique para anexar foto ou PDF de comprovação</div>
+                        </label>
+                    </div>
+                    <?php if ($existingFile): ?>
+                        <a href="<?= $existingFile ?>" target="_blank" class="hud-badge" style="display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; text-decoration: none; color: var(--accent-cyan); border-color: rgba(0,217,255,0.3);">
+                            <i class="material-icons-round" style="font-size: 1rem;">visibility</i> VISUALIZAR ARQUIVO ATUAL
+                        </a>
                     <?php endif; ?>
                 </div>
-            <?php endforeach; ?>
-            
-            <input type="hidden" name="is_multi_question" value="1">
-        <?php endif; ?>
+            <?php else: ?>
+                <!-- Questions -->
+                <?php foreach ($questions as $q): ?>
+                    <div style="margin-bottom: 30px; position: relative; padding-left: 16px; border-left: 1px solid rgba(255,255,255,0.1);">
+                        <label class="hud-stat-label" style="display: block; margin-bottom: 14px; color: #fff; font-size: 0.85rem; line-height: 1.4; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                            <?= htmlspecialchars($q['question_text']) ?>
+                        </label>
 
-        <?php if ($status !== 'approved'): ?>
-            <div class="modal-actions">
-                <button type="button" class="btn-submit" onclick="submitStepForm(<?= $step['id'] ?>, this.form, 'draft')" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); flex: 1;">
-                    <span class="material-icons-round" style="font-size: 1.2rem;">save</span>
-                    Salvar Rascunho
-                </button>
+                        <?php 
+                        $currentAnswer = '';
+                        $decoded = json_decode($existingText, true);
+                        if (is_array($decoded) && isset($decoded[$q['id']])) {
+                            $currentAnswer = $decoded[$q['id']];
+                        } elseif (!is_array($decoded) && count($questions) === 1) {
+                            $currentAnswer = $existingText;
+                        }
+                        ?>
+
+                        <?php if ($q['type'] === 'text'): ?>
+                            <textarea name="answers[<?= $q['id'] ?>]" class="hud-input" style="min-height: 100px; resize: none;"
+                                placeholder="Insira sua resposta..."><?= htmlspecialchars($currentAnswer) ?></textarea>
+
+                        <?php elseif ($q['type'] === 'single_choice' || $q['type'] === 'multiple_choice'): ?>
+                            <?php
+                            $options = json_decode($q['options'] ?? '[]', true) ?? [];
+                            $selectedAnswers = is_array($currentAnswer) ? $currentAnswer : [$currentAnswer];
+                            ?>
+                            <div style="display: grid; gap: 10px;">
+                                <?php foreach ($options as $optIdx => $opt): 
+                                    $checked = in_array($optIdx, $selectedAnswers);
+                                ?>
+                                    <label class="radio-tech-card-wrapper" style="cursor: pointer;">
+                                        <input type="<?= $q['type'] === 'single_choice' ? 'radio' : 'checkbox' ?>" 
+                                               name="answers[<?= $q['id'] ?>]<?= $q['type'] === 'multiple_choice' ? '[]' : '' ?>" 
+                                               value="<?= $optIdx ?>" <?= $checked ? 'checked' : '' ?> style="display: none;">
+                                        <div class="radio-tech-card">
+                                            <div class="radio-check"></div>
+                                            <span><?= htmlspecialchars($opt) ?></span>
+                                        </div>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+
+                        <?php elseif ($q['type'] === 'true_false'): ?>
+                            <div style="display: flex; gap: 12px;">
+                                <label class="radio-tech-card-wrapper" style="flex: 1; cursor: pointer;">
+                                    <input type="radio" name="answers[<?= $q['id'] ?>]" value="0" <?= $currentAnswer === '0' ? 'checked' : '' ?> style="display: none;">
+                                    <div class="radio-tech-card" style="justify-content: center; height: 80px; flex-direction: column;">
+                                        <i class="material-icons-round" style="font-size: 1.8rem; color: #22c55e;">check_circle</i>
+                                        <span style="margin-top: 4px;">Verdadeiro</span>
+                                    </div>
+                                </label>
+                                <label class="radio-tech-card-wrapper" style="flex: 1; cursor: pointer;">
+                                    <input type="radio" name="answers[<?= $q['id'] ?>]" value="1" <?= $currentAnswer === '1' ? 'checked' : '' ?> style="display: none;">
+                                    <div class="radio-tech-card" style="justify-content: center; height: 80px; flex-direction: column;">
+                                        <i class="material-icons-round" style="font-size: 1.8rem; color: #ef4444;">cancel</i>
+                                        <span style="margin-top: 4px;">Falso</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                        <?php elseif ($q['type'] === 'file_upload'): ?>
+                             <div class="file-upload-zone" style="background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer;">
+                                <input type="file" name="response_file" onchange="this.parentElement.querySelector('.file-status').innerText = this.files[0].name" style="display: none;" id="file-q-<?= $q['id'] ?>">
+                                <label for="file-q-<?= $q['id'] ?>" style="cursor: pointer; display: block;">
+                                    <i class="material-icons-round" style="font-size: 1.5rem; color: var(--accent-cyan); opacity: 0.5;">attach_file</i>
+                                    <div class="file-status" style="font-size: 0.8rem; color: var(--hud-text-dim);">Anexar Documento</div>
+                                </label>
+                            </div>
+
+                        <?php elseif ($q['type'] === 'url'): ?>
+                            <div style="position: relative;">
+                                <i class="material-icons-round" style="position: absolute; left: 14px; top: 12px; color: var(--hud-text-dim); font-size: 1.1rem;">link</i>
+                                <input type="url" name="answers[<?= $q['id'] ?>]" class="hud-input" placeholder="https://..." style="padding-left: 42px;"
+                                    value="<?= htmlspecialchars($currentAnswer) ?>">
+
+                        <?php elseif ($q['type'] === 'manual'): ?>
+                            <textarea name="answers[<?= $q['id'] ?>]" class="hud-input" style="min-height: 80px; resize: none;"
+                                placeholder="Relatório de atividade prática..."><?= htmlspecialchars($currentAnswer) ?></textarea>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+                <input type="hidden" name="is_multi_question" value="1">
+            <?php endif; ?>
+
+            <div style="display: flex; gap: 16px; margin-top: 40px; background: rgba(0,0,0,0.2); margin: 40px -24px -24px; padding: 24px;">
+                <button type="button" class="hud-btn secondary" onclick="closeStepModal()" style="flex: 1; justify-content: center;">CANCELAR</button>
+                <?php if ($status !== 'approved' && $status !== 'submitted'): ?>
+                    <button type="button" class="hud-btn secondary" onclick="submitStepForm(<?= $step['id'] ?>, this.form, 'draft')" style="flex: 1.2; justify-content: center;">
+                        <i class="material-icons-round">save</i> SALVAR RASCUNHO
+                    </button>
+                    <button type="submit" class="hud-btn primary" style="flex: 1.5; justify-content: center;">
+                        <i class="material-icons-round">rocket_launch</i> ENVIAR AGORA
+                    </button>
+                <?php endif; ?>
             </div>
-        <?php endif; ?>
-    </form>
+        </form>
+    </div>
 </div>
+
+<style>
+    .radio-tech-card-wrapper input:checked + .radio-tech-card {
+        background: rgba(0, 217, 255, 0.1);
+        border-color: var(--accent-cyan);
+        box-shadow: 0 0 20px rgba(0, 217, 255, 0.1);
+    }
+    .radio-tech-card-wrapper input:checked + .radio-tech-card .radio-check {
+        background: var(--accent-cyan);
+        box-shadow: 0 0 8px var(--accent-cyan);
+        border-color: var(--accent-cyan);
+    }
+    .radio-tech-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 12px;
+        transition: all 0.2s;
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+    .radio-check {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.2);
+    }
+    .radio-tech-card:hover {
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(255,255,255,0.15);
+    }
+    .file-upload-zone:hover {
+        background: rgba(255,255,255,0.05) !important;
+        border-color: var(--accent-cyan) !important;
+    }
+    #modal-content-area::-webkit-scrollbar { width: 6px; }
+    #modal-content-area::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+    #modal-content-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+</style>

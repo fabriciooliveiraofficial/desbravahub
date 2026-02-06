@@ -37,72 +37,77 @@
         $progPercent = $totalSteps > 0 ? round(($completedSteps / $totalSteps) * 100) : 0;
         $engPercent = $totalSteps > 0 ? round(($answeredSteps / $totalSteps) * 100) : 0;
         ?>
-        <div class="hud-stat-card primary">
-            <div class="plate-header">
+        <div class="hud-stat-card primary tech-plate vibrant-cyan stagger-1" style="flex: 2; padding: 24px;">
+            <div class="plate-header" style="margin-bottom: 8px;">
                 <div>
-                    <div class="hud-stat-value" style="font-size: 1.5rem;"><?= $engPercent ?>%</div>
-                    <div class="hud-stat-label">Progresso</div>
+                    <div class="hud-stat-value" style="font-size: 2.8rem; line-height: 1;"><?= $engPercent ?>%</div>
+                    <div class="hud-stat-label">REQUISITOS SINCRONIZADOS</div>
                 </div>
-                <i class="material-icons-round hud-stat-icon" style="color: var(--accent-cyan)">pie_chart</i>
+                <i class="material-icons-round hud-stat-icon" style="opacity: 1; color: var(--accent-cyan); filter: drop-shadow(0 0 8px var(--accent-cyan)); font-size: 2.5rem;">hub</i>
             </div>
-            <div class="hud-progress" style="background: rgba(255,255,255,0.05); position: relative;">
-                <!-- Answered Bar (Engagement) -->
-                <div class="hud-progress-bar" style="width: <?= $engPercent ?>%; background: var(--accent-cyan); opacity: 0.3; position: absolute;"></div>
-                <!-- Approved Bar (Real Progress) -->
-                <div class="hud-progress-bar" style="width: <?= $progPercent ?>%; background: var(--accent-cyan); position: relative;"></div>
+            
+            <div style="margin: 16px 0;">
+                <div class="hud-progress" style="background: rgba(0,0,0,0.3); height: 8px; border-radius: 100px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+                    <!-- Answered Bar (Engagement) -->
+                    <div class="hud-progress-bar" style="width: <?= $engPercent ?>%; background: var(--accent-cyan); opacity: 0.2; position: absolute; height: 100%;"></div>
+                    <!-- Approved Bar (Real Progress) -->
+                    <div class="hud-progress-bar" style="width: <?= $progPercent ?>%; background: linear-gradient(90deg, #22d3ee, #06b6d4); position: relative; height: 100%; box-shadow: 0 0 10px var(--accent-cyan);"></div>
+                </div>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.75rem; color: var(--hud-text-dim);">
-                <span>CONCLUÍDO (APROVADO)</span>
-                <span><?= $progPercent ?>%</span>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 2px;">
+                <span style="font-size: 0.65rem; font-weight: 800; color: var(--hud-text-dim);">DADOS VALIDADOS</span>
+                <span style="font-size: 0.75rem; font-weight: 900; color: #fff;"><?= $progPercent ?>%</span>
             </div>
         </div>
 
-        <div class="hud-stat-card">
-            <div>
-                <div class="hud-stat-value" style="font-size: 1.5rem;"><?= count($steps) ?></div>
-                <div class="hud-stat-label">Requisitos</div>
+        <div style="display: flex; flex-direction: column; gap: 16px; flex: 1.2;">
+            <div class="hud-stat-card tech-plate vibrant-purple stagger-2" style="padding: 20px;">
+                <div class="plate-header" style="margin-bottom: 0;">
+                    <div>
+                        <div class="hud-stat-value" style="font-size: 1.8rem; color: #a78bfa;"><?= count($steps) ?></div>
+                        <div class="hud-stat-label">TOTAL DE MÓDULOS</div>
+                    </div>
+                    <i class="material-icons-round hud-stat-icon" style="color: #8b5cf6; opacity: 1; font-size: 1.8rem;">inventory_2</i>
+                </div>
             </div>
-            <i class="material-icons-round hud-stat-icon" style="color: var(--accent-purple)">list</i>
-        </div>
 
-        <div class="hud-stat-card">
-            <div>
-                <div class="hud-stat-value" style="font-size: 1.5rem;">+<?= number_format($program['xp_reward']) ?></div>
-                <div class="hud-stat-label">XP Recompensa</div>
+            <div class="hud-stat-card tech-plate vibrant-green stagger-3" style="padding: 20px;">
+                <div class="plate-header" style="margin-bottom: 0;">
+                    <div>
+                        <div class="hud-stat-value" style="font-size: 1.8rem; color: var(--accent-green);">+<?= number_format($program['xp_reward']) ?></div>
+                        <div class="hud-stat-label">RECOMPENSA XP</div>
+                    </div>
+                    <i class="material-icons-round hud-stat-icon" style="color: var(--accent-green); opacity: 1; font-size: 1.8rem;">auto_awesome</i>
+                </div>
             </div>
-            <i class="material-icons-round hud-stat-icon" style="color: var(--accent-green)">bolt</i>
         </div>
     </div>
     
     <!-- Finalize Button (If 100% engaged but not submitted) -->
     <?php if ($engPercent >= 100 && $program['user_status'] === 'in_progress'): ?>
-        <div class="hud-stat-card" style="margin-top: 16px; grid-column: 1 / -1; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(34, 211, 238, 0.1)); border: 1px solid rgba(34, 211, 238, 0.3); flex-direction: row; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 16px;">
-                <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(34, 211, 238, 0.1); display: flex; align-items: center; justify-content: center;">
-                    <i class="material-icons-round" style="color: var(--accent-cyan); font-size: 1.8rem;">task_alt</i>
+        <div class="tech-plate vibrant-orange stagger-4" style="margin-top: 24px; padding: 24px; display: flex; justify-content: space-between; align-items: center;">
+            <div class="status-line"></div>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.3); display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons-round" style="color: #f97316; font-size: 2rem; filter: drop-shadow(0 0 8px #f97316);">verified</i>
                 </div>
                 <div>
-                    <div class="hud-stat-value" style="font-size: 1.1rem; color: #fff;">Missão Completa!</div>
-                    <div class="hud-stat-label" style="font-size: 0.75rem;">Você respondeu todos os requisitos.</div>
+                    <div class="hud-stat-value" style="font-size: 1.2rem; color: #fff;">MISSÃO CONCLUÍDA!</div>
+                    <div class="hud-stat-label">O QG aguarda o envio dos dados para avaliação final.</div>
                 </div>
             </div>
-            <button class="action-button-hud program-submit-btn" data-program-id="<?= $program['id'] ?>" style="padding: 10px 20px; font-size: 0.75rem;">
-                <span class="material-icons-round" style="font-size: 1rem;">send</span> ENVIAR PARA AVALIAÇÃO
+            <button class="hud-btn primary program-submit-btn" data-program-id="<?= $program['id'] ?>" style="background: linear-gradient(135deg, #f97316, #fb923c); box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);">
+                <i class="material-icons-round">send</i> ENVIAR AGORA
             </button>
         </div>
     <?php endif; ?>
-<?php 
-// Fallback if status is already submitted but progress is 0% in DB
-// (This covers the user case where they submitted but review hasn't started)
-?>
 
     <!-- Steps List -->
-    <section class="hud-section" style="margin-top: 32px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
-            <h2 class="hud-section-title" style="margin: 0; font-size: 0.95rem; letter-spacing: 0.1em; opacity: 0.9;">ROTEIRO DE ATIVIDADES</h2>
-            <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">
-                Sequência Operacional
-            </div>
+    <section class="hud-section" style="margin-top: 40px;">
+        <div class="hud-section-header">
+            <h2 class="hud-section-title" style="font-size: 1.1rem; color: var(--accent-cyan);">SEQUÊNCIA OPERACIONAL</h2>
+            <div class="hud-section-count"><?= $totalSteps ?> REQUISITOS</div>
         </div>
         
         <div class="hud-grid" style="grid-template-columns: 1fr; gap: 16px;">
@@ -110,105 +115,54 @@
                 $response = $step['response'];
                 $status = $response['status'] ?? 'pending';
                 
-                // Detailed Status Config
-                $config = match ($status) {
-                    'submitted' => ['color' => '#f59e0b', 'icon' => 'hourglass_top', 'label' => 'Em Análise', 'bg' => 'rgba(245, 158, 11, 0.1)'],
-                    'approved' => ['color' => '#10b981', 'icon' => 'check_circle', 'label' => 'Aprovado', 'bg' => 'rgba(16, 185, 129, 0.1)'],
-                    'rejected' => ['color' => '#ef4444', 'icon' => 'error', 'label' => 'Revisar', 'bg' => 'rgba(239, 68, 68, 0.1)'],
-                    default => ['color' => 'var(--text-secondary)', 'icon' => 'radio_button_unchecked', 'label' => 'Pendente', 'bg' => 'rgba(255, 255, 255, 0.03)']
+                // Vibrant Selection
+                $vClass = match ($status) {
+                    'submitted' => 'vibrant-orange',
+                    'approved' => 'vibrant-green',
+                    'rejected' => 'vibrant-red',
+                    default => 'vibrant-cyan'
                 };
 
-                $isLocked = false; // Implement logic later if sequential unlocking exists
+                $config = match ($status) {
+                    'submitted' => ['color' => '#fbbf24', 'icon' => 'hourglass_empty', 'label' => 'EM ANÁLISE'],
+                    'approved' => ['color' => '#34d399', 'icon' => 'verified', 'label' => 'APROVADO'],
+                    'rejected' => ['color' => '#f87171', 'icon' => 'error_outline', 'label' => 'REVISÃO'],
+                    default => ['color' => 'var(--accent-cyan)', 'icon' => 'radio_button_unchecked', 'label' => 'DISPONÍVEL']
+                };
                 ?>
-                <div class="tech-plate learning-card" onclick="openStepModal(<?= $step['id'] ?>)" 
-                     style="
-                        cursor: pointer; position: relative; overflow: hidden; 
-                        border-left: 4px solid <?= $config['color'] === 'var(--text-secondary)' ? 'transparent' : $config['color'] ?>;
-                        padding: 0; min-height: 100px; display: flex;
-                        background: linear-gradient(145deg, rgba(20, 20, 30, 0.6), rgba(20, 20, 30, 0.8)) !important;
-                     ">
+                <div class="tech-plate learning-card <?= $vClass ?> stagger-<?= ($index % 4) + 1 ?>" 
+                     onclick="openStepModal(<?= $step['id'] ?>)" 
+                     style="cursor: pointer; padding: 0; min-height: 100px; display: flex;">
                     
-                    <!-- Background Progress Hint -->
-                    <?php if ($status === 'approved'): ?>
-                        <div style="position: absolute; inset: 0; background: linear-gradient(90deg, <?= $config['bg'] ?>, transparent 40%); opacity: 0.2; pointer-events: none;"></div>
-                    <?php endif; ?>
+                    <div class="status-line"></div>
 
                     <!-- Number Column -->
-                    <div style="
-                        width: 70px; display: flex; align-items: flex-start; justify-content: center;
-                        padding-top: 24px; flex-shrink: 0;
-                    ">
-                        <div style="
-                            width: 32px; height: 32px; 
-                            border-radius: 10px; 
-                            background: rgba(255,255,255,0.03); 
-                            color: <?= $config['color'] ?>;
-                            display: flex; align-items: center; justify-content: center;
-                            font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.9rem;
-                            border: 1px solid rgba(255,255,255,0.05);
-                        ">
-                            <?php if ($status === 'approved'): ?>
-                                <span class="material-icons-round" style="font-size: 1rem;">check</span>
-                            <?php else: ?>
-                                <?= str_pad($index + 1, 2, '0', STR_PAD_LEFT) ?>
-                            <?php endif; ?>
+                    <div style="width: 80px; display: flex; align-items: center; justify-content: center; position: relative;">
+                         <div style="font-family: 'JetBrains Mono', monospace; font-weight: 900; font-size: 1.2rem; opacity: 0.3; color: <?= $config['color'] ?>;">
+                            <?= str_pad($index + 1, 2, '0', STR_PAD_LEFT) ?>
                         </div>
                     </div>
 
                     <!-- Content Column -->
-                    <div class="plate-content" style="flex: 1; padding: 20px 0 20px 0; display: flex; flex-direction: column; gap: 10px;">
-                        
-                        <!-- Top Meta: XP & Status (Badge Row) -->
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="hud-badge" style="
-                                font-size: 0.7rem; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;
-                                background: rgba(255,255,255,0.03); color: var(--text-secondary); border: 1px solid rgba(255,255,255,0.05);
-                            ">
-                                <?= $step['points'] ?> XP
-                            </span>
+                    <div class="plate-content" style="flex: 1; padding: 24px 0; display: flex; flex-direction: column; gap: 8px;">
+                        <!-- Status Tag -->
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                             <div class="hud-badge" style="font-size: 0.6rem; color: <?= $config['color'] ?>; border-color: <?= $config['color'] ?>; background: rgba(0,0,0,0.2);">
+                                <?= $config['label'] ?>
+                            </div>
                             <?php if ($step['is_required']): ?>
-                                <span class="hud-badge" style="
-                                    font-size: 0.7rem; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;
-                                    color: var(--accent-cyan); background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.15);
-                                ">
-                                    Obrigatório
-                                </span>
-                            <?php endif; ?>
-                            
-                            <!-- Detailed Status -->
-                            <?php if ($status !== 'not_started'): ?>
-                                <div style="display: flex; align-items: center; gap: 4px; border: 1px solid <?= $config['bg'] ?>; padding: 2px 8px; border-radius: 6px; background: rgba(0,0,0,0.2);"> 
-                                    <div style="width: 6px; height: 6px; border-radius: 50%; background: <?= $config['color'] ?>; box-shadow: 0 0 5px <?= $config['color'] ?>;"></div>
-                                    <span style="font-size: 0.65rem; color: <?= $config['color'] ?>; font-weight: 700; text-transform: uppercase;">
-                                        <?= $config['label'] ?>
-                                    </span>
-                                </div>
+                                <span style="font-size: 0.6rem; font-weight: 800; color: #f87171; letter-spacing: 0.1em;">[OBRIGATÓRIO]</span>
                             <?php endif; ?>
                         </div>
 
                         <!-- Title -->
-                        <h3 class="plate-title" style="
-                            font-size: 1rem; line-height: 1.4em; margin: 0;
-                            display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; overflow: hidden !important;
-                            max-height: 2.8em; font-weight: 500; color: #f1f5f9; letter-spacing: 0.01em;
-                        "><?= htmlspecialchars(mb_strimwidth($step['title'], 0, 60, "...")) ?></h3>
-                        
+                        <h3 class="plate-title" style="font-size: 1.1rem; line-height: 1.3;"><?= htmlspecialchars($step['title']) ?></h3>
                     </div>
 
-                    <!-- Action Column -->
-                    <div style="
-                        width: 50px; display: flex; align-items: center; justify-content: center;
-                        padding-right: 12px;
-                    ">
-                        <div class="card-arrow" style="
-                            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-                            background: transparent; border-radius: 50%; border: 1px solid rgba(255,255,255,0.05);
-                            color: var(--text-secondary); transition: all 0.2s;
-                        ">
-                            <span class="material-icons-round" style="font-size: 1.2rem;">chevron_right</span>
-                        </div>
+                    <!-- Icon Column -->
+                    <div style="width: 70px; display: flex; align-items: center; justify-content: center;">
+                        <i class="material-icons-round" style="color: <?= $config['color'] ?>; font-size: 1.8rem; opacity: 0.8;"><?= $config['icon'] ?></i>
                     </div>
-
                 </div>
             <?php endforeach; ?>
         </div>
@@ -216,24 +170,15 @@
 
     <style>
         .learning-card {
-            background: linear-gradient(145deg, rgba(30, 30, 46, 0.8), rgba(20, 20, 35, 0.9)) !important;
-            backdrop-filter: blur(10px);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 24px !important; /* Design System: Rounded Cards */
-            overflow: hidden; /* Ensure content obeys radius */
+            border-radius: 20px !important;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         .learning-card:hover {
-            transform: translateY(-2px) !important;
-            background: linear-gradient(145deg, rgba(40, 40, 60, 0.9), rgba(25, 25, 45, 0.95)) !important;
-            border-color: rgba(255,255,255,0.1);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        }
-        .learning-card:hover .card-arrow {
-            background: var(--accent-cyan);
-            color: #fff;
+            background: rgba(255, 255, 255, 0.1) !important;
+            transform: scale(1.01) translateX(10px) !important;
         }
         .learning-card:active {
-            transform: scale(0.99) !important;
+            transform: scale(0.98) !important;
         }
     </style>
 </div>
