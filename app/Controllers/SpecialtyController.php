@@ -956,36 +956,66 @@ class SpecialtyController
             return;
         }
 
-        // Generate unique ID
-        $prefix = substr(preg_replace('/[^a-z]/', '', strtolower($categoryId)), 0, 4);
-        $suffix = substr(uniqid(), -5);
-        $specialtyId = $prefix . '_t' . $tenant['id'] . '_' . $suffix;
+        // Clean category ID (handle prefixes like lc_123 or strings)
+        $cleanCategoryId = $categoryId;
+        if (str_starts_with($categoryId, 'lc_')) {
+            $cleanCategoryId = substr($categoryId, 3);
+        } elseif (!is_numeric($categoryId)) {
+            // If it's a string ID (legacy), we might need to look it up or set null if migrating
+            // For now, assuming new architecture uses integer IDs for categories
+            // If it fails, we default to null or try to find by name? 
+            // Better to fail gracefully if category ID format is wrong
+             $cleanCategoryId = null; // Let it fail validation or insert as null?
+        }
+
+        // Generate slug for learning_programs
+        $slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $name));
+        $specialtyId = null; // Will be the auto-increment ID from learning_programs
 
         try {
-            db_insert('specialties', [
-                'id' => $specialtyId,
+            // Start transaction
+            db_begin();
+
+            // Insert into learning_programs (The Source of Truth)
+            $programId = db_insert('learning_programs', [
                 'tenant_id' => $tenant['id'],
-                'category_id' => $categoryId,
+                'category_id' => $cleanCategoryId,
+                'type' => 'specialty', // Explicitly set type to specialty
                 'name' => $name,
-                'badge_icon' => $badgeIcon,
-                'type' => $type,
+                'slug' => $slug,
+                'icon' => $badgeIcon,
+                'description' => $description,
+                'is_outdoor' => ($type === 'outdoor' || $type === 'mixed') ? 1 : 0,
                 'duration_hours' => $durationHours,
                 'difficulty' => $difficulty,
                 'xp_reward' => $xpReward,
-                'description' => $description,
-                'status' => 'inactive', // 'inactive' acts as draft in current schema
-                'created_by' => $user['id'],
+                'status' => 'active', // Active by default in god-mode
+                'created_by' => $user['id']
             ]);
+
+            // Also create initial version for it (since ProgramController expects it)
+            db_insert('program_versions', [
+                'program_id' => $programId,
+                'version_number' => 1,
+                'status' => 'draft', // Content is draft until published
+                'created_at' => date('Y-m-d H:i:s') 
+            ]);
+
+            db_commit();
 
             $this->json([
                 'success' => true,
                 'message' => 'Especialidade criada com sucesso!',
-                'specialty_id' => $specialtyId,
-                'redirect' => base_url($tenant['slug'] . '/admin/especialidades/' . urlencode($specialtyId) . '/requisitos')
+                'specialty_id' => $programId,
+                // Redirect to the requirements editor which should now support integer IDs
+                'redirect' => base_url($tenant['slug'] . '/admin/programas/' . $programId . '/editar') 
             ]);
 
         } catch (\Exception $e) {
-            $this->json(['error' => 'Erro ao criar especialidade: ' . $e->getMessage()], 500);
+            db_rollback();
+            // Log full error for internal debugging
+            error_log("SpecialtyCreation Error: " . $e->getMessage());
+            $this->json(['error' => 'Erro ao criar: ' . $e->getMessage()], 500);
         }
     }
 

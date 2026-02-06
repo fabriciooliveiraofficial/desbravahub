@@ -41,22 +41,22 @@
             <div class="plate-header" style="margin-bottom: 8px;">
                 <div>
                     <div class="hud-stat-value" style="font-size: 2.8rem; line-height: 1;"><?= $engPercent ?>%</div>
-                    <div class="hud-stat-label">REQUISITOS SINCRONIZADOS</div>
+                    <div class="hud-stat-label">SINCRONIZAÇÃO DE DADOS</div>
                 </div>
                 <i class="material-icons-round hud-stat-icon" style="opacity: 1; color: var(--accent-cyan); filter: drop-shadow(0 0 8px var(--accent-cyan)); font-size: 2.5rem;">hub</i>
             </div>
             
             <div style="margin: 16px 0;">
-                <div class="hud-progress" style="background: rgba(0,0,0,0.3); height: 8px; border-radius: 100px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+                <div class="hud-progress" style="background: rgba(0,0,0,0.3); height: 8px; border-radius: 100px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); position: relative;">
                     <!-- Answered Bar (Engagement) -->
-                    <div class="hud-progress-bar" style="width: <?= $engPercent ?>%; background: var(--accent-cyan); opacity: 0.2; position: absolute; height: 100%;"></div>
+                    <div class="hud-progress-bar" style="width: <?= $engPercent ?>%; background: var(--accent-cyan); opacity: 0.3; position: absolute; height: 100%;"></div>
                     <!-- Approved Bar (Real Progress) -->
                     <div class="hud-progress-bar" style="width: <?= $progPercent ?>%; background: linear-gradient(90deg, #22d3ee, #06b6d4); position: relative; height: 100%; box-shadow: 0 0 10px var(--accent-cyan);"></div>
                 </div>
             </div>
 
             <div style="display: flex; justify-content: space-between; margin-top: 2px;">
-                <span style="font-size: 0.65rem; font-weight: 800; color: var(--hud-text-dim);">DADOS VALIDADOS</span>
+                <span style="font-size: 0.65rem; font-weight: 800; color: var(--hud-text-dim);">ÍNDICE DE VALIDAÇÃO</span>
                 <span style="font-size: 0.75rem; font-weight: 900; color: #fff;"><?= $progPercent ?>%</span>
             </div>
         </div>

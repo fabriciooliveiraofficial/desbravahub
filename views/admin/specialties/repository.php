@@ -1558,22 +1558,42 @@ $pageIcon = 'school';
                     body: formData
                 });
 
-                const data = await response.json();
+                // Check for JSON content type
+                const contentType = response.headers.get("content-type");
+                if (!response.ok) {
+                     if (contentType && contentType.indexOf("application/json") !== -1) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || `Erro ${response.status}: ${response.statusText}`);
+                     } else {
+                        const text = await response.text();
+                        console.error("Server Error HTML:", text); // Log full HTML for debug
+                        throw new Error(`Erro no servidor (${response.status}). Verifique o console.`);
+                     }
+                }
 
-                if (data.success) {
-                    showToast('✅ Especialidade criada com sucesso!');
-                    // Redirect to requirements editor
-                    if (data.redirect) {
-                        setTimeout(() => window.location.href = data.redirect, 500);
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    const data = await response.json();
+                    if (data.success) {
+                        showToast('✅ Especialidade criada com sucesso!');
+                        // Redirect to requirements editor
+                        if (data.redirect) {
+                            setTimeout(() => window.location.href = data.redirect, 500);
+                        } else {
+                            setTimeout(() => location.reload(), 500);
+                        }
                     } else {
-                        setTimeout(() => location.reload(), 500);
+                        throw new Error(data.error || 'Erro desconhecido ao criar especialidade');
                     }
                 } else {
-                    showToast(data.error || 'Erro ao criar especialidade', 'error');
+                     // Unexpected success response format
+                     const text = await response.text();
+                     console.warn("Unexpected response format:", text);
+                     throw new Error('Formato de resposta inválido do servidor');
                 }
+
             } catch (err) {
                 console.error(err);
-                showToast('Erro de conexão', 'error');
+                showToast(err.message || 'Erro de conexão', 'error');
             } finally {
                 btn.disabled = false;
                 btn.textContent = '🚀 Criar Especialidade';

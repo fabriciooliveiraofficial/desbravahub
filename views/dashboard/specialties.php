@@ -25,12 +25,27 @@
         <!-- Primary -->
         <div class="hud-stat-card primary">
             <div>
-                <div class="hud-stat-value" style="color: var(--accent-cyan)"><?= $countProgress ?></div>
-                <div class="hud-stat-label">Em Execução</div>
+                <div class="hud-stat-value" style="color: var(--accent-cyan)"><?= $countProgress + $countReview ?></div>
+                <div class="hud-stat-label">Incursões Ativas</div>
             </div>
             <i class="fas fa-satellite-dish hud-stat-icon"></i>
             <div class="hud-progress" style="margin-left: 0; margin-top: 8px; height: 3px;">
-                <div class="hud-progress-bar" style="width: 60%; background: var(--accent-cyan); box-shadow: 0 0 10px var(--accent-cyan);"></div>
+                <?php 
+                $avgProgress = 0;
+                if ($totalAssigned > 0) {
+                    $sum = 0;
+                    foreach ($assignments as $a) {
+                        if ($a['type_label'] === 'program') {
+                            $sum += $a['progress_percent'] ?? 0;
+                        } else {
+                            $calc = \App\Services\SpecialtyService::calculateProgress($a['id'], $a['specialty_id']);
+                            $sum += $calc['percentage'];
+                        }
+                    }
+                    $avgProgress = round($sum / $totalAssigned);
+                }
+                ?>
+                <div class="hud-progress-bar" style="width: <?= $avgProgress ?>%; background: var(--accent-cyan); box-shadow: 0 0 10px var(--accent-cyan);"></div>
             </div>
         </div>
 
@@ -133,8 +148,19 @@
                                 <?php endif; ?>
                             </div>
                             
-                            <div class="hud-progress" style="color: var(--accent-cyan)">
-                                <div class="hud-progress-bar" style="width: 50%"></div>
+                            <?php 
+                            if ($a['type_label'] === 'program') {
+                                $engPercent = $a['total_steps'] > 0 ? round(($a['answered_steps'] / $a['total_steps']) * 100) : 0;
+                                $progPercent = $a['progress_percent'] ?? 0;
+                            } else {
+                                $calc = \App\Services\SpecialtyService::calculateProgress($a['id'], $a['specialty_id']);
+                                $engPercent = $calc['answered_percentage'];
+                                $progPercent = $calc['percentage'];
+                            }
+                            ?>
+                            <div class="hud-progress" style="color: var(--accent-cyan); background: rgba(0,0,0,0.3); height: 6px; border-radius: 100px; overflow: hidden; position: relative;">
+                                <div class="hud-progress-bar" style="width: <?= $engPercent ?>%; opacity: 0.3; position: absolute; height: 100%;"></div>
+                                <div class="hud-progress-bar" style="width: <?= $progPercent ?>%; position: relative; height: 100%; box-shadow: 0 0 8px currentColor;"></div>
                             </div>
 
                             <div class="plate-data">

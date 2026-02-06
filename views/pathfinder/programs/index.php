@@ -67,12 +67,12 @@
                     </div>
 
                     <div style="margin: 24px 0;">
-                        <div class="hud-progress" style="background: rgba(0,0,0,0.4); height: 10px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.05);">
-                            <div class="hud-progress-bar" style="width: <?= $engPercent ?>%; background: <?= $catType === 'class' ? '#8b5cf6' : 'var(--accent-cyan)' ?>; opacity: 0.2; position: absolute; height: 100%;"></div>
+                        <div class="hud-progress" style="background: rgba(0,0,0,0.4); height: 10px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden;">
+                            <div class="hud-progress-bar" style="width: <?= $engPercent ?>%; background: <?= $catType === 'class' ? '#8b5cf6' : 'var(--accent-cyan)' ?>; opacity: 0.3; position: absolute; height: 100%;"></div>
                             <div class="hud-progress-bar" style="width: <?= $appPercent ?>%; background: linear-gradient(90deg, <?= $catType === 'class' ? '#a78bfa, #8b5cf6' : '#22d3ee, #06b6d4' ?>); position: relative; height: 100%; box-shadow: 0 0 12px currentColor;"></div>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                            <span style="font-size: 0.65rem; font-weight: 800; color: var(--hud-text-dim);">DADOS SINCRONIZADOS</span>
+                            <span style="font-size: 0.65rem; font-weight: 800; color: var(--hud-text-dim);">DESEMPENHO OPERACIONAL</span>
                             <span style="font-size: 0.75rem; font-weight: 900; color: #fff;"><?= $appPercent ?>%</span>
                         </div>
                     </div>
