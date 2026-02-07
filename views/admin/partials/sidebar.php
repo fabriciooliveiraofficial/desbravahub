@@ -191,13 +191,7 @@
 
     </nav>
 
-    <!-- Footer -->
-    <div class="sidebar-footer">
-        <a href="<?= base_url($tenant['slug'] . '/dashboard') ?>" class="nav-item" style="color: var(--text-muted);">
-            <span class="material-icons-round" style="font-size: 18px;">keyboard_backspace</span>
-            Voltar ao App
-        </a>
-    </div>
+
 </aside>
 
 

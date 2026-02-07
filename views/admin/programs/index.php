@@ -769,7 +769,7 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
                                     <span class="meta-tag status-<?= $program['status'] ?>" style="margin-left:auto; background: var(--bg-dark); padding: 2px 8px; border-radius: 4px;">
                                         <?= match ($program['status']) {
                                             'draft' => '📝 Rascunho',
-                                            'published', 'active' => '✅ Publicado',
+                                            'published', 'active', '' => '✅ Publicado',
                                             'archived' => '📦 Arquivado',
                                             default => '❓ ' . ucfirst($program['status'] ?? 'Desconhecido')
                                         } ?>
@@ -793,7 +793,7 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
                                     <span class="material-icons-round" style="font-size:18px">edit</span>
                                 </a>
 
-                                <?php if ($program['status'] === 'published' || $program['status'] === 'active'): ?>
+                                <?php if ($program['status'] === 'published' || $program['status'] === 'active' || empty($program['status'])): ?>
                                     <a href="<?= base_url($programs_tenantSlug . '/admin/especialidades/prog_' . $program['id'] . '/atribuir') ?>" 
                                        class="btn-card-assign">
                                         <span class="material-icons-round" style="font-size:16px">group_add</span> Atribuir
