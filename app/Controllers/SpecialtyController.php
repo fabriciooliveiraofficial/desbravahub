@@ -989,7 +989,7 @@ class SpecialtyController
                 'duration_hours' => $durationHours,
                 'difficulty' => $difficulty,
                 'xp_reward' => $xpReward,
-                'status' => 'active', // Active by default in god-mode
+                'status' => 'draft', // Draft by default (Active is not a valid enum value)
                 'created_by' => $user['id']
             ]);
 

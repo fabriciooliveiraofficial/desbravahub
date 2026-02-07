@@ -770,7 +770,8 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
                                         <?= match ($program['status']) {
                                             'draft' => '📝 Rascunho',
                                             'published' => '✅ Publicado',
-                                            'archived' => '📦 Arquivado'
+                                            'archived' => '📦 Arquivado',
+                                            default => '❓ ' . ucfirst($program['status'] ?? 'Desconhecido')
                                         } ?>
                                     </span>
                                 </div>
