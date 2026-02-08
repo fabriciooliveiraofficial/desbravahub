@@ -142,7 +142,8 @@ function is_production(): bool
  */
 function is_dev(): bool
 {
-    return is_env('dev');
+    $env = env('APP_ENV', 'production');
+    return $env === 'dev' || $env === 'local';
 }
 
 /**

@@ -287,6 +287,12 @@ class SpecialtyService
                 throw new \Exception("Esta missão (Programa) não possui uma versão publicada e não pode ser liberada.");
             }
 
+            // PREVENT DUPLICATES: Check if user already has this program assigned
+            $existing = db_fetch_one("SELECT id FROM user_program_progress WHERE program_id = ? AND user_id = ? AND tenant_id = ?", [$progId, $userId, $tenantId]);
+            if ($existing) {
+                return (int) $existing['id'];
+            }
+
             return db_insert('user_program_progress', [
                 'tenant_id' => $tenantId,
                 'program_id' => $progId,

@@ -38,7 +38,7 @@ class LearningNotificationService
         $admins = db_fetch_all("
             SELECT u.id FROM users u
             JOIN roles r ON u.role_id = r.id
-            WHERE u.tenant_id = ? AND r.name IN ('admin', 'director', 'counselor')
+            WHERE u.tenant_id = ? AND r.name IN ('admin', 'director', 'counselor', 'instructor')
         ", [$tenantId]);
 
         $service = new NotificationService();
@@ -53,7 +53,7 @@ class LearningNotificationService
                         'link' => base_url("{$tenantSlug}/admin/aprovacoes"),
                         'icon' => '📋'
                     ],
-                    'channels' => ['toast'] // Admins only get toast/email usually, or push if configured
+                    'channels' => ['toast', 'push']
                 ]
             );
         }

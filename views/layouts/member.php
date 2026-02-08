@@ -17,6 +17,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#1a1a2e">
     <title>DesbravaHub | <?= $tenant['name'] ?></title>
     
@@ -115,10 +116,10 @@
             e.preventDefault();
             e.stopPropagation();
             
-            const programId = btn.dataset.programId;
-            if (!programId) return;
+            const progressId = btn.dataset.progressId;
+            if (!progressId) return;
             
-            const confirmed = await sconfirm('Deseja enviar todas as respostas para avaliação? Certifique-se de que revisou tudo.', 'Finalizar Missão');
+            const confirmed = await sconfirm('Deseja enviar esta missão para avaliação? Certifique-se de que revisou tudo.', 'Enviar Missão');
             if (!confirmed) return;
             
             const originalContent = btn.innerHTML;
@@ -126,7 +127,7 @@
             btn.classList.add('disabled');
             btn.innerHTML = '<span class="material-icons-round spin">sync</span> Enviando...';
             
-            fetch(`/<?= $tenant['slug'] ?>/aprendizado/${programId}/submit-all`, {
+            fetch(`/<?= $tenant['slug'] ?>/aprendizado/${progressId}/submit-all`, {
                 method: 'POST'
             })
             .then(r => r.json())

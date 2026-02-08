@@ -713,6 +713,12 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
                     </option>
                     <option value="class" <?= ($type ?? '') === 'class' ? 'selected' : '' ?>>🎖️ Classes</option>
                 </select>
+                <select class="filter-select" onchange="filterByStatus(this.value)">
+                    <option value="">Ativos & Rascunhos</option>
+                    <option value="published" <?= ($status ?? '') === 'published' ? 'selected' : '' ?>>✅ Publicados</option>
+                    <option value="draft" <?= ($status ?? '') === 'draft' ? 'selected' : '' ?>>📝 Rascunhos</option>
+                    <option value="archived" <?= ($status ?? '') === 'archived' ? 'selected' : '' ?>>📦 Arquivados</option>
+                </select>
             </div>
 
             <div class="actions-group">
@@ -984,6 +990,16 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
             window.location = url;
         }
 
+        function filterByStatus(status) {
+            const url = new URL(window.location);
+            if (status) {
+                url.searchParams.set('status', status);
+            } else {
+                url.searchParams.delete('status');
+            }
+            window.location = url;
+        }
+
         async function publishProgram(id) {
             const confirmed = await showConfirm({
                 title: 'Publicar Programa',
@@ -1007,27 +1023,53 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
             }
         }
 
-        async function deleteProgram(id, name) {
-            const confirmed = await showConfirm({
-                title: 'Excluir Programa',
-                message: `Excluir "${name}"? Esta ação não pode ser desfeita.`,
-                icon: '🗑️',
-                danger: true,
-                okText: 'Excluir'
-            });
-            if (!confirmed) return;
+        async function deleteProgram(id, name, force = false) {
+            if (!force) {
+                const confirmed = await showConfirm({
+                    title: 'Excluir Programa',
+                    message: `Excluir "${name}"? Esta ação não pode ser desfeita.`,
+                    icon: '🗑️',
+                    danger: true,
+                    okText: 'Excluir'
+                });
+                if (!confirmed) return;
+            }
 
             try {
-                const resp = await fetch(`/${programs_tenantSlug}/admin/programas/${id}/delete`, { method: 'POST' });
+                console.log('Deletando programa:', id, force ? '(FORÇADO)' : '');
+                const url = `/${programs_tenantSlug}/admin/programas/${id}/delete${force ? '?force=true' : ''}`;
+                const resp = await fetch(url, { method: 'POST' });
                 const data = await resp.json();
+                
                 if (data.success) {
+                    if (data.has_progress && !force) {
+                        // Special case: handled as archive but we offer the forced delete option directly
+                        const forceDelete = await showConfirm({
+                            title: '☢️ EXCLUSÃO CRÍTICA',
+                            message: `Este programa possui progresso de desbravadores! Ele foi <b>ARQUIVADO</b> para segurança.<br><br>Deseja realmente <b>APAGAR TUDO</b> (incluindo o progresso de todos os usuários)? Esta ação é permanente e destrutiva!`,
+                            icon: '⚠️',
+                            danger: true,
+                            okText: 'Sim, Apagar Tudo',
+                            cancelText: 'Manter Arquivado'
+                        });
+
+                        if (forceDelete) {
+                            return deleteProgram(id, name, true);
+                        } else {
+                            location.reload();
+                        }
+                        return;
+                    }
+
                     showToast(data.message);
-                    setTimeout(() => location.reload(), 500);
+                    const delay = data.message.includes('arquivado') ? 2000 : 800;
+                    setTimeout(() => location.reload(), delay);
                 } else {
-                    showToast(data.error || 'Erro', 'error');
+                    showToast(data.error || 'Erro ao excluir', 'error');
                 }
             } catch (err) {
-                showToast('Erro de conexão', 'error');
+                console.error('Erro na deleção:', err);
+                showToast('Erro de conexão ou erro interno', 'error');
             }
         }
         window.deleteProgram = deleteProgram;

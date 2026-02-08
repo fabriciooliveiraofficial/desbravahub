@@ -80,29 +80,9 @@ class HomeController
                 'status' => 'active',
             ]);
 
-            // Create admin role
-            $roleId = db_insert('roles', [
-                'tenant_id' => $tenantId,
-                'name' => 'admin',
-                'display_name' => 'Administrador',
-                'is_system' => 1,
-            ]);
-
-            // Create pathfinder role
-            db_insert('roles', [
-                'tenant_id' => $tenantId,
-                'name' => 'pathfinder',
-                'display_name' => 'Desbravador',
-                'is_system' => 1,
-            ]);
-
-            // Create director role
-            db_insert('roles', [
-                'tenant_id' => $tenantId,
-                'name' => 'director',
-                'display_name' => 'Diretor',
-                'is_system' => 1,
-            ]);
+            // Setup all official roles for the new club
+            $syncStats = \App\Services\RoleService::syncTenant($tenantId);
+            $roleId = $syncStats['roles']['admin'] ?? 0;
 
             // Create admin user
             db_insert('users', [

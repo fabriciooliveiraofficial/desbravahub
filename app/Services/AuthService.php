@@ -141,7 +141,10 @@ class AuthService
     public function setAuthCookie(string $token): void
     {
         $expires = time() + (self::SESSION_LIFETIME_HOURS * 3600);
-        $secure = !is_dev(); // Only secure in production
+        
+        // Only use Secure cookies if on HTTPS AND not in dev/local environment
+        // Browsers block Secure cookies on http://localhost exception, but it's safer to be explicit
+        $secure = is_https() && !is_dev();
 
         setcookie('auth_token', $token, [
             'expires' => $expires,

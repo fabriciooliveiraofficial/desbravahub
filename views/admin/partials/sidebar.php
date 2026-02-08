@@ -28,6 +28,7 @@
                 ];
                 $roleLabel = $roleLabels[$user['role_name']] ?? ucfirst($user['role_name']);
             }
+            $permissionService = new \App\Services\PermissionService();
             ?>
             <div style="margin-top: 8px;">
                 <span class="role-badge" style="background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7;">
@@ -124,7 +125,7 @@
         </a>
 
         <!-- Permissions (Admin Only) -->
-        <?php if (($user['role_name'] ?? '') === 'admin'): ?>
+        <?php if ($permissionService->can('admin.access')): ?>
             <a href="<?= base_url($tenant['slug'] . '/admin/permissoes') ?>"
                 class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/admin/permissoes') ? 'active' : '' ?>">
                 <span class="material-icons-round" style="color: #d97706;">lock</span> <!-- Amber-600 -->
@@ -133,7 +134,7 @@
         <?php endif; ?>
 
         <!-- Email Group -->
-        <?php if (in_array($user['role_name'] ?? '', ['admin', 'director'])): ?>
+        <?php if ($permissionService->canAny(['notifications.broadcast', 'admin.access'])): ?>
             <a href="<?= base_url($tenant['slug'] . '/admin/email/inbox') ?>"
                 class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/admin/email') ? 'active' : '' ?>">
                 <span class="material-icons-round" style="color: #3b82f6;">mail</span> <!-- Blue-500 -->
@@ -142,7 +143,7 @@
         <?php endif; ?>
 
         <!-- Invitations -->
-        <?php if (in_array($user['role_name'] ?? '', ['admin', 'director', 'associate_director', 'counselor'])): ?>
+        <?php if ($permissionService->canAny(['users.create', 'admin.access'])): ?>
             <a href="<?= base_url($tenant['slug'] . '/admin/convites') ?>"
                 class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/admin/convites') ? 'active' : '' ?>">
                 <span class="material-icons-round" style="color: #94a3b8;">confirmation_number</span> <!-- Slate-400 -->
@@ -165,7 +166,7 @@
         </a>
 
         <!-- Versions -->
-        <?php if (($user['role_name'] ?? '') === 'admin'): ?>
+        <?php if ($permissionService->can('admin.versions')): ?>
             <a href="<?= base_url($tenant['slug'] . '/admin/versoes') ?>"
                 class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/admin/versoes') ? 'active' : '' ?>">
                 <span class="material-icons-round" style="color: #60a5fa;">system_update_alt</span> <!-- Blue-400 -->
@@ -174,7 +175,7 @@
         <?php endif; ?>
 
         <!-- Feature Flags -->
-        <?php if (($user['role_name'] ?? '') === 'admin'): ?>
+        <?php if ($permissionService->can('admin.features')): ?>
             <a href="<?= base_url($tenant['slug'] . '/admin/features') ?>"
                 class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/admin/features') ? 'active' : '' ?>">
                 <span class="material-icons-round" style="color: #f43f5e;">flag</span> <!-- Rose-500 -->
@@ -190,6 +191,16 @@
         </a>
 
     </nav>
+    <!-- App Switcher -->
+    <div class="sidebar-footer" style="margin-top: auto; padding: 16px; border-top: 1px solid var(--border-color);">
+        <a href="<?= base_url($tenant['slug'] . '/dashboard') ?>" 
+           class="nav-item" 
+           style="color: var(--accent-primary); font-weight: 800; background: #ecfeff; border-radius: 12px; border: 1px solid #cffafe;"
+           hx-boost="false">
+            <span class="material-icons-round" style="font-size: 20px;">rocket_launch</span>
+            Painel Desbravador
+        </a>
+    </div>
 
 
 </aside>

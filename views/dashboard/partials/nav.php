@@ -69,6 +69,21 @@ $isPerfil = strpos($currentPath, '/perfil') !== false;
             <span class="dock-label">Perfil</span>
             <?php if ($isPerfil): ?><span class="active-dot"></span><?php endif; ?>
         </a>
+
+        <?php 
+        $permissionService = new \App\Services\PermissionService();
+        if ($permissionService->can('admin.access')): 
+        ?>
+        <a href="<?= base_url($tenant['slug'] . '/admin/dashboard') ?>" 
+           class="dock-item" data-tooltip="Painel Administrativo"
+           hx-boost="false">
+            <div class="dock-icon-wrap">
+                <span class="material-icons-round">admin_panel_settings</span>
+                <div class="icon-glow"></div>
+            </div>
+            <span class="dock-label">Painel Adm</span>
+        </a>
+        <?php endif; ?>
     </div>
 </nav>
 
@@ -289,29 +304,50 @@ $isPerfil = strpos($currentPath, '/perfil') !== false;
     }
 }
 
-/* Ultra-small screens (iPhone SE, ≤360px) - prevent overflow */
-@media (max-width: 360px) {
+/* Mobile screens (prevent overflow with 6+ items) */
+@media (max-width: 480px) {
     .dock-inner {
-        gap: 0;
-        padding: 8px 8px 10px;
+        gap: 2px;
+        padding: 8px 10px 10px;
+        border-radius: 20px;
     }
     
     .dock-item {
-        padding: 6px 4px;
+        padding: 6px 6px;
+        min-width: 50px;
     }
     
     .dock-icon-wrap {
-        width: 40px;
-        height: 40px;
+        width: 42px;
+        height: 42px;
     }
     
     .dock-icon-wrap .material-icons-round {
-        font-size: 22px;
+        font-size: 20px;
     }
     
     .dock-label {
         font-size: 0.55rem;
-        letter-spacing: 0;
+        letter-spacing: -0.02em;
+        white-space: nowrap;
+    }
+}
+
+/* Vertical phones (≤360px) */
+@media (max-width: 360px) {
+    .dock-inner {
+        gap: 0;
+        padding: 6px 6px 8px;
+    }
+    
+    .dock-item {
+        padding: 4px 2px;
+        min-width: 45px;
+    }
+    
+    .dock-icon-wrap {
+        width: 38px;
+        height: 38px;
     }
 }
 </style>

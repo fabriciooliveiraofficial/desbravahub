@@ -29,11 +29,21 @@
         $totalSteps = count($steps);
         $completedSteps = 0;
         $answeredSteps = 0;
+        $finalizedSteps = 0; // Steps that are either submitted, approved, or rejected (waiting review)
+        
         foreach ($steps as $s) {
             $st = $s['response']['status'] ?? 'pending';
             if ($st === 'approved') $completedSteps++;
             if ($st !== 'pending' && $st !== 'not_started') $answeredSteps++;
+            
+            // Count steps that are effectively "done" from user perspective
+            if (in_array($st, ['submitted', 'approved', 'rejected'])) {
+                $finalizedSteps++;
+            }
         }
+        
+        $isFullySubmitted = ($finalizedSteps >= $totalSteps) && $totalSteps > 0;
+
         $progPercent = $totalSteps > 0 ? round(($completedSteps / $totalSteps) * 100) : 0;
         $engPercent = $totalSteps > 0 ? round(($answeredSteps / $totalSteps) * 100) : 0;
         ?>
@@ -49,15 +59,28 @@
             <div style="margin: 16px 0;">
                 <div class="hud-progress" style="background: rgba(0,0,0,0.3); height: 8px; border-radius: 100px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); position: relative;">
                     <!-- Answered Bar (Engagement) -->
-                    <div class="hud-progress-bar" style="width: <?= $engPercent ?>%; background: var(--accent-cyan); opacity: 0.3; position: absolute; height: 100%;"></div>
+                    <div class="hud-progress-bar" style="width: <?= $engPercent ?>%; background: var(--accent-cyan); opacity: 0.6; position: absolute; height: 100%;"></div>
                     <!-- Approved Bar (Real Progress) -->
                     <div class="hud-progress-bar" style="width: <?= $progPercent ?>%; background: linear-gradient(90deg, #22d3ee, #06b6d4); position: relative; height: 100%; box-shadow: 0 0 10px var(--accent-cyan);"></div>
                 </div>
             </div>
 
             <div style="display: flex; justify-content: space-between; margin-top: 2px;">
-                <span style="font-size: 0.65rem; font-weight: 800; color: var(--hud-text-dim);">ÍNDICE DE VALIDAÇÃO</span>
-                <span style="font-size: 0.75rem; font-weight: 900; color: #fff;"><?= $progPercent ?>%</span>
+                <?php
+                $dispLabel = 'ÍNDICE DE VALIDAÇÃO';
+                $dispVal = $progPercent;
+                $dispColor = '#fff';
+
+                // If Approval is 0 but Engagement is 100% (or positive), show "Review in Progress"
+                // to give user 100% feedback once they finish their part.
+                if ($progPercent == 0 && $engPercent > 0) {
+                    $dispLabel = 'VALIDAÇÃO EM CURSO';
+                    $dispVal = $engPercent;
+                    $dispColor = '#fbbf24'; // Amber/Warning
+                }
+                ?>
+                <span style="font-size: 0.65rem; font-weight: 800; color: var(--hud-text-dim);"><?= $dispLabel ?></span>
+                <span style="font-size: 0.75rem; font-weight: 900; color: <?= $dispColor ?>;"><?= $dispVal ?>%</span>
             </div>
         </div>
 
@@ -85,11 +108,12 @@
     </div>
     
     <!-- Finalize Button (If 100% engaged but not submitted) -->
-    <?php if ($engPercent >= 100 && $program['user_status'] === 'in_progress'): ?>
-        <div class="tech-plate vibrant-orange stagger-4" style="margin-top: 24px; padding: 24px; display: flex; justify-content: space-between; align-items: center;">
+    <!-- Logic: Show "Send Now" if engaged but NOT fully submitted yet. -->
+    <?php if ($engPercent >= 100 && !$isFullySubmitted && $program['user_status'] === 'in_progress'): ?>
+        <div class="tech-plate vibrant-orange stagger-4 mission-complete-card" style="margin-top: 24px; padding: 24px; display: flex; justify-content: space-between; align-items: center;">
             <div class="status-line"></div>
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.3); display: flex; align-items: center; justify-content: center;">
+            <div class="mission-complete-content" style="display: flex; align-items: center; gap: 20px;">
+                <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                     <i class="material-icons-round" style="color: #f97316; font-size: 2rem; filter: drop-shadow(0 0 8px #f97316);">verified</i>
                 </div>
                 <div>
@@ -99,6 +123,22 @@
             </div>
             <button class="hud-btn primary program-submit-btn" data-program-id="<?= $program['id'] ?>" style="background: linear-gradient(135deg, #f97316, #fb923c); box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);">
                 <i class="material-icons-round">send</i> ENVIAR AGORA
+            </button>
+        </div>
+    <?php elseif ($isFullySubmitted && $program['user_status'] !== 'completed'): ?>
+        <div class="tech-plate vibrant-cyan stagger-4 mission-complete-card" style="margin-top: 24px; padding: 24px; display: flex; justify-content: space-between; align-items: center;">
+            <div class="status-line"></div>
+            <div class="mission-complete-content" style="display: flex; align-items: center; gap: 20px;">
+                <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(0, 217, 255, 0.1); border: 1px solid rgba(0, 217, 255, 0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <i class="material-icons-round" style="color: var(--accent-cyan); font-size: 2rem; filter: drop-shadow(0 0 8px var(--accent-cyan));">hourglass_empty</i>
+                </div>
+                <div>
+                    <div class="hud-stat-value" style="font-size: 1.2rem; color: #fff;">MISSÃO ENVIADA!</div>
+                    <div class="hud-stat-label">Aguardando análise da liderança. Você será notificado.</div>
+                </div>
+            </div>
+            <button class="hud-btn secondary" disabled style="opacity: 0.7; cursor: not-allowed;">
+                <i class="material-icons-round">check</i> ENVIADO
             </button>
         </div>
     <?php endif; ?>
@@ -185,10 +225,10 @@
 
 <!-- Step Modal (Reused Logic) -->
 <div class="modal-overlay" id="stepModal" onclick="closeModal(event)" style="z-index: 10000;">
-    <div class="modal hud-modal" onclick="event.stopPropagation()" style="background: #1e1e2d; border: 1px solid rgba(255,255,255,0.1); max-width: 600px; border-radius: 28px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;">
+    <div class="modal hud-modal" onclick="event.stopPropagation()" style="background: #1e1e2d; border: 1px solid rgba(255,255,255,0.1); width: 95%; max-width: 600px; border-radius: 28px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;">
         <div class="modal-header" style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 24px 24px 20px 24px; flex-shrink: 0;">
             <h2 id="modalTitle" style="color: #f1f5f9; font-size: 1.1rem; line-height: 1.5; font-weight: 600; margin: 0; padding-right: 24px;">Requisito</h2>
-            <button class="modal-close" onclick="closeModal()" style="color: #94a3b8; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); border: none; cursor: pointer; transition: all 0.2s;">×</button>
+
         </div>
         <div class="modal-body" id="modalBody" style="color: #ccc; padding: 0; overflow-y: auto;">
             <div class="modal-loading" style="padding: 40px; text-align: center;">⏳ Carregando módulos...</div>
@@ -200,6 +240,29 @@
 /* HUD specific modal overrides */
 .hud-modal {
     box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.6);
+}
+@media (max-width: 480px) {
+    .modal-header {
+        padding: 16px 16px 12px 16px !important;
+    }
+    
+    /* Mission Complete Card Responsive */
+    .mission-complete-card {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 20px;
+        padding: 20px !important;
+    }
+    .mission-complete-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px !important;
+    }
+    .mission-complete-card .program-submit-btn,
+    .mission-complete-card .hud-btn {
+        width: 100%;
+        justify-content: center;
+    }
 }
 </style>
 

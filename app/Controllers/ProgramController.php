@@ -16,7 +16,7 @@ class ProgramController
     /**
      * Require admin/director role
      */
-    private function requireAdmin(): void
+    protected function requireAdmin(): void
     {
         $user = App::user();
         $role = $user['role_name'] ?? '';
@@ -118,6 +118,7 @@ class ProgramController
 
         $categoryId = $_GET['category'] ?? null;
         $type = $_GET['type'] ?? null;
+        $status = $_GET['status'] ?? null;
 
         // Build query
         $sql = "SELECT p.*, c.name as category_name, c.color as category_color, c.icon as category_icon
@@ -134,6 +135,14 @@ class ProgramController
         if ($type) {
             $sql .= " AND p.type = ?";
             $params[] = $type;
+        }
+
+        if ($status) {
+            $sql .= " AND p.status = ?";
+            $params[] = $status;
+        } else {
+            // Default: don't show archived
+            $sql .= " AND (p.status IS NULL OR p.status != 'archived')";
         }
 
         $sql .= " ORDER BY p.name";
@@ -161,6 +170,7 @@ class ProgramController
             'currentCategory' => $currentCategory,
             'categoryId' => $categoryId,
             'type' => $type,
+            'status' => $status,
             'programs_tenantSlug' => $tenant['slug']
         ]);
     }
@@ -483,17 +493,46 @@ class ProgramController
         $tenant = App::tenant();
         $programId = (int) ($params['id'] ?? 0);
 
+        $force = ($_REQUEST['force'] ?? '') === 'true';
+
         // Check if has progress
-        $hasProgress = db_fetch_column(
+        $hasProgress = (int) db_fetch_column(
             "SELECT COUNT(*) FROM user_program_progress WHERE program_id = ?",
             [$programId]
         );
 
         if ($hasProgress > 0) {
-            // Archive instead
-            db_update('learning_programs', ['status' => 'archived'], 'id = ? AND tenant_id = ?', [$programId, $tenant['id']]);
-            $this->json(['success' => true, 'message' => 'Programa arquivado (possui progresso de usuários)']);
-            return;
+            if ($force) {
+                // If forced, we delete the progress first
+                try {
+                    db_delete('user_program_progress', 'program_id = ?', [$programId]);
+                } catch (\Exception $e) {
+                    $this->json(['error' => 'Falha ao remover progresso dos usuários: ' . $e->getMessage()], 500);
+                    return;
+                }
+            } else {
+                // Get current status
+                $currentStatus = db_fetch_column("SELECT status FROM learning_programs WHERE id = ?", [$programId]);
+                
+                if ($currentStatus === 'archived') {
+                    $this->json([
+                        'success' => true, 
+                        'is_archived' => true,
+                        'has_progress' => true,
+                        'message' => 'O programa já está arquivado e possui progresso de usuários, não podendo ser removido permanentemente sem exclusão forçada.'
+                    ]);
+                } else {
+                    // Archive instead (Standard behavior)
+                    db_update('learning_programs', ['status' => 'archived'], 'id = ? AND tenant_id = ?', [$programId, $tenant['id']]);
+                    $this->json([
+                        'success' => true, 
+                        'is_archived' => true,
+                        'has_progress' => true,
+                        'message' => 'Programa arquivado! (Ocultado da lista por possuir progresso de usuários)'
+                    ]);
+                }
+                return;
+            }
         }
 
         try {
@@ -615,17 +654,19 @@ class ProgramController
         $tenant = App::tenant();
         $programId = (int) ($params['id'] ?? 0);
 
-        // Get all pathfinders
+        // Get users to assign (Pathfinders + Leadership roles)
         $users = db_fetch_all("
             SELECT u.id, u.name, u.avatar_url as profile_picture,
-                   CASE WHEN upp.id IS NOT NULL THEN 1 ELSE 0 END as already_assigned
+                   CASE WHEN upp.id IS NOT NULL THEN 1 ELSE 0 END as already_assigned,
+                   r.display_name as role_display
             FROM users u
+            JOIN roles r ON u.role_id = r.id
             LEFT JOIN user_program_progress upp ON upp.user_id = u.id AND upp.program_id = ?
-            WHERE u.tenant_id = ? AND u.role_id IN (
-                SELECT id FROM roles WHERE tenant_id = ? AND name IN ('pathfinder', 'desbravador')
+            WHERE u.tenant_id = ? AND r.name IN (
+                'admin', 'director', 'associate_director', 'chaplain', 'instructor', 'counselor', 'leader', 'pathfinder'
             )
-            ORDER BY u.name
-        ", [$programId, $tenant['id'], $tenant['id']]);
+            ORDER BY r.name = 'pathfinder' DESC, u.name ASC
+        ", [$programId, $tenant['id']]);
 
         $this->json(['success' => true, 'users' => $users]);
     }

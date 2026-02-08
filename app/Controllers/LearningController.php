@@ -31,7 +31,7 @@ class LearningController
                    up.id as progress_id, up.status as user_status, up.progress_percent, up.started_at, up.completed_at,
                    pv.id as version_id, pv.version_number,
                    (SELECT COUNT(*) FROM program_steps ps WHERE ps.version_id = pv.id) as total_steps,
-                   (SELECT COUNT(*) FROM user_step_responses usr WHERE usr.progress_id = up.id AND usr.status IN ('draft', 'submitted', 'approved', 'rejected')) as answered_steps
+                   (SELECT COUNT(id) FROM user_step_responses usr WHERE usr.progress_id = up.id) as answered_steps
             FROM user_program_progress up
             JOIN learning_programs p ON up.program_id = p.id
             JOIN program_versions pv ON up.version_id = pv.id
@@ -39,6 +39,37 @@ class LearningController
             WHERE up.tenant_id = ? AND up.user_id = ?
             ORDER BY up.status, p.name
         ", [$tenant['id'], $user['id']]);
+
+        // De-duplicate programs (keep latest progress_id for each program_id, prioritizing status)
+        $uniquePrograms = [];
+        $statusPriority = [
+            'approved' => 3,
+            'completed' => 3,
+            'submitted' => 2,
+            'rejected' => 1.5,
+            'in_progress' => 1,
+            'not_started' => 0
+        ];
+
+        foreach ($programs as $p) {
+            $pid = $p['id'];
+            $currentStatus = strtolower(trim($p['user_status'] ?? 'not_started'));
+            
+            if (!isset($uniquePrograms[$pid])) {
+                $uniquePrograms[$pid] = $p;
+                continue;
+            }
+
+            $existingStatus = strtolower(trim($uniquePrograms[$pid]['user_status'] ?? 'not_started'));
+            $pCurr = $statusPriority[$currentStatus] ?? 0;
+            $pExis = $statusPriority[$existingStatus] ?? 0;
+
+            // Prioritize higher status, then higher ID
+            if ($pCurr > $pExis || ($pCurr === $pExis && $p['progress_id'] > $uniquePrograms[$pid]['progress_id'])) {
+                $uniquePrograms[$pid] = $p;
+            }
+        }
+        $programs = array_values($uniquePrograms);
 
         // Group by status
         $grouped = [
@@ -334,6 +365,12 @@ class LearningController
                     'action' => 'submitted',
                     'performed_by' => $user['id']
                 ]);
+
+                // Notify admins/instructors
+                $program = db_fetch_one("SELECT * FROM learning_programs WHERE id = ?", [$step['program_id']]);
+                if ($program) {
+                    \App\Services\LearningNotificationService::stepSubmitted($tenant['id'], $user, $step, $program, $tenant['slug']);
+                }
             }
 
             $message = $status === 'draft' ? 'Rascunho salvo com sucesso!' : 'Resposta enviada! Aguarde aprovação.';
@@ -411,19 +448,25 @@ class LearningController
      */
     public function submitProgram(array $params): void
     {
+        // Prevent partial output
+        if (ob_get_level()) ob_end_clean();
+        ob_start();
+
         try {
             $tenant = App::tenant();
             $user = App::user();
-            $programId = (int) ($params['id'] ?? 0);
+            $progressId = (int) ($params['id'] ?? 0);
 
-            // Get progress record
+            // Get progress record specifically by progress_id
             $progress = db_fetch_one("
                 SELECT id, program_id, status 
                 FROM user_program_progress 
-                WHERE program_id = ? AND user_id = ? AND tenant_id = ?
-            ", [$programId, $user['id'], $tenant['id']]);
+                WHERE id = ? AND user_id = ? AND tenant_id = ?
+            ", [$progressId, $user['id'], $tenant['id']]);
 
             if (!$progress) {
+                // Return clean JSON
+                ob_clean();
                 $this->json(['error' => 'Programa não encontrado'], 404);
                 return;
             }
@@ -450,6 +493,31 @@ class LearningController
                 'submitted_at' => date('Y-m-d H:i:s')
             ], 'id = ?', [$progress['id']]);
 
+            // SELF-HEALING: Verify if 'submitted' was actually saved. 
+            // If not, it means the column is an ENUM that doesn't support it.
+            $verify = db_fetch_one("SELECT status FROM user_program_progress WHERE id = ?", [$progress['id']]);
+            if ($verify && $verify['status'] !== 'submitted') {
+                // Fix schema dynamically
+                try {
+                    // Force commit previous attempts
+                    db_commit(); 
+                    
+                    // ALTER requires no active transaction in some DBs, or causes implicit commit
+                    db_query("ALTER TABLE user_program_progress MODIFY COLUMN status VARCHAR(50) NOT NULL DEFAULT 'not_started'");
+                    
+                    // Start new transaction for the retry
+                    db_begin();
+                    
+                    // Retry update
+                    db_update('user_program_progress', [
+                        'status' => 'submitted',
+                        'submitted_at' => date('Y-m-d H:i:s')
+                    ], 'id = ?', [$progress['id']]);
+                } catch (\Throwable $ex) {
+                    error_log("Failed to auto-fix schema: " . $ex->getMessage());
+                }
+            }
+
             // 4. Log activity
             $anyResponse = db_fetch_one("SELECT id FROM user_step_responses WHERE progress_id = ? LIMIT 1", [$progress['id']]);
             if ($anyResponse) {
@@ -462,8 +530,9 @@ class LearningController
                 ]);
             }
 
-            db_commit();
+            if (db_in_transaction()) db_commit();
 
+            ob_clean(); // Clear buffer
             $this->json([
                 'success' => true, 
                 'message' => 'Respostas enviadas com sucesso! Aguarde a avaliação.'
@@ -471,7 +540,10 @@ class LearningController
 
         } catch (\Throwable $e) {
             if (db_in_transaction()) db_rollback();
+            
             error_log("LearningController::submitProgram - " . $e->getMessage());
+            
+            ob_clean(); // Ensure no HTML error leaks
             $this->json(['error' => 'Erro ao enviar respostas: ' . $e->getMessage()], 500);
         }
     }

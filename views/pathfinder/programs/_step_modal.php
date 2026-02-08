@@ -12,11 +12,11 @@ $status = $response['status'] ?? 'not_started';
 $feedback = $response['feedback'] ?? '';
 ?>
 
-<div class="tech-plate vibrant-cyan stagger-1" style="padding: 0; overflow: hidden; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
-    <div class="status-line" style="width: 4px;"></div>
+<div>
+    <div class="status-line" style="width: 4px; left: 0;"></div>
     
     <!-- Modal Header -->
-    <div style="padding: 24px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: flex-start;">
+    <div class="step-modal-header">
         <div style="flex: 1;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                 <span class="hud-badge" style="color: var(--accent-cyan); font-size: 0.6rem; border-color: rgba(0,217,255,0.3); background: rgba(0,217,255,0.05);">TREINAMENTO OPERACIONAL</span>
@@ -26,13 +26,13 @@ $feedback = $response['feedback'] ?? '';
             </div>
             <h2 style="font-size: 1.4rem; margin: 0; color: #fff; line-height: 1.2; font-weight: 800; letter-spacing: -0.02em;"><?= htmlspecialchars($step['title']) ?></h2>
         </div>
-        <button type="button" onclick="closeStepModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; cursor: pointer; padding: 6px; border-radius: 8px; transition: all 0.2s;">
+        <button type="button" onclick="closeModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; cursor: pointer; padding: 6px; border-radius: 8px; transition: all 0.2s;">
             <i class="material-icons-round" style="font-size: 1.2rem;">close</i>
         </button>
     </div>
 
     <!-- Modal Body -->
-    <div id="modal-content-area" style="padding: 24px; max-height: 65vh; overflow-y: auto;">
+    <div id="modal-content-area" class="modal-content-scroll">
         
         <?php if (!empty($step['description'])): ?>
             <div class="tech-plate" style="background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.05); padding: 20px; margin-bottom: 30px; border-radius: 12px; position: relative;">
@@ -205,14 +205,14 @@ $feedback = $response['feedback'] ?? '';
                 <input type="hidden" name="is_multi_question" value="1">
             <?php endif; ?>
 
-            <div style="display: flex; gap: 16px; margin-top: 40px; background: rgba(0,0,0,0.2); margin: 40px -24px -24px; padding: 24px;">
-                <button type="button" class="hud-btn secondary" onclick="closeStepModal()" style="flex: 1; justify-content: center;">CANCELAR</button>
+            <div class="modal-actions-footer">
+                <button type="button" class="hud-btn secondary modal-btn-cancel" onclick="closeModal()">CANCELAR</button>
                 <?php if ($status !== 'approved' && $status !== 'submitted'): ?>
-                    <button type="button" class="hud-btn secondary" onclick="submitStepForm(<?= $step['id'] ?>, this.form, 'draft')" style="flex: 1.2; justify-content: center;">
-                        <i class="material-icons-round">save</i> SALVAR RASCUNHO
+                    <button type="button" class="hud-btn secondary modal-btn-save" onclick="submitStepForm(<?= $step['id'] ?>, this.form, 'draft')">
+                        <i class="material-icons-round">save</i> <span class="btn-text">SALVAR</span>
                     </button>
-                    <button type="submit" class="hud-btn primary" style="flex: 1.5; justify-content: center;">
-                        <i class="material-icons-round">rocket_launch</i> ENVIAR AGORA
+                    <button type="submit" class="hud-btn primary modal-btn-submit">
+                        <i class="material-icons-round">rocket_launch</i> <span class="btn-text">ENVIAR</span>
                     </button>
                 <?php endif; ?>
             </div>
@@ -221,6 +221,62 @@ $feedback = $response['feedback'] ?? '';
 </div>
 
 <style>
+    .step-modal-header {
+        padding: 24px;
+        background: rgba(0,0,0,0.3);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    @media (max-width: 480px) {
+        .step-modal-header {
+            padding: 16px;
+        }
+    }
+    .modal-actions-footer {
+        display: flex;
+        gap: 16px;
+        margin-top: 24px;
+        background: rgba(0,0,0,0.2);
+        margin: 24px -24px -24px; /* Default margin to stretch to edges */
+        padding: 24px;
+        border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .hud-btn {
+        min-height: 48px; /* Touch target fix */
+        display: flex; /* Flex alignment */
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+    }
+    .modal-btn-cancel { flex: 1; }
+    .modal-btn-save { flex: 1.2; }
+    .modal-btn-submit { flex: 1.5; box-shadow: 0 4px 15px rgba(0, 217, 255, 0.2); }
+
+    @media (max-width: 480px) {
+        .modal-actions-footer {
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 24px -16px -16px; /* Match mobile padding */
+            padding: 16px;
+        }
+        .modal-btn-cancel {
+            order: 3;
+            flex: 100% !important;
+            margin-top: 4px;
+        }
+        .modal-btn-save, .modal-btn-submit {
+            flex: 1 1 40% !important;
+            font-size: 0.8rem;
+            padding: 0 12px;
+        }
+        .btn-text {
+            font-size: 0.8rem;
+        }
+    }
+
     .radio-tech-card-wrapper input:checked + .radio-tech-card {
         background: rgba(0, 217, 255, 0.1);
         border-color: var(--accent-cyan);
@@ -255,10 +311,22 @@ $feedback = $response['feedback'] ?? '';
         border-color: rgba(255,255,255,0.15);
     }
     .file-upload-zone:hover {
-        background: rgba(255,255,255,0.05) !important;
+        background: rgba(255, 255, 255, 0.05) !important;
         border-color: var(--accent-cyan) !important;
     }
     #modal-content-area::-webkit-scrollbar { width: 6px; }
     #modal-content-area::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
     #modal-content-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+    .modal-content-scroll {
+        padding: 24px;
+        max-height: 65vh;
+        overflow-y: auto;
+    }
+    @media (max-width: 480px) {
+        .modal-content-scroll {
+            padding: 16px;
+            max-height: 70vh;
+        }
+    }
 </style>

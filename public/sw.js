@@ -1,4 +1,4 @@
-const CACHE_NAME = 'desbravahub-v13'; // Deep link support
+const CACHE_NAME = 'desbravahub-v14'; // Single tab navigation support
 const urlsToCache = [
     '/assets/css/app.css',
     '/assets/js/toast.js',
@@ -97,20 +97,38 @@ self.addEventListener('notificationclick', (event) => {
     const targetUrl = event.notification.data?.url || '/';
     console.log('[SW v13] Opening URL:', targetUrl);
 
-    // Simply open the URL in a new window/tab - most reliable method
+    // Focus existing window or open new one
     event.waitUntil(
-        clients.openWindow(targetUrl)
-            .then(() => console.log('[SW v13] Window opened successfully'))
-            .catch(err => {
-                console.error('[SW v13] openWindow failed:', err);
-                // Try focusing existing window as fallback
-                return clients.matchAll({ type: 'window' })
-                    .then(windowClients => {
-                        if (windowClients.length > 0) {
-                            windowClients[0].focus();
-                        }
+        clients.matchAll({
+            type: 'window',
+            includeUncontrolled: true
+        }).then(windowClients => {
+            let matchingClient = null;
+
+            // Check if there is already a window/tab open
+            for (let i = 0; i < windowClients.length; i++) {
+                const client = windowClients[i];
+                // Check if same origin (part of our app)
+                if (new URL(client.url).origin === new URL(targetUrl).origin) {
+                    matchingClient = client;
+                    break;
+                }
+            }
+
+            if (matchingClient) {
+                return matchingClient.focus()
+                    .then(() => matchingClient.navigate(targetUrl))
+                    .catch(err => {
+                        console.error('[SW v14] Focus/Navigate failed:', err);
+                        if (clients.openWindow) return clients.openWindow(targetUrl);
                     });
-            })
+            }
+
+            // If no window is open, open a new one
+            if (clients.openWindow) {
+                return clients.openWindow(targetUrl);
+            }
+        })
     );
 });
 

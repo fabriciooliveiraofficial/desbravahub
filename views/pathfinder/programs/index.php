@@ -39,7 +39,11 @@
                 <?php 
                 $totalSteps = $program['total_steps'] ?? 0;
                 $answeredSteps = $program['answered_steps'] ?? 0;
-                $isSubmitted = in_array($program['user_status'], ['submitted', 'completed', 'approved']);
+                
+                // Robust Status Check
+                $rawStatus = strtolower(trim($program['user_status'] ?? 'not_started'));
+                $isSubmitted = in_array($rawStatus, ['submitted', 'completed', 'approved']);
+                
                 $canSubmit = ($totalSteps > 0 && $answeredSteps >= $totalSteps) && !$isSubmitted;
                 $engPercent = $totalSteps > 0 ? round(($answeredSteps / $totalSteps) * 100) : 0;
                 $appPercent = $program['progress_percent'] ?? 0;
@@ -68,12 +72,37 @@
 
                     <div style="margin: 24px 0;">
                         <div class="hud-progress" style="background: rgba(0,0,0,0.4); height: 10px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden;">
-                            <div class="hud-progress-bar" style="width: <?= $engPercent ?>%; background: <?= $catType === 'class' ? '#8b5cf6' : 'var(--accent-cyan)' ?>; opacity: 0.3; position: absolute; height: 100%;"></div>
+                            <!-- Engagement Bar (Sent) - Increased opacity for visibility -->
+                            <div class="hud-progress-bar" style="width: <?= $engPercent ?>%; background: <?= $catType === 'class' ? '#8b5cf6' : 'var(--accent-cyan)' ?>; opacity: 0.6; position: absolute; height: 100%;"></div>
+                            <!-- Approved Bar (Valid) -->
                             <div class="hud-progress-bar" style="width: <?= $appPercent ?>%; background: linear-gradient(90deg, <?= $catType === 'class' ? '#a78bfa, #8b5cf6' : '#22d3ee, #06b6d4' ?>); position: relative; height: 100%; box-shadow: 0 0 12px currentColor;"></div>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                            <span style="font-size: 0.65rem; font-weight: 800; color: var(--hud-text-dim);">DESEMPENHO OPERACIONAL</span>
-                            <span style="font-size: 0.75rem; font-weight: 900; color: #fff;"><?= $appPercent ?>%</span>
+                            <?php 
+                            // Smart Label Logic
+                            // If Approval is 0 but Engagement > 0, show "Under Review"
+                            $displayPercent = $appPercent;
+                            $displayLabel = 'DESEMPENHO OPERACIONAL';
+                            $displayColor = '#fff';
+
+                            if ($appPercent == 0 && $engPercent > 0) {
+                                $displayPercent = $engPercent;
+                                $displayLabel = 'EM ANÁLISE (QG)';
+                                $displayColor = '#fbbf24'; // Warning color
+                            }
+                            
+                            // Debug/Clarity: Show counts if suspicious
+                            if ($appPercent == 0 && $engPercent == 0 && $answeredSteps > 0) {
+                                // Mismatch case (calculation error?)
+                                $displayLabel = "ERRO CÁLCULO ($answeredSteps/$totalSteps)";
+                                $displayColor = '#f87171';
+                            } elseif ($appPercent == 0 && $engPercent > 0) {
+                                // Add count to label for clarity
+                                $displayLabel .= " <span style='opacity:0.7; font-weight:400;'>($answeredSteps/$totalSteps)</span>";
+                            }
+                            ?>
+                            <span style="font-size: 0.65rem; font-weight: 800; color: var(--hud-text-dim);"><?= $displayLabel ?></span>
+                            <span style="font-size: 0.75rem; font-weight: 900; color: <?= $displayColor ?>;"><?= $displayPercent ?>%</span>
                         </div>
                     </div>
 
@@ -81,7 +110,7 @@
                         <div class="data-point">
                             <span class="data-label">Status Operacional</span>
                             <span class="data-value" style="font-size: 0.8rem; color: #fff; text-transform: uppercase;">
-                                <?= str_replace('_', ' ', $program['user_status']) ?>
+                                <?= str_replace('_', ' ', $rawStatus) ?>
                             </span>
                         </div>
                         <div class="data-point" style="align-items: flex-end;">
@@ -91,13 +120,28 @@
                         </div>
                     </div>
                     
+                    <?php
+                    $btnLabel = 'ENVIAR MISSÃO';
+                    $btnIcon = 'rocket_launch';
+                    if ($isSubmitted) {
+                        $btnIcon = 'verified';
+                        $btnLabel = ($rawStatus === 'submitted') ? 'MISSÃO ENVIADA' : 'MISSÃO CONCLUÍDA';
+                    } elseif ($rawStatus === 'rejected') {
+                        $btnIcon = 'rebase_edit';
+                        $btnLabel = 'REENVIAR CORREÇÕES';
+                        $canSubmit = true; // Force clickable if rejected
+                    } elseif (!$canSubmit) {
+                        $btnIcon = 'radio_button_unchecked';
+                        $btnLabel = 'REQUISITOS PENDENTES';
+                    }
+                    ?>
                     <button type="button" 
                             class="hud-btn primary program-submit-btn <?= $canSubmit ? '' : 'secondary' ?>"
-                            data-program-id="<?= $program['id'] ?>"
+                            data-progress-id="<?= $program['progress_id'] ?>"
                             <?= $canSubmit ? '' : 'disabled' ?>
                             style="width: 100%; z-index: 10; padding: 12px; font-size: 0.75rem; justify-content: center; box-shadow: <?= $canSubmit ? '0 4px 15px rgba(6, 182, 212, 0.3)' : 'none' ?>;">
-                        <i class="material-icons-round" style="font-size: 1.1rem;"><?= $isSubmitted ? 'verified' : 'rocket_launch' ?></i>
-                        <?= $isSubmitted ? 'MISSÃO CONCLUÍDA' : ($canSubmit ? 'FINALIZAR INCURSÃO' : 'REQUISITOS PENDENTES') ?>
+                        <i class="material-icons-round" style="font-size: 1.1rem;"><?= $btnIcon ?></i>
+                        <?= $btnLabel ?>
                     </button>
                 </div>
             <?php endforeach; ?>
@@ -204,8 +248,30 @@
         box-shadow: none;
         opacity: 0.6;
     }
+
+    @media (max-width: 480px) {
+        .hud-tabs-container {
+            width: 100%;
+            max-width: 100%;
+            gap: 8px;
+            padding: 4px;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .hud-tab {
+            padding: 10px 12px;
+            font-size: 0.75rem;
+            flex: 1;
+            justify-content: center;
+        }
+        .hud-tab .material-icons-round {
+            font-size: 1.1rem;
+        }
+    }
 </style>
 
 
     <?php endif; ?>
 </div>
+
+

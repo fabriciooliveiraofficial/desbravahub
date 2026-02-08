@@ -700,19 +700,8 @@ class AdminController
         $tenant = App::tenant();
         $user = App::user();
 
-        // Get all roles for this tenant
-        $roles = db_fetch_all(
-            "SELECT * FROM roles WHERE tenant_id = ? ORDER BY
-             CASE name 
-                WHEN 'admin' THEN 1 
-                WHEN 'director' THEN 2 
-                WHEN 'associate_director' THEN 3 
-                WHEN 'counselor' THEN 4 
-                WHEN 'pathfinder' THEN 5 
-                ELSE 6 
-             END",
-            [$tenant['id']]
-        );
+        // Get official roles for this tenant in correct order
+        $roles = \App\Services\RoleService::getTenantRoles($tenant['id']);
 
         // Get all permissions grouped
         $permissions = db_fetch_all(

@@ -382,11 +382,33 @@ $pageIcon = 'assignment_ind';
         right: 8px;
         background: #ffedd5;
         color: #c2410c;
-        padding: 2px 6px;
-        border-radius: 4px;
+        padding: 4px 8px;
+        border-radius: 6px;
         font-size: 0.65rem;
         font-weight: 700;
         text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .btn-remove-assignment {
+        background: transparent;
+        border: none;
+        padding: 0;
+        color: #ef4444;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s, opacity 0.2s;
+        opacity: 0.7;
+    }
+
+    .btn-remove-assignment:hover {
+        transform: scale(1.2);
+        opacity: 1;
     }
 
     /* Delivery Config */
@@ -721,7 +743,18 @@ $pageIcon = 'assignment_ind';
                                 </div>
 
                                 <?php if ($isAssigned): ?>
-                                    <div class="assigned-label">Atribuído</div>
+                                    <?php $assignmentId = $assignmentMap[$pf['id']] ?? ''; ?>
+                                    <div class="assigned-label">
+                                        Atribuído
+                                        <?php if ($assignmentId): ?>
+                                            <button type="button" 
+                                                    class="btn-remove-assignment"
+                                                    onclick="removeAssignment(event, '<?= $assignmentId ?>', '<?= htmlspecialchars($pf['name']) ?>', this.closest('.pathfinder-card'))"
+                                                    title="Remover atribuição">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        <?php endif; ?>
+                                    </div>
                                 <?php endif; ?>
                             </label>
                         <?php endforeach; ?>
@@ -764,12 +797,59 @@ $pageIcon = 'assignment_ind';
 </form>
 <!-- End Content -->
 
-    <!-- Success/Error Toast -->
-    <div id="toast" style="position: fixed; bottom: 24px; right: 24px; padding: 16px 24px; background: #fff; border-left: 4px solid var(--accent-green); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-radius: 8px; transform: translateY(150%); transition: transform 0.3s ease; z-index: 2000; font-weight: 600; color: #0f172a;">
-        Mensagem aqui
-    </div>
+    <!-- Success/Error Toast placeholder removed - now using global window.toast -->
+    <script src="<?= asset_url('js/toast.js') ?>"></script>
 
     <script>
+        
+        // Remove assignment
+        async function removeAssignment(event, assignmentId, userName, card) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const confirmed = await window.toast.confirm(
+                'Remover Atribuição',
+                `Deseja remover a atribuição de "${userName}"?\n\nEsta ação só funciona se a missão ainda não foi iniciada pelo desbravador.`,
+                { confirmText: 'Remover', cancelText: 'Manter' }
+            );
+
+            if (!confirmed) return;
+
+            try {
+                const formData = new FormData();
+                formData.append('assignment_id', assignmentId);
+                formData.append('csrf_token', '<?= csrf_token() ?>');
+
+                const response = await fetch('<?= base_url($tenant['slug'] . '/admin/especialidades/atribuicao/delete') ?>', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.toast.success('Sucesso', data.message || 'Atribuição removida!');
+                    
+                    // Re-enable the card
+                    card.classList.remove('disabled');
+                    const checkbox = card.querySelector('input[name="user_ids[]"]');
+                    if (checkbox) checkbox.disabled = false;
+                    
+                    // Remove the assignment label
+                    const label = card.querySelector('.assigned-label');
+                    if (label) label.remove();
+                    
+                    // Trigger haptic/visual feedback on card
+                    card.style.animation = 'hud-reveal 0.3s ease-out';
+                } else {
+                    window.toast.error('Não permitido', data.message || 'Não é possível remover: missão em andamento.');
+                }
+            } catch (err) {
+                console.error('[RemoveAssignment] Error:', err);
+                window.toast.error('Erro de Conexão', 'Não foi possível remover a atribuição agora.');
+            }
+        }
+        
         // Handle selection count and card states
         function updateCount(checkbox) {
             if(!checkbox) return;
@@ -800,7 +880,6 @@ $pageIcon = 'assignment_ind';
                 updateCount(cb);
             });
         }
-        
         // Fast search with empty state support
         function filterPathfinders(query) {
             const q = query.toLowerCase().trim();
@@ -832,22 +911,6 @@ $pageIcon = 'assignment_ind';
             }
         }
         
-        // Premium Toast Implementation
-        function displayPageToast(message, isError = false) {
-            const toast = document.getElementById('toast');
-            toast.innerHTML = (isError ? '⚠️ ' : '✅ ') + message;
-            toast.style.background = isError ? 'rgba(239, 68, 68, 0.95)' : 'rgba(16, 185, 129, 0.95)';
-            toast.style.color = '#fff';
-            toast.style.border = 'none';
-            toast.style.backdropFilter = 'blur(10px)';
-            toast.style.boxShadow = '0 10px 25px rgba(0,0,0,0.3)';
-            toast.style.transform = 'translateY(0)';
-            
-            setTimeout(() => {
-                toast.style.transform = 'translateY(150%)';
-            }, 4000);
-        }
-        
         // Submit Flow with Loading State
         document.getElementById('assignForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -868,19 +931,19 @@ $pageIcon = 'assignment_ind';
                 const data = await response.json();
                 
                 if (data.success) {
-                    displayPageToast(data.message || 'Missão liberada! Os desbravadores já podem começar.');
+                    window.toast.success('Sucesso', data.message || 'Missão liberada! Os desbravadores já podem começar.');
                     submitBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> Missão Iniciada!';
                     setTimeout(() => {
                         window.location.href = '<?= base_url($tenant['slug'] . '/admin/especialidades') ?>';
                     }, 1200);
                 } else {
-                    displayPageToast(data.error || 'Falha na atribuição. Verifique e tente novamente.', true);
+                    window.toast.error('Erro na Atribuição', data.error || 'Verifique os dados e tente novamente.');
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalHTML;
                 }
             } catch (err) {
                 console.error('[Assign] Error:', err);
-                displayPageToast('Erro de conexão com o servidor', true);
+                window.toast.error('Falha no Servidor', 'Ocorreu um erro ao processar sua solicitação.');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalHTML;
             }

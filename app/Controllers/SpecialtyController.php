@@ -157,13 +157,14 @@ class SpecialtyController
             $specialty['requirements'] = SpecialtyService::getRequirementsFromDB($specialtyId);
         }
 
-        // Get pathfinders to assign
+        // Get users to assign (Pathfinders + Leadership roles)
         $pathfinders = db_fetch_all(
-            "SELECT u.id, u.name, u.email, r.name as role_name
+            "SELECT u.id, u.name, u.email, r.name as role_name, r.display_name as role_display
              FROM users u
              JOIN roles r ON u.role_id = r.id
-             WHERE u.tenant_id = ? AND u.status = 'active' AND r.name = 'pathfinder'
-             ORDER BY u.name",
+             WHERE u.tenant_id = ? AND u.status = 'active' 
+             AND r.name IN ('admin', 'director', 'associate_director', 'chaplain', 'instructor', 'counselor', 'leader', 'pathfinder')
+             ORDER BY r.name = 'pathfinder' DESC, u.name ASC",
             [$tenant['id']]
         );
 
@@ -171,25 +172,32 @@ class SpecialtyController
         if (str_starts_with($specialtyId, 'prog_')) {
             $progId = (int) substr($specialtyId, 5);
             $existingAssignments = db_fetch_all(
-                "SELECT user_id FROM user_program_progress 
+                "SELECT user_id, id FROM user_program_progress 
                  WHERE tenant_id = ? AND program_id = ?",
                 [$tenant['id'], $progId]
             );
+            $prefix = 'prog_';
         } else {
             $existingAssignments = db_fetch_all(
-                "SELECT user_id FROM specialty_assignments 
+                "SELECT user_id, id FROM specialty_assignments 
                  WHERE tenant_id = ? AND specialty_id = ? AND status != 'cancelled'",
                 [$tenant['id'], $specialtyId]
             );
+            $prefix = 'spec_';
         }
-        $assignedUserIds = array_column($existingAssignments, 'user_id');
+        
+        $assignmentMap = [];
+        foreach ($existingAssignments as $ea) {
+            $assignmentMap[$ea['user_id']] = $prefix . $ea['id'];
+        }
 
         View::render('admin/specialties/assign', [
             'tenant' => $tenant,
             'user' => $user,
             'specialty' => $specialty,
             'pathfinders' => $pathfinders,
-            'assignedUserIds' => $assignedUserIds
+            'assignmentMap' => $assignmentMap,
+            'assignedUserIds' => array_keys($assignmentMap)
         ]);
     }
 
@@ -567,7 +575,12 @@ class SpecialtyController
             $grouped[$a['status']][] = $a;
         }
 
-        require BASE_PATH . '/views/dashboard/specialties.php';
+        View::render('dashboard/specialties', [
+            'tenant' => $tenant,
+            'user' => $user,
+            'assignments' => $assignments,
+            'grouped' => $grouped
+        ], 'member');
     }
 
     /**

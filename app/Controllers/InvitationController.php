@@ -319,6 +319,9 @@ class InvitationController
             return;
         }
 
+        // Ensure all official roles exist for this tenant
+        \App\Services\RoleService::syncTenant($tenant['id']);
+
         // Get role ID
         $role = db_fetch_one(
             "SELECT id FROM roles WHERE tenant_id = ? AND name = ?",
@@ -326,16 +329,11 @@ class InvitationController
         );
 
         if (!$role) {
-            // Create role if it doesn't exist
-            $roleId = db_insert('roles', [
-                'tenant_id' => $tenant['id'],
-                'name' => $invitation['role_name'],
-                'display_name' => $roleLabels[$invitation['role_name']] ?? ucfirst($invitation['role_name']),
-                'is_system' => 1
-            ]);
-        } else {
-            $roleId = $role['id'];
+            $error = 'Configuração de cargos do clube inválida. Contate o administrador.';
+            require BASE_PATH . '/views/auth/invitation-error.php';
+            return;
         }
+        $roleId = $role['id'];
 
         // Create user
         $userId = db_insert('users', [
@@ -745,21 +743,19 @@ class InvitationController
             return;
         }
 
-        // Get or Create Role
+        // Ensure all official roles exist for this tenant
+        \App\Services\RoleService::syncTenant($tenant['id']);
+
+        // Get Role
         $roleName = $invitation['role_name']; // pathfinder or parent
         $role = db_fetch_one("SELECT id FROM roles WHERE tenant_id = ? AND name = ?", [$tenant['id'], $roleName]);
         
         if (!$role) {
-             $displayNames = ['pathfinder' => 'Desbravador', 'parent' => 'Pai/Responsável'];
-             $roleId = db_insert('roles', [
-                'tenant_id' => $tenant['id'],
-                'name' => $roleName,
-                'display_name' => $displayNames[$roleName] ?? ucfirst($roleName),
-                'is_system' => 1
-            ]);
-        } else {
-            $roleId = $role['id'];
+            $error = 'Configuração de cargos do clube inválida.';
+            require BASE_PATH . '/views/auth/accept-member-invitation.php';
+            return;
         }
+        $roleId = $role['id'];
 
         // Create User
         $userId = db_insert('users', [
