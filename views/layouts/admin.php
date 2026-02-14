@@ -146,44 +146,147 @@
 
 
     <style>
-        /* Fade transition for HTMX swaps */
-        .fade-me-out.htmx-swapping {
+        /* HTMX Fade transition */
+        .admin-main {
+            transition: opacity 0.25s ease-in-out;
+        }
+        .htmx-added {
             opacity: 0;
-            transition: opacity 200ms ease-out;
+        }
+        .admin-main.htmx-settling {
+            opacity: 1;
         }
 
-        .fade-me-in {
+        /* Loading Bar */
+        .htmx-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .htmx-request.htmx-indicator {
             opacity: 1;
-            transition: opacity 200ms ease-in;
+        }
+        .loading-bar-inner {
+            height: 100%;
+            background: linear-gradient(90deg, #06b6d4, #2563eb);
+            width: 0;
+            animation: loadingProgress 2s ease-in-out infinite;
+        }
+        @keyframes loadingProgress {
+            0% { width: 0; }
+            50% { width: 70%; }
+            100% { width: 100%; }
         }
     </style>
 </head>
 
-<body class="<?= isset($_COOKIE['theme']) && $_COOKIE['theme'] === 'dark' ? 'dark' : '' ?>" hx-boost="true">
+<body class="<?= isset($_COOKIE['theme']) && $_COOKIE['theme'] === 'dark' ? 'dark' : '' ?>" hx-boost="true" hx-indicator="#loading-bar">
+    
+    <!-- Global Loading Indicator -->
+    <div id="loading-bar" class="htmx-indicator">
+        <div class="loading-bar-inner"></div>
+    </div>
 
     <?php
     // Sidebar
-    require BASE_PATH . '/views/admin/partials/sidebar.php';
+    // Added hx-preserve="true" to keep persistent navigation during HTMX swaps
     ?>
+    <div id="sidebar-container" hx-preserve="true">
+        <?php require BASE_PATH . '/views/admin/partials/sidebar.php'; ?>
+    </div>
+
+    <!-- Sidebar Backdrop -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop" hx-preserve="true"></div>
+
+    <script hx-preserve="true">
+        document.addEventListener('click', (e) => {
+            const sidebar = document.querySelector('.admin-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            
+            // Safety check
+            if (!sidebar || !backdrop) return;
+
+            const toggleBtn = e.target.closest('#mobile-sidebar-toggle');
+            const closeBtn = e.target.closest('#mobile-sidebar-close');
+            const isBackdrop = e.target.id === 'sidebar-backdrop';
+            
+            // Handle Toggle Button
+            if (toggleBtn) {
+                e.preventDefault(); // Prevent default if it's a link/button
+                e.stopPropagation();
+                
+                const isOpen = sidebar.classList.contains('open');
+                if (isOpen) {
+                    sidebar.classList.remove('open');
+                    backdrop.classList.remove('visible');
+                } else {
+                    sidebar.classList.add('open');
+                    backdrop.classList.add('visible');
+                }
+                return;
+            }
+
+            // Handle Close Button
+            if (closeBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                sidebar.classList.remove('open');
+                backdrop.classList.remove('visible');
+                return;
+            }
+
+            // Handle Backdrop Click
+            if (isBackdrop) {
+                sidebar.classList.remove('open');
+                backdrop.classList.remove('visible');
+                return;
+            }
+
+            // Handle Navigation Click (Mobile Only)
+            if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
+                const navLink = e.target.closest('.nav-item, .submenu-item');
+                if (navLink) {
+                    // Don't prevent default, let navigation happen
+                    // But close the sidebar immediately
+                    sidebar.classList.remove('open');
+                    backdrop.classList.remove('visible');
+                }
+            }
+        });
+    </script>
 
     <main class="admin-main">
-        <?php
-        // Header
-        require BASE_PATH . '/views/admin/partials/header.php';
-        ?>
+        <header id="admin-header" hx-preserve="true">
+            <?php
+            // Header
+            require BASE_PATH . '/views/admin/partials/header.php';
+            ?>
+        </header>
 
         <!-- Content Area -->
         <div id="main-content" class="fade-me-in">
             <?= $content ?>
         </div>
+
     </main>
 
     <script>
-        // Re-initialize scripts after HTMX swap
+        // Re-initialize logic after HTMX swap
         document.body.addEventListener('htmx:afterSwap', function (evt) {
-            // Re-run theme toggle logic if needed or any other global init
-            // For now, most legacy scripts might need a tweak to run on load AND after swap
-            // but we'll test first.
+            // Re-run submenu expansion if sidebar was NOT preserved or if we need to update active state
+            if (typeof expandActiveSubmenus === 'function') {
+                expandActiveSubmenus();
+            }
+        });
+
+        document.body.addEventListener('htmx:beforeSwap', function(evt) {
+            // Optional: Handle cleanup before swap
         });
     </script>
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>

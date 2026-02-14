@@ -220,6 +220,7 @@ $router->get('/{tenant}/admin/especialidades', [SpecialtyController::class, 'rep
 $router->get('/{tenant}/admin/especialidades/categoria/{id}', [SpecialtyController::class, 'repositoryByCategory'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/especialidades/atribuicoes', [SpecialtyController::class, 'assignments'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/especialidades/god-mode', [SpecialtyController::class, 'godMode'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/admin/especialidades/god-mode/matrix', [SpecialtyController::class, 'godModeMatrix'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/especialidades/{id}/atribuir', [SpecialtyController::class, 'showAssign'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/especialidades/{id}/atribuir', [SpecialtyController::class, 'assign'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/especialidades/criar', [SpecialtyController::class, 'storeSpecialty'], [TenantMiddleware::class, AuthMiddleware::class]);

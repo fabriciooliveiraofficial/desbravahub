@@ -1,5 +1,5 @@
 <!-- Admin Sidebar (Redesigned - Light/Dark Theme) -->
-<aside class="admin-sidebar" role="navigation">
+<aside class="admin-sidebar" role="navigation" hx-preserve="true" id="admin-sidebar">
     <!-- Header -->
     <div class="sidebar-header">
         <div class="brand-wrapper">
@@ -38,8 +38,8 @@
         </div>
 
         <!-- Toggle Button (Mobile) -->
-        <button class="d-md-none" style="background: none; border: none; color: var(--text-muted); cursor: pointer;"
-            onclick="toggleSidebar()">
+        <button class="d-md-none mobile-sidebar-close" style="background: none; border: none; color: var(--text-muted); cursor: pointer;"
+            id="mobile-sidebar-close">
             <span class="material-icons-round">close</span>
         </button>
     </div>
@@ -206,15 +206,9 @@
 </aside>
 
 
-<!-- Mobile Overlay -->
-<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 
 <script>
-    function toggleSidebar() {
-        document.querySelector('.admin-sidebar').classList.toggle('open');
-        document.querySelector('.sidebar-overlay').classList.toggle('open');
-    }
-
     function toggleSubmenu(id) {
         const submenu = document.getElementById(id);
         const arrow = document.getElementById('arrow-' + id);
@@ -228,17 +222,20 @@
         }
     }
 
-    // Auto-open submenu if active child present on load
-    document.addEventListener('DOMContentLoaded', () => {
+    // Auto-open submenu if active child present on load or after swap
+    function expandActiveSubmenus() {
         const activeLinks = document.querySelectorAll('.submenu-item.active');
         activeLinks.forEach(link => {
             const parent = link.closest('.submenu-container');
-            if (parent) {
+            if (parent && !parent.classList.contains('open')) {
                 parent.classList.add('open');
                 const arrowId = 'arrow-' + parent.id;
                 const arrow = document.getElementById(arrowId);
                 if (arrow) arrow.style.transform = 'rotate(180deg)';
             }
         });
-    });
+    }
+
+    document.addEventListener('DOMContentLoaded', expandActiveSubmenus);
+    document.addEventListener('htmx:afterSwap', expandActiveSubmenus);
 </script>

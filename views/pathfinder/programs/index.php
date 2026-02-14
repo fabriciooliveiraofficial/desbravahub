@@ -39,10 +39,19 @@
                 <?php 
                 $totalSteps = $program['total_steps'] ?? 0;
                 $answeredSteps = $program['answered_steps'] ?? 0;
+                $approvedSteps = $program['approved_steps'] ?? 0;
+                $rejectedSteps = $program['rejected_steps'] ?? 0;
                 
                 // Robust Status Check
                 $rawStatus = strtolower(trim($program['user_status'] ?? 'not_started'));
                 $isSubmitted = in_array($rawStatus, ['submitted', 'completed', 'approved']);
+                
+                // Override status if there are rejected steps (backend should already revert, but be defensive)
+                $hasRejections = $rejectedSteps > 0;
+                if ($hasRejections && $isSubmitted) {
+                    $rawStatus = 'in_progress';
+                    $isSubmitted = false;
+                }
                 
                 $canSubmit = ($totalSteps > 0 && $answeredSteps >= $totalSteps) && !$isSubmitted;
                 $engPercent = $totalSteps > 0 ? round(($answeredSteps / $totalSteps) * 100) : 0;
@@ -56,7 +65,7 @@
                    data-category-type="<?= $catType ?>"
                    style="cursor: pointer; padding: 28px; <?= $catType === 'specialty' ? '' : 'display: none;' ?>">
                     
-                    <div class="status-line"></div>
+                    <div class="status-line" <?= $hasRejections ? 'style="background: linear-gradient(90deg, #ef4444, #f87171); box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);"' : '' ?>></div>
                     
                     <div class="plate-header">
                         <div class="plate-content">
@@ -79,26 +88,29 @@
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-top: 10px;">
                             <?php 
-                            // Smart Label Logic
-                            // If Approval is 0 but Engagement > 0, show "Under Review"
+                            // Smart Label Logic v2 — handles all states
                             $displayPercent = $appPercent;
                             $displayLabel = 'DESEMPENHO OPERACIONAL';
                             $displayColor = '#fff';
 
-                            if ($appPercent == 0 && $engPercent > 0) {
-                                $displayPercent = $engPercent;
-                                $displayLabel = 'EM ANÁLISE (QG)';
-                                $displayColor = '#fbbf24'; // Warning color
-                            }
-                            
-                            // Debug/Clarity: Show counts if suspicious
-                            if ($appPercent == 0 && $engPercent == 0 && $answeredSteps > 0) {
-                                // Mismatch case (calculation error?)
-                                $displayLabel = "ERRO CÁLCULO ($answeredSteps/$totalSteps)";
+                            if ($hasRejections) {
+                                // Rejected state — show how many need fixing
+                                $displayPercent = $appPercent;
+                                $displayLabel = "⚠ REVISÃO NECESSÁRIA <span style='opacity:0.7; font-weight:400;'>($rejectedSteps " . ($rejectedSteps > 1 ? 'itens' : 'item') . ")</span>";
                                 $displayColor = '#f87171';
                             } elseif ($appPercent == 0 && $engPercent > 0) {
-                                // Add count to label for clarity
-                                $displayLabel .= " <span style='opacity:0.7; font-weight:400;'>($answeredSteps/$totalSteps)</span>";
+                                $displayPercent = $engPercent;
+                                $displayLabel = "EM ANÁLISE (QG) <span style='opacity:0.7; font-weight:400;'>($answeredSteps/$totalSteps)</span>";
+                                $displayColor = '#fbbf24';
+                            } elseif ($appPercent > 0 && $appPercent < 100) {
+                                $displayLabel = "APROVADOS <span style='opacity:0.7; font-weight:400;'>($approvedSteps/$totalSteps)</span>";
+                                $displayColor = 'var(--accent-cyan)';
+                            } elseif ($appPercent >= 100) {
+                                $displayLabel = 'MISSÃO COMPLETA';
+                                $displayColor = '#10b981';
+                            } elseif ($appPercent == 0 && $engPercent == 0 && $answeredSteps > 0) {
+                                $displayLabel = "ERRO CÁLCULO ($answeredSteps/$totalSteps)";
+                                $displayColor = '#f87171';
                             }
                             ?>
                             <span style="font-size: 0.65rem; font-weight: 800; color: var(--hud-text-dim);"><?= $displayLabel ?></span>
@@ -109,8 +121,29 @@
                     <div class="plate-data" style="margin-bottom: 24px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
                         <div class="data-point">
                             <span class="data-label">Status Operacional</span>
-                            <span class="data-value" style="font-size: 0.8rem; color: #fff; text-transform: uppercase;">
-                                <?= str_replace('_', ' ', $rawStatus) ?>
+                            <?php
+                            $statusDisplay = str_replace('_', ' ', $rawStatus);
+                            $statusColor = '#fff';
+                            $statusIcon = '';
+                            if ($hasRejections) {
+                                $statusDisplay = 'REVISÃO PENDENTE';
+                                $statusColor = '#f87171';
+                                $statusIcon = '🔴';
+                            } elseif ($rawStatus === 'submitted') {
+                                $statusDisplay = 'ENVIADO';
+                                $statusColor = '#fbbf24';
+                                $statusIcon = '🟡';
+                            } elseif ($rawStatus === 'completed' || $rawStatus === 'approved') {
+                                $statusDisplay = 'CONCLUÍDO';
+                                $statusColor = '#10b981';
+                                $statusIcon = '🟢';
+                            } elseif ($rawStatus === 'in_progress') {
+                                $statusDisplay = 'EM PROGRESSO';
+                                $statusColor = 'var(--accent-cyan)';
+                            }
+                            ?>
+                            <span class="data-value" style="font-size: 0.8rem; color: <?= $statusColor ?>; text-transform: uppercase; font-weight: 900;">
+                                <?= $statusIcon ?> <?= $statusDisplay ?>
                             </span>
                         </div>
                         <div class="data-point" style="align-items: flex-end;">
@@ -123,13 +156,19 @@
                     <?php
                     $btnLabel = 'ENVIAR MISSÃO';
                     $btnIcon = 'rocket_launch';
-                    if ($isSubmitted) {
+                    $btnStyle = '';
+                    if ($hasRejections) {
+                        $btnIcon = 'rebase_edit';
+                        $btnLabel = 'REENVIAR CORREÇÕES';
+                        $canSubmit = false; // Must fix and resubmit individual steps
+                        $btnStyle = 'background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);';
+                    } elseif ($isSubmitted) {
                         $btnIcon = 'verified';
                         $btnLabel = ($rawStatus === 'submitted') ? 'MISSÃO ENVIADA' : 'MISSÃO CONCLUÍDA';
                     } elseif ($rawStatus === 'rejected') {
                         $btnIcon = 'rebase_edit';
                         $btnLabel = 'REENVIAR CORREÇÕES';
-                        $canSubmit = true; // Force clickable if rejected
+                        $canSubmit = true;
                     } elseif (!$canSubmit) {
                         $btnIcon = 'radio_button_unchecked';
                         $btnLabel = 'REQUISITOS PENDENTES';
@@ -139,7 +178,7 @@
                             class="hud-btn primary program-submit-btn <?= $canSubmit ? '' : 'secondary' ?>"
                             data-progress-id="<?= $program['progress_id'] ?>"
                             <?= $canSubmit ? '' : 'disabled' ?>
-                            style="width: 100%; z-index: 10; padding: 12px; font-size: 0.75rem; justify-content: center; box-shadow: <?= $canSubmit ? '0 4px 15px rgba(6, 182, 212, 0.3)' : 'none' ?>;">
+                            style="width: 100%; z-index: 10; padding: 12px; font-size: 0.75rem; justify-content: center; <?= $btnStyle ?: ($canSubmit ? 'box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);' : 'box-shadow: none;') ?>">
                         <i class="material-icons-round" style="font-size: 1.1rem;"><?= $btnIcon ?></i>
                         <?= $btnLabel ?>
                     </button>

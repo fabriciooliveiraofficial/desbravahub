@@ -109,7 +109,42 @@
                                 <div class="data-point" style="grid-column: span 2; border-top: 1px dashed var(--hud-glass-border); margin-top: 8px; padding-top: 8px;">
                                     <span class="data-label" style="color: var(--accent-warning);">MESSAGE FROM HQ:</span>
                                     <span class="data-value" style="font-style: italic; opacity: 0.8; font-weight: 400;">
-                                        "<?= htmlspecialchars($proof['feedback']) ?>"
+                                        <?php 
+                                        if (str_starts_with($proof['feedback'], '[ITEM_EVAL]')) {
+                                            $jsonStr = substr($proof['feedback'], 11); // Remove [ITEM_EVAL]
+                                            $evalData = json_decode($jsonStr, true);
+                                            
+                                            if ($evalData) {
+                                                // Show main evidence feedback if rejected
+                                                if (isset($evalData['items']['main_evidence']['status']) && $evalData['items']['main_evidence']['status'] === 'rejected') {
+                                                    echo '<span style="color: #ef4444;">' . htmlspecialchars($evalData['items']['main_evidence']['feedback']) . '</span>';
+                                                } 
+                                                // Show overall feedback is present
+                                                elseif (!empty($evalData['overall'])) {
+                                                    echo htmlspecialchars($evalData['overall']);
+                                                }
+                                                // Show generic message if multiple items rejected
+                                                else {
+                                                    $rejectedCount = 0;
+                                                    foreach ($evalData['items'] as $item) {
+                                                        if (isset($item['status']) && $item['status'] === 'rejected') {
+                                                            $rejectedCount++;
+                                                        }
+                                                    }
+                                                    if ($rejectedCount > 0) {
+                                                        echo "Existem $rejectedCount itens que precisam de revisão. Verifique os detalhes.";
+                                                    } else {
+                                                        echo "Avaliação completa.";
+                                                    }
+                                                }
+                                            } else {
+                                                // Fallback if JSON decode fails
+                                                echo htmlspecialchars(substr($proof['feedback'], 0, 50) . '...'); 
+                                            }
+                                        } else {
+                                            echo htmlspecialchars($proof['feedback']);
+                                        }
+                                        ?>
                                     </span>
                                 </div>
                             <?php endif; ?>

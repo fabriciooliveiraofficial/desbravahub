@@ -175,10 +175,19 @@ class NotificationService
             return ['toast', 'email'];
         }
 
+        // 1. Try specific preference
         $prefs = db_fetch_one(
             "SELECT * FROM user_notification_preferences WHERE user_id = ? AND notification_type = ?",
             [$userId, $type]
         );
+
+        // 2. Fallback to 'all' preference if specific not found
+        if (!$prefs && $type !== 'all') {
+            $prefs = db_fetch_one(
+                "SELECT * FROM user_notification_preferences WHERE user_id = ? AND notification_type = 'all'",
+                [$userId]
+            );
+        }
 
         if (!$prefs) {
             // No explicit preferences - check if user has push subscription

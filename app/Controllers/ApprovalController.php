@@ -111,7 +111,7 @@ class ApprovalController
         ", [$progressId, $tenant['id']]);
 
         if (!$progress) {
-            header('Location: ' . base_url($tenant['slug'] . '/admin/approvals'));
+            header('Location: ' . base_url($tenant['slug'] . '/admin/aprovacoes'));
             exit;
         }
 
@@ -129,19 +129,19 @@ class ApprovalController
         // Enhance steps with question details to map numeric answers (e.g. "0" -> "First Option")
     foreach ($steps as &$step) {
         $questions = db_fetch_all("SELECT * FROM program_questions WHERE step_id = ? ORDER BY sort_order", [$step['id']]);
+        $step['structured_content'] = []; // Always initialize for the view
         
         if (!empty($questions) && !empty($step['response_text'])) {
             $decoded = json_decode($step['response_text'], true);
             
             if (is_array($decoded)) {
-                $formattedText = "";
                 foreach ($questions as $q) {
                     $qId = $q['id'];
-                    // The key might be the question ID (new format) or index (legacy)
                     $answer = $decoded[$qId] ?? ($decoded[$questions[0]['id'] ?? -1] ?? null);
                     
                     if ($answer !== null) {
                         $label = $q['question_text'] ?: "Resposta";
+                        $readableAnswer = $answer;
                         
                         // Map options if choice type
                         if (in_array($q['type'], ['single_choice', 'multiple_choice', 'select', 'true_false'])) {
@@ -149,10 +149,10 @@ class ApprovalController
                             
                             if (is_numeric($answer) && isset($options[(int)$answer])) {
                                 $opt = $options[(int)$answer];
-                                $answer = is_string($opt) ? $opt : ($opt['text'] ?? $opt['label'] ?? $answer);
+                                $readableAnswer = is_string($opt) ? $opt : ($opt['text'] ?? $opt['label'] ?? $answer);
                             } elseif ($q['type'] === 'true_false') {
-                                if ($answer === '0' || $answer === 0) $answer = 'Falso';
-                                elseif ($answer === '1' || $answer === 1) $answer = 'Verdadeiro';
+                                if ($answer === '0' || $answer === 0) $readableAnswer = 'Falso';
+                                elseif ($answer === '1' || $answer === 1) $readableAnswer = 'Verdadeiro';
                             } elseif (is_array($answer)) {
                                 $mappedArr = [];
                                 foreach ($answer as $a) {
@@ -163,33 +163,37 @@ class ApprovalController
                                         $mappedArr[] = $a;
                                     }
                                 }
-                                $answer = implode(", ", $mappedArr);
+                                $readableAnswer = implode(", ", $mappedArr);
                             }
                         }
                         
-                        if (count($questions) > 1) {
-                            $formattedText .= "• " . $label . ": " . $answer . "\n";
-                        } else {
-                            $formattedText = $answer;
-                        }
+                        $step['structured_content'][] = [
+                            'question' => $label,
+                            'answer' => $readableAnswer,
+                            'type' => $q['type']
+                        ];
                     }
                 }
-                $step['response_text'] = $formattedText ?: $step['response_text'];
-                
             } else {
                 // Fallback for non-JSON simple values (Legacy)
                 foreach ($questions as $q) {
+                    $readableAnswer = $step['response_text'];
                     if (in_array($q['type'], ['single_choice', 'multiple_choice', 'select', 'true_false'])) {
                         $options = json_decode($q['options'] ?? '[]', true);
                         if (is_numeric($step['response_text']) && isset($options[(int)$step['response_text']])) {
                             $opt = $options[(int)$step['response_text']];
-                            $step['response_text'] = is_string($opt) ? $opt : ($opt['text'] ?? $opt['label'] ?? $step['response_text']);
+                            $readableAnswer = is_string($opt) ? $opt : ($opt['text'] ?? $opt['label'] ?? $step['response_text']);
                         } elseif ($q['type'] === 'true_false') {
-                            if ($step['response_text'] === '0') $step['response_text'] = 'Falso';
-                            if ($step['response_text'] === '1') $step['response_text'] = 'Verdadeiro';
+                            if ($step['response_text'] === '0') $readableAnswer = 'Falso';
+                            if ($step['response_text'] === '1') $readableAnswer = 'Verdadeiro';
                         }
-                        break; 
                     }
+                    $step['structured_content'][] = [
+                        'question' => $q['question_text'] ?: "Resposta",
+                        'answer' => $readableAnswer,
+                        'type' => $q['type']
+                    ];
+                    break; 
                 }
             }
         }
@@ -205,9 +209,19 @@ class ApprovalController
     {
         $this->requireAdmin();
 
+        // Buffer output to prevent PHP warnings from corrupting JSON response
+        ob_start();
+
         $tenant = App::tenant();
         $user = App::user();
         $responseId = (int) ($params['id'] ?? 0);
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $itemEvaluations = $input['item_evaluations'] ?? null;
+        
+        // If we have granular evaluations, we store them as JSON in the feedback field (prefixing with [GRANULAR])
+        // or we could use another field, but for Phase 92 we'll keep it simple and efficient.
+        $feedbackBlob = $itemEvaluations ? '[ITEM_EVAL]' . json_encode($itemEvaluations) : null;
 
         try {
             db_begin();
@@ -215,6 +229,7 @@ class ApprovalController
             // Update response status
             db_update('user_step_responses', [
                 'status' => 'approved',
+                'feedback' => $feedbackBlob,
                 'reviewed_by' => $user['id'],
                 'reviewed_at' => date('Y-m-d H:i:s')
             ], 'id = ?', [$responseId]);
@@ -227,29 +242,35 @@ class ApprovalController
                 'performed_by' => $user['id']
             ]);
 
-            // Update progress
-            $response = db_fetch_one("SELECT usr.progress_id, usr.step_id, upp.user_id, upp.program_id 
-                FROM user_step_responses usr
-                JOIN user_program_progress upp ON usr.progress_id = upp.id
-                WHERE usr.id = ?", [$responseId]);
+            // Update progress & send notification (wrapped in try-catch)
+            try {
+                $response = db_fetch_one("SELECT usr.progress_id, usr.step_id, upp.user_id, upp.program_id 
+                    FROM user_step_responses usr
+                    JOIN user_program_progress upp ON usr.progress_id = upp.id
+                    WHERE usr.id = ?", [$responseId]);
 
-            if ($response) {
-                $this->updateProgressPercent($response['progress_id'], $tenant['slug']);
+                if ($response) {
+                    $this->updateProgressPercent($response['progress_id'], $tenant['slug']);
 
-                // Send notification
-                $step = db_fetch_one("SELECT * FROM program_steps WHERE id = ?", [$response['step_id']]);
-                $program = db_fetch_one("SELECT * FROM learning_programs WHERE id = ?", [$response['program_id']]);
-                if ($step && $program) {
-                    LearningNotificationService::stepApproved($tenant['id'], $response['user_id'], $step, $program, $tenant['slug']);
+                    // Send notification
+                    $step = db_fetch_one("SELECT * FROM program_steps WHERE id = ?", [$response['step_id']]);
+                    $program = db_fetch_one("SELECT * FROM learning_programs WHERE id = ?", [$response['program_id']]);
+                    if ($step && $program) {
+                        LearningNotificationService::stepApproved($tenant['id'], $response['user_id'], $step, $program, $tenant['slug']);
+                    }
                 }
+            } catch (\Exception $notifError) {
+                error_log("Notification error during approval: " . $notifError->getMessage());
             }
 
             db_commit();
 
+            ob_end_clean();
             $this->json(['success' => true, 'message' => 'Aprovado!']);
 
         } catch (\Exception $e) {
             db_rollback();
+            ob_end_clean();
             $this->json(['error' => 'Erro: ' . $e->getMessage()], 500);
         }
     }
@@ -261,12 +282,22 @@ class ApprovalController
     {
         $this->requireAdmin();
 
+        // Buffer output to prevent PHP warnings from corrupting JSON response
+        ob_start();
+
         $tenant = App::tenant();
         $user = App::user();
         $responseId = (int) ($params['id'] ?? 0);
 
         $input = json_decode(file_get_contents('php://input'), true);
         $feedback = $input['feedback'] ?? '';
+        $itemEvaluations = $input['item_evaluations'] ?? null;
+
+        // Combine overall feedback with granular evaluations
+        $feedbackBlob = $itemEvaluations ? '[ITEM_EVAL]' . json_encode([
+            'overall' => $feedback,
+            'items' => $itemEvaluations
+        ]) : $feedback;
 
         try {
             db_begin();
@@ -274,7 +305,7 @@ class ApprovalController
             // Update response status
             db_update('user_step_responses', [
                 'status' => 'rejected',
-                'feedback' => $feedback,
+                'feedback' => $feedbackBlob,
                 'reviewed_by' => $user['id'],
                 'reviewed_at' => date('Y-m-d H:i:s')
             ], 'id = ?', [$responseId]);
@@ -288,26 +319,59 @@ class ApprovalController
                 'notes' => $feedback
             ]);
 
-            // Send notification
-            $response = db_fetch_one("SELECT usr.step_id, upp.user_id, upp.program_id 
-                FROM user_step_responses usr
-                JOIN user_program_progress upp ON usr.progress_id = upp.id
-                WHERE usr.id = ?", [$responseId]);
+            // Recalculate progress & revert program status
+            try {
+                $response = db_fetch_one("SELECT usr.step_id, usr.progress_id, upp.user_id, upp.program_id, upp.status as program_status
+                    FROM user_step_responses usr
+                    JOIN user_program_progress upp ON usr.progress_id = upp.id
+                    WHERE usr.id = ?", [$responseId]);
 
-            if ($response) {
-                $step = db_fetch_one("SELECT * FROM program_steps WHERE id = ?", [$response['step_id']]);
-                $program = db_fetch_one("SELECT * FROM learning_programs WHERE id = ?", [$response['program_id']]);
-                if ($step && $program) {
-                    LearningNotificationService::stepRejected($tenant['id'], $response['user_id'], $step, $program, $feedback, $tenant['slug']);
+                if ($response) {
+                    // Bug #1: Recalculate progress_percent after rejection
+                    $this->updateProgressPercent($response['progress_id'], $tenant['slug']);
+
+                    // Bug #2: Revert program status to in_progress if it was submitted/completed
+                    if (in_array($response['program_status'], ['submitted', 'completed'])) {
+                        db_update('user_program_progress', [
+                            'status' => 'in_progress',
+                            'completed_at' => null
+                        ], 'id = ?', [$response['progress_id']]);
+                    }
+
+                    $step = db_fetch_one("SELECT * FROM program_steps WHERE id = ?", [$response['step_id']]);
+                    $program = db_fetch_one("SELECT * FROM learning_programs WHERE id = ?", [$response['program_id']]);
+                    
+                    if ($step && $program) {
+                        $rejectedCount = 0;
+                        if ($itemEvaluations && is_array($itemEvaluations)) {
+                            foreach ($itemEvaluations as $eval) {
+                                if (($eval['status'] ?? '') === 'rejected') $rejectedCount++;
+                            }
+                        }
+
+                        $notificationMsg = $feedback;
+                        if ($rejectedCount > 0) {
+                            $suffix = "({$rejectedCount} " . ($rejectedCount > 1 ? "itens precisam" : "item precisa") . " de correção)";
+                            $notificationMsg = $notificationMsg ? $notificationMsg . " | " . $suffix : $suffix;
+                        }
+
+                        LearningNotificationService::stepRejected($tenant['id'], $response['user_id'], $step, $program, $notificationMsg, $tenant['slug']);
+                    }
                 }
+            } catch (\Exception $notifError) {
+                error_log("Notification error during rejection: " . $notifError->getMessage());
             }
 
             db_commit();
+
+            // Discard any buffered output (PHP warnings, etc.)
+            ob_end_clean();
 
             $this->json(['success' => true, 'message' => 'Rejeitado com feedback']);
 
         } catch (\Exception $e) {
             db_rollback();
+            ob_end_clean();
             $this->json(['error' => 'Erro: ' . $e->getMessage()], 500);
         }
     }

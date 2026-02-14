@@ -226,33 +226,46 @@ class AdminController
     // Format program responses if they are JSON
     foreach ($programSubmissions as &$psub) {
         $content = $psub['response_file'] ?? $psub['response_url'] ?? $psub['response_text'];
+        $psub['structured_content'] = [];
         
         if ($psub['type'] === 'text' && !empty($psub['response_text'])) {
             $decoded = json_decode($psub['response_text'], true);
             if (is_array($decoded)) {
                 $questions = db_fetch_all("SELECT * FROM program_questions WHERE step_id = ? ORDER BY sort_order", [$psub['step_id']]);
                 if (!empty($questions)) {
-                    $formatted = "";
                     foreach ($questions as $q) {
                         $ans = $decoded[$q['id']] ?? ($decoded[$questions[0]['id'] ?? -1] ?? null);
                         if ($ans !== null) {
                             $qTitle = $q['question_text'] ?: "Pergunta";
+                            $readableAns = $ans;
                             
                             // Simple choice mapping for the summary
-                            if (in_array($q['type'], ['single_choice', 'select', 'true_false'])) {
+                            if (in_array($q['type'], ['single_choice', 'select', 'true_false', 'multiple_choice'])) {
                                 $options = json_decode($q['options'] ?? '[]', true);
-                                if (is_numeric($ans) && isset($options[(int)$ans])) {
+                                if ($q['type'] === 'multiple_choice' && is_array($ans)) {
+                                    $ansLabels = [];
+                                    foreach ($ans as $val) {
+                                        if (isset($options[(int)$val])) {
+                                            $opt = $options[(int)$val];
+                                            $ansLabels[] = is_string($opt) ? $opt : ($opt['text'] ?? $opt['label'] ?? $val);
+                                        }
+                                    }
+                                    $readableAns = implode(', ', $ansLabels);
+                                } elseif (is_numeric($ans) && isset($options[(int)$ans])) {
                                     $opt = $options[(int)$ans];
-                                    $ans = is_string($opt) ? $opt : ($opt['text'] ?? $opt['label'] ?? $ans);
+                                    $readableAns = is_string($opt) ? $opt : ($opt['text'] ?? $opt['label'] ?? $ans);
                                 } elseif ($q['type'] === 'true_false') {
-                                    $ans = ($ans == '1') ? 'Verdadeiro' : 'Falso';
+                                    $readableAns = ($ans == '1') ? 'Verdadeiro' : 'Falso';
                                 }
                             }
                             
-                            $formatted .= ($formatted ? " | " : "") . "$qTitle: $ans";
+                            $psub['structured_content'][] = [
+                                'question' => $qTitle,
+                                'answer' => $readableAns,
+                                'type' => $q['type']
+                            ];
                         }
                     }
-                    $content = $formatted ?: $content;
                 }
             }
         }

@@ -4,9 +4,12 @@
  * Requires: $pageTitle (string), $user (array), $tenant (array)
  */
 ?>
-<header class="admin-header">
+<header class="admin-header" id="admin-header" hx-preserve="true">
     <!-- Left Side: Icon & Title -->
     <div class="header-title-group">
+        <button class="mobile-sidebar-toggle" id="mobile-sidebar-toggle">
+            <span class="material-icons-round">menu</span>
+        </button>
         <div class="header-icon-box">
             <span class="material-icons-outlined"><?= $pageIcon ?? 'dashboard' ?></span>
         </div>

@@ -56,7 +56,7 @@ class WebPushService
         
         // Use deep link URL from data if available, otherwise default to notifications page
         $defaultUrl = $tenant ? base_url($tenant['slug'] . '/notificacoes') : '/';
-        $deepLinkUrl = isset($data['url']) ? $data['url'] : $defaultUrl;
+        $deepLinkUrl = $data['url'] ?? $data['link'] ?? $defaultUrl;
 
         $payload = json_encode([
             'title' => $title,

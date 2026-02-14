@@ -377,8 +377,6 @@ body {
 }
 </style>
 
-<!-- Physical Spacer for good measure -->
-<div class="dock-spacer" style="height: 100px; width: 100%; pointer-events: none;"></div>
 
 <script>
 // macOS Dock-style magnification effect

@@ -72,77 +72,113 @@ $uniqueUnits = count(array_unique(array_column($pendingQueue, 'unit_name')));
                 <p style="color: var(--text-secondary); margin-top: 10px;">Todos os requisitos foram validados. Nenhum dado pendente.</p>
             </div>
         <?php else: ?>
-            <div class="queue-grid">
-                <?php foreach ($pendingQueue as $idx => $q): ?>
-                    <div class="queue-card" style="animation: fadeInUp 0.4s ease-out forwards; animation-delay: <?= $idx * 0.05 ?>s; opacity: 0;">
-                        <div class="student-profile" style="display: flex; align-items: center; gap: 16px;">
-                            <div class="avatar-glow" style="width: 64px; height: 64px; border-radius: 20px; padding: 3px; background: linear-gradient(45deg, var(--eval-cyan), var(--eval-purple));">
-                                <div class="avatar-inner" style="width: 100%; height: 100%; border-radius: 17px; background: var(--bg-card); display: flex; align-items: center; justify-content: center; overflow: hidden; font-weight: 800; font-family: 'Outfit';">
-                                    <?php if ($q['avatar_url']): ?>
-                                        <img src="<?= $q['avatar_url'] ?>" style="width: 100%; height: 100%; object-fit: cover;">
-                                    <?php else: ?>
-                                        <?= strtoupper(substr($q['user_name'] ?? 'U', 0, 1)) ?>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            <div style="flex: 1;">
-                                <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin: 0; letter-spacing: -0.01em;">
-                                    <?= htmlspecialchars($q['user_name']) ?>
-                                </h3>
-                                <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
-                                    <span class="material-icons-round" style="font-size: 0.9rem;">hub</span>
-                                    <?= htmlspecialchars($q['unit_name'] ?? 'Equipe Principal') ?>
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-size: 0.7rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">Último Sinal</div>
-                                <div style="font-family: 'JetBrains Mono'; color: var(--eval-cyan); font-weight: 600;">
-                                    <?= date('d/m H:i', strtotime($q['last_submission'])) ?>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="program-focus-box">
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(139, 92, 246, 0.08); color: var(--eval-purple); display: flex; align-items: center; justify-content: center;">
-                                        <span class="material-icons-round" style="font-size: 1.2rem;"><?= $q['program_icon'] ?? 'bookmark' ?></span>
+            <div class="queue-table-container">
+                <table class="queue-table">
+                    <thead>
+                        <tr>
+                            <th>Candidato</th>
+                            <th>Programa</th>
+                            <th>Pendente</th>
+                            <th>Último Sinal</th>
+                            <th>Progresso</th>
+                            <th style="text-align: right;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($pendingQueue as $idx => $q): ?>
+                            <tr style="animation: fadeInUp 0.4s ease-out forwards; animation-delay: <?= $idx * 0.05 ?>s; opacity: 0;">
+                                <td>
+                                    <div class="table-identity">
+                                        <div class="table-avatar">
+                                            <?php if ($q['avatar_url']): ?>
+                                                <img src="<?= $q['avatar_url'] ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                                            <?php else: ?>
+                                                <?= strtoupper(substr($q['user_name'] ?? 'U', 0, 1)) ?>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="table-candidate-info">
+                                            <h4><?= htmlspecialchars($q['user_name']) ?></h4>
+                                            <p>
+                                                <span class="material-icons-round" style="font-size: 0.8rem;">hub</span>
+                                                <?= htmlspecialchars($q['unit_name'] ?? 'Equipe Principal') ?>
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div style="font-weight: 700; font-family: 'Outfit'; color: var(--text-main);"><?= htmlspecialchars($q['program_name']) ?></div>
-                                </div>
-                                <div class="pending-count-tag" style="background: rgba(139, 92, 246, 0.1); color: var(--eval-purple); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800;"><?= $q['pending_count'] ?> pendentes</div>
-                            </div>
-
-                            <div style="margin-top: 16px;">
-                                <div style="display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase;">
-                                    <span>Progresso Global</span>
-                                    <span style="color: var(--eval-cyan)"><?= $q['progress_percent'] ?>%</span>
-                                </div>
-                                <div style="height: 8px; background: var(--bg-main); border-radius: 4px; overflow: hidden;">
-                                    <div style="height: 100%; background: linear-gradient(to right, var(--eval-cyan), #3b82f6); width: <?= $q['progress_percent'] ?>%; border-radius: 4px; transition: width 1s ease-out;"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 60px; gap: 12px;">
-                            <a href="<?= base_url($tenant['slug'] . '/admin/aprovacoes/' . $q['progress_id'] . '/review') ?>" class="btn-eval-cyan">
-                                <span class="material-icons-round" style="font-size: 1.2rem;">assignment_turned_in</span>
-                                AVALIAR REQUISITOS
-                            </a>
-                            <button class="btn-check-all" onclick="bulkApproveProgram(<?= $q['progress_id'] ?>)" 
-                                    title="Aprovar todos os requisitos deste programa de uma vez"
-                                    style="background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-secondary); border-radius: 14px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center;">
-                                <span class="material-icons-round">done_all</span>
-                            </button>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+                                </td>
+                                <td>
+                                    <div class="table-program">
+                                        <div class="table-program-icon">
+                                            <span class="material-icons-round" style="font-size: 1.1rem;"><?= $q['program_icon'] ?? 'bookmark' ?></span>
+                                        </div>
+                                        <span class="table-program-name"><?= htmlspecialchars($q['program_name']) ?></span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="tag-pending"><?= $q['pending_count'] ?> pendentes</span>
+                                </td>
+                                <td>
+                                    <div class="table-timestamp">
+                                        <?= date('d/m H:i', strtotime($q['last_submission'])) ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="table-progress-box">
+                                        <div class="table-progress-bar">
+                                            <div class="table-progress-inner" style="width: <?= $q['progress_percent'] ?>%;"></div>
+                                        </div>
+                                        <div class="table-progress-label"><?= $q['progress_percent'] ?>%</div>
+                                    </div>
+                                </td>
+                                <td style="text-align: right;">
+                                    <div class="action-cluster">
+                                        <a href="<?= base_url($tenant['slug'] . '/admin/aprovacoes/' . $q['progress_id'] . '/review') ?>" 
+                                           class="action-btn primary" 
+                                           title="Avaliar Requisitos"
+                                           hx-boost="false">
+                                            <span class="material-icons-round">assignment_turned_in</span>
+                                        </a>
+                                        <button class="action-btn secondary" 
+                                                onclick="bulkApproveProgram(<?= $q['progress_id'] ?>)" 
+                                                title="Aprovar tudo de uma vez">
+                                            <span class="material-icons-round">done_all</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
         <?php endif; ?>
     </div>
 
     <!-- History Display -->
     <div id="history-tab" style="display: none;">
+        <!-- Smart Filter Bar -->
+        <div class="history-filter-bar">
+            <div class="filter-search-group">
+                <span class="material-icons-round filter-search-icon">search</span>
+                <input type="text" id="historySearch" class="filter-search-input" 
+                       placeholder="Pesquisar por nome, validador..." 
+                       oninput="filterHistory()">
+            </div>
+            <div class="filter-controls">
+                <select id="historyStatusFilter" class="filter-select" onchange="filterHistory()">
+                    <option value="all">Todos os Status</option>
+                    <option value="approved">✅ Aprovados</option>
+                    <option value="rejected">❌ Rejeitados</option>
+                </select>
+                <input type="date" id="historyDateFrom" class="filter-date" onchange="filterHistory()" title="Data inicial">
+                <input type="date" id="historyDateTo" class="filter-date" onchange="filterHistory()" title="Data final">
+                <button class="filter-clear-btn" onclick="clearHistoryFilters()" title="Limpar filtros">
+                    <span class="material-icons-round">filter_list_off</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Counter -->
+        <div id="historyResultCount" class="history-result-count"></div>
+
         <div class="stat-glass-card" style="display: block; padding: 0; overflow: hidden;">
             <?php if (empty($recentApprovals)): ?>
                 <div style="padding: 60px; text-align: center; color: var(--text-secondary);">Nenhum log de atividade detectado.</div>
@@ -157,9 +193,12 @@ $uniqueUnits = count(array_unique(array_column($pendingQueue, 'unit_name')));
                                 <th>Timestamp</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="historyTableBody">
                             <?php foreach ($recentApprovals as $log): ?>
-                                <tr>
+                                <tr data-status="<?= $log['action'] ?>" 
+                                    data-name="<?= htmlspecialchars(strtolower($log['user_name'] ?? '')) ?>" 
+                                    data-reviewer="<?= htmlspecialchars(strtolower($log['reviewer_name'] ?? '')) ?>"
+                                    data-date="<?= date('Y-m-d', strtotime($log['created_at'])) ?>">
                                     <td>
                                         <div style="display: flex; align-items: center; gap: 12px;">
                                             <div style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: <?= $log['action'] === 'approved' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' ?>; color: <?= $log['action'] === 'approved' ? '#10b981' : '#f87171' ?>;">
@@ -178,12 +217,17 @@ $uniqueUnits = count(array_unique(array_column($pendingQueue, 'unit_name')));
                         </tbody>
                     </table>
                 </div>
+                <!-- No results state -->
+                <div id="historyNoResults" style="display: none; padding: 60px; text-align: center; color: var(--text-secondary);">
+                    <span class="material-icons-round" style="font-size: 3rem; opacity: 0.3; margin-bottom: 12px; display: block;">search_off</span>
+                    Nenhum resultado encontrado com os filtros atuais.
+                </div>
             <?php endif; ?>
         </div>
     </div>
 </div>
 
-<div class="toast modern-toast" id="eval-toast" style="position: fixed; bottom: 30px; right: 30px; z-index: 999999; display: none; background: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); font-weight: 600;"></div>
+
 
 <script>
     function showEvalTab(tab) {
@@ -221,14 +265,61 @@ $uniqueUnits = count(array_unique(array_column($pendingQueue, 'unit_name')));
         }
     }
 
-    function showEvalToast(msg, type = 'success') {
-        const toast = document.getElementById('eval-toast');
-        if (!toast) return;
-        toast.textContent = msg;
-        toast.style.display = 'block';
-        toast.style.borderLeft = `4px solid ${type === 'error' ? '#f87171' : 'var(--eval-cyan)'}`;
-        toast.style.color = 'var(--text-main)'; // Ensure visibility in dark mode since inline styles were removed
-        toast.style.background = 'var(--bg-card)';
-        setTimeout(() => toast.style.display = 'none', 4000);
+    // Smart History Filter
+    function filterHistory() {
+        const search = document.getElementById('historySearch')?.value?.toLowerCase() || '';
+        const status = document.getElementById('historyStatusFilter')?.value || 'all';
+        const dateFrom = document.getElementById('historyDateFrom')?.value || '';
+        const dateTo = document.getElementById('historyDateTo')?.value || '';
+
+        const rows = document.querySelectorAll('#historyTableBody tr');
+        let visible = 0;
+
+        rows.forEach(row => {
+            const rowStatus = row.dataset.status;
+            const rowName = row.dataset.name || '';
+            const rowReviewer = row.dataset.reviewer || '';
+            const rowDate = row.dataset.date || '';
+
+            let show = true;
+
+            // Text search (name or reviewer)
+            if (search && !rowName.includes(search) && !rowReviewer.includes(search)) {
+                show = false;
+            }
+
+            // Status filter
+            if (status !== 'all') {
+                const statusMap = { 'approved': 'approved', 'rejected': 'rejected' };
+                if (rowStatus !== statusMap[status]) show = false;
+            }
+
+            // Date range
+            if (dateFrom && rowDate < dateFrom) show = false;
+            if (dateTo && rowDate > dateTo) show = false;
+
+            row.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+
+        // Show/hide no-results state
+        const noResults = document.getElementById('historyNoResults');
+        if (noResults) noResults.style.display = visible === 0 ? 'block' : 'none';
+
+        // Update counter
+        const counter = document.getElementById('historyResultCount');
+        const hasFilters = search || status !== 'all' || dateFrom || dateTo;
+        if (counter) {
+            counter.style.display = hasFilters ? 'block' : 'none';
+            counter.textContent = `${visible} de ${rows.length} registro${rows.length !== 1 ? 's' : ''}`;
+        }
+    }
+
+    function clearHistoryFilters() {
+        document.getElementById('historySearch').value = '';
+        document.getElementById('historyStatusFilter').value = 'all';
+        document.getElementById('historyDateFrom').value = '';
+        document.getElementById('historyDateTo').value = '';
+        filterHistory();
     }
 </script>

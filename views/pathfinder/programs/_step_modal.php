@@ -10,6 +10,20 @@ $existingUrl = $response['response_url'] ?? '';
 $existingFile = $response['response_file'] ?? '';
 $status = $response['status'] ?? 'not_started';
 $feedback = $response['feedback'] ?? '';
+
+// Phase 92: Granular Feedback Processing
+$itemEvals = null;
+if (str_starts_with($feedback, '[ITEM_EVAL]')) {
+    $json = substr($feedback, 11);
+    $decoded = json_decode($json, true);
+    if (isset($decoded['items'])) {
+        $feedback = $decoded['overall'] ?? '';
+        $itemEvals = $decoded['items'];
+    } else {
+        $itemEvals = $decoded;
+        $feedback = '';
+    }
+}
 ?>
 
 <div>
@@ -94,15 +108,78 @@ $feedback = $response['feedback'] ?? '';
                     <label class="hud-stat-label" style="display: block; margin-bottom: 12px; color: #fff;">RELATÓRIO DE EXECUÇÃO</label>
                     <textarea name="response_text" class="hud-input" style="min-height: 120px; resize: none;"
                         placeholder="Descreva detalhadamente como o requisito foi cumprido..."><?= htmlspecialchars($existingText) ?></textarea>
+                    
+                    <?php if (isset($itemEvals['consolidated'])): 
+                        $eval = $itemEvals['consolidated'];
+                        $isRejected = ($eval['status'] ?? '') === 'rejected';
+                    ?>
+                        <div style="margin-top: 12px; padding: 12px; border-radius: 10px; background: <?= $isRejected ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.05)' ?>; border: 1px solid <?= $isRejected ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)' ?>;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                <i class="material-icons-round" style="font-size: 1rem; color: <?= $isRejected ? '#f87171' : '#34d399' ?>;">
+                                    <?= $isRejected ? 'error_outline' : 'verified' ?>
+                                </i>
+                                <span style="font-size: 0.65rem; font-weight: 900; color: <?= $isRejected ? '#f87171' : '#34d399' ?>; text-transform: uppercase;">
+                                    <?= $isRejected ? 'Ajuste na Resposta' : 'Resposta Validada' ?>
+                                </span>
+                            </div>
+                            <?php if (!empty($eval['feedback'])): ?>
+                                <div style="font-size: 0.85rem; color: #fff; line-height: 1.4; opacity: 0.9;">
+                                    <?= htmlspecialchars($eval['feedback']) ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <div style="margin-bottom: 24px;">
                     <label class="hud-stat-label" style="display: block; margin-bottom: 12px; color: #fff;">EVIDÊNCIA EXTERNA (Opcional)</label>
                     <div style="position: relative;">
-                        <i class="material-icons-round" style="position: absolute; left: 16px; top: 14px; color: var(--hud-text-dim); font-size: 1.2rem;">link</i>
-                        <input type="url" name="response_url" class="hud-input" style="padding-left: 48px;" placeholder="https://youtube.com/watch?v=..."
-                            value="<?= htmlspecialchars($existingUrl) ?>">
+                        <?php 
+                        $youtubeMatch = preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/', (string)$existingUrl, $yMatch);
+                        $instagramMatch = preg_match('/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/', (string)$existingUrl, $iMatch);
+                        $tiktokMatch = preg_match('/tiktok\.com\/.*\/video\/([0-9]+)/', (string)$existingUrl, $tMatch);
+                        $isEmbedReady = ($youtubeMatch || $instagramMatch || $tiktokMatch) && ($status === 'approved' || $status === 'submitted');
+                        ?>
+
+                        <?php if ($isEmbedReady): ?>
+                            <div class="social-embed-container" style="margin-bottom: 12px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                                <?php if ($youtubeMatch): ?>
+                                    <iframe src="https://www.youtube.com/embed/<?= $yMatch[1] ?>" allowfullscreen style="width: 100%; aspect-ratio: 16/9; border: 0; display: block;"></iframe>
+                                <?php elseif ($instagramMatch): ?>
+                                    <blockquote class="instagram-media" data-instgrm-permalink="<?= htmlspecialchars((string)$existingUrl) ?>" data-instgrm-version="14" style="width:100%; border:0; margin:0; padding:0;"></blockquote>
+                                    <script async src="//www.instagram.com/embed.js"></script>
+                                <?php elseif ($tiktokMatch): ?>
+                                    <blockquote class="tiktok-embed" cite="<?= htmlspecialchars((string)$existingUrl) ?>" data-video-id="<?= $tMatch[1] ?>" style="width:100%; margin:0; padding:0;"> <section> </section> </blockquote> 
+                                    <script async src="https://www.tiktok.com/embed.js"></script>
+                                <?php endif; ?>
+                            </div>
+                        <?php else: ?>
+                            <i class="material-icons-round" style="position: absolute; left: 16px; top: 14px; color: var(--hud-text-dim); font-size: 1.2rem;">link</i>
+                            <input type="url" name="response_url" class="hud-input" style="padding-left: 48px;" placeholder="https://youtube.com/watch?v=..."
+                                value="<?= htmlspecialchars((string)$existingUrl) ?>">
+                        <?php endif; ?>
                     </div>
+
+                    <?php if (isset($itemEvals['main_evidence'])): 
+                        $eval = $itemEvals['main_evidence'];
+                        $isRejected = ($eval['status'] ?? '') === 'rejected';
+                    ?>
+                        <div style="margin-top: 12px; padding: 12px; border-radius: 10px; background: <?= $isRejected ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.05)' ?>; border: 1px solid <?= $isRejected ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)' ?>;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                <i class="material-icons-round" style="font-size: 1rem; color: <?= $isRejected ? '#f87171' : '#34d399' ?>;">
+                                    <?= $isRejected ? 'error_outline' : 'verified' ?>
+                                </i>
+                                <span style="font-size: 0.65rem; font-weight: 900; color: <?= $isRejected ? '#f87171' : '#34d399' ?>; text-transform: uppercase;">
+                                    <?= $isRejected ? 'Ajuste na Evidência' : 'Evidência Validada' ?>
+                                </span>
+                            </div>
+                            <?php if (!empty($eval['feedback'])): ?>
+                                <div style="font-size: 0.85rem; color: #fff; line-height: 1.4; opacity: 0.9;">
+                                    <?= htmlspecialchars($eval['feedback']) ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <div style="margin-bottom: 24px;">
@@ -122,7 +199,7 @@ $feedback = $response['feedback'] ?? '';
                 </div>
             <?php else: ?>
                 <!-- Questions -->
-                <?php foreach ($questions as $q): ?>
+                <?php foreach ($questions as $idx => $q): ?>
                     <div style="margin-bottom: 30px; position: relative; padding-left: 16px; border-left: 1px solid rgba(255,255,255,0.1);">
                         <label class="hud-stat-label" style="display: block; margin-bottom: 14px; color: #fff; font-size: 0.85rem; line-height: 1.4; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
                             <?= htmlspecialchars($q['question_text']) ?>
@@ -130,17 +207,38 @@ $feedback = $response['feedback'] ?? '';
 
                         <?php 
                         $currentAnswer = '';
-                        $decoded = json_decode($existingText, true);
-                        if (is_array($decoded) && isset($decoded[$q['id']])) {
-                            $currentAnswer = $decoded[$q['id']];
-                        } elseif (!is_array($decoded) && count($questions) === 1) {
+                        $decodedAnswer = json_decode($existingText, true);
+                        if (is_array($decodedAnswer) && isset($decodedAnswer[$q['id']])) {
+                            $currentAnswer = $decodedAnswer[$q['id']];
+                        } elseif (!is_array($decodedAnswer) && count($questions) === 1) {
                             $currentAnswer = $existingText;
                         }
                         ?>
 
                         <?php if ($q['type'] === 'text'): ?>
-                            <textarea name="answers[<?= $q['id'] ?>]" class="hud-input" style="min-height: 100px; resize: none;"
-                                placeholder="Insira sua resposta..."><?= htmlspecialchars($currentAnswer) ?></textarea>
+                            <?php 
+                            $youtubeMatch = preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/', (string)$currentAnswer, $yMatch);
+                            $instagramMatch = preg_match('/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/', (string)$currentAnswer, $iMatch);
+                            $tiktokMatch = preg_match('/tiktok\.com\/.*\/video\/([0-9]+)/', (string)$currentAnswer, $tMatch);
+                            $isEmbedReady = ($youtubeMatch || $instagramMatch || $tiktokMatch) && ($status === 'approved' || $status === 'submitted');
+                            ?>
+
+                            <?php if ($isEmbedReady): ?>
+                                <div class="social-embed-container" style="margin-bottom: 12px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                                    <?php if ($youtubeMatch): ?>
+                                        <iframe src="https://www.youtube.com/embed/<?= $yMatch[1] ?>" allowfullscreen style="width: 100%; aspect-ratio: 16/9; border: 0; display: block;"></iframe>
+                                    <?php elseif ($instagramMatch): ?>
+                                        <blockquote class="instagram-media" data-instgrm-permalink="<?= htmlspecialchars((string)$currentAnswer) ?>" data-instgrm-version="14" style="width:100%; border:0; margin:0; padding:0;"></blockquote>
+                                        <script async src="//www.instagram.com/embed.js"></script>
+                                    <?php elseif ($tiktokMatch): ?>
+                                        <blockquote class="tiktok-embed" cite="<?= htmlspecialchars((string)$currentAnswer) ?>" data-video-id="<?= $tMatch[1] ?>" style="width:100%; margin:0; padding:0;"> <section> </section> </blockquote> 
+                                        <script async src="https://www.tiktok.com/embed.js"></script>
+                                    <?php endif; ?>
+                                </div>
+                            <?php else: ?>
+                                <textarea name="answers[<?= $q['id'] ?>]" class="hud-input" style="min-height: 100px; resize: none;"
+                                    placeholder="Insira sua resposta..."><?= htmlspecialchars((string)$currentAnswer) ?></textarea>
+                            <?php endif; ?>
 
                         <?php elseif ($q['type'] === 'single_choice' || $q['type'] === 'multiple_choice'): ?>
                             <?php
@@ -156,7 +254,7 @@ $feedback = $response['feedback'] ?? '';
                                                name="answers[<?= $q['id'] ?>]<?= $q['type'] === 'multiple_choice' ? '[]' : '' ?>" 
                                                value="<?= $optIdx ?>" <?= $checked ? 'checked' : '' ?> style="display: none;">
                                         <div class="radio-tech-card">
-                                            <div class="radio-check"></div>
+                                            <div class="<?= $q['type'] === 'multiple_choice' ? 'checkbox-check' : 'radio-check' ?>"></div>
                                             <span><?= htmlspecialchars($opt) ?></span>
                                         </div>
                                     </label>
@@ -195,10 +293,31 @@ $feedback = $response['feedback'] ?? '';
                                 <i class="material-icons-round" style="position: absolute; left: 14px; top: 12px; color: var(--hud-text-dim); font-size: 1.1rem;">link</i>
                                 <input type="url" name="answers[<?= $q['id'] ?>]" class="hud-input" placeholder="https://..." style="padding-left: 42px;"
                                     value="<?= htmlspecialchars($currentAnswer) ?>">
-
+                            </div>
                         <?php elseif ($q['type'] === 'manual'): ?>
                             <textarea name="answers[<?= $q['id'] ?>]" class="hud-input" style="min-height: 80px; resize: none;"
-                                placeholder="Relatório de atividade prática..."><?= htmlspecialchars($currentAnswer) ?></textarea>
+                                placeholder="Relatório de atividade prática..."><?= htmlspecialchars((string)$currentAnswer) ?></textarea>
+                        <?php endif; ?>
+
+                        <?php if (isset($itemEvals[$idx])): 
+                            $eval = $itemEvals[$idx];
+                            $isRejected = ($eval['status'] ?? '') === 'rejected';
+                        ?>
+                            <div style="margin-top: 12px; padding: 12px; border-radius: 10px; background: <?= $isRejected ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.05)' ?>; border: 1px solid <?= $isRejected ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)' ?>;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                    <i class="material-icons-round" style="font-size: 1rem; color: <?= $isRejected ? '#f87171' : '#34d399' ?>;">
+                                        <?= $isRejected ? 'error_outline' : 'verified' ?>
+                                    </i>
+                                    <span style="font-size: 0.65rem; font-weight: 900; color: <?= $isRejected ? '#f87171' : '#34d399' ?>; text-transform: uppercase;">
+                                        <?= $isRejected ? 'Ajuste Necessário' : 'Item Validado' ?>
+                                    </span>
+                                </div>
+                                <?php if (!empty($eval['feedback'])): ?>
+                                    <div style="font-size: 0.85rem; color: #fff; line-height: 1.4; opacity: 0.9;">
+                                        <?= htmlspecialchars($eval['feedback']) ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
@@ -282,7 +401,8 @@ $feedback = $response['feedback'] ?? '';
         border-color: var(--accent-cyan);
         box-shadow: 0 0 20px rgba(0, 217, 255, 0.1);
     }
-    .radio-tech-card-wrapper input:checked + .radio-tech-card .radio-check {
+    .radio-tech-card-wrapper input:checked + .radio-tech-card .radio-check,
+    .radio-tech-card-wrapper input:checked + .radio-tech-card .checkbox-check {
         background: var(--accent-cyan);
         box-shadow: 0 0 8px var(--accent-cyan);
         border-color: var(--accent-cyan);
@@ -304,6 +424,12 @@ $feedback = $response['feedback'] ?? '';
         width: 14px;
         height: 14px;
         border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.2);
+    }
+    .checkbox-check {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
         border: 2px solid rgba(255,255,255,0.2);
     }
     .radio-tech-card:hover {

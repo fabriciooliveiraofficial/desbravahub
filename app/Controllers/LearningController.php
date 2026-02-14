@@ -31,7 +31,9 @@ class LearningController
                    up.id as progress_id, up.status as user_status, up.progress_percent, up.started_at, up.completed_at,
                    pv.id as version_id, pv.version_number,
                    (SELECT COUNT(*) FROM program_steps ps WHERE ps.version_id = pv.id) as total_steps,
-                   (SELECT COUNT(id) FROM user_step_responses usr WHERE usr.progress_id = up.id) as answered_steps
+                   (SELECT COUNT(id) FROM user_step_responses usr WHERE usr.progress_id = up.id) as answered_steps,
+                   (SELECT COUNT(id) FROM user_step_responses usr WHERE usr.progress_id = up.id AND usr.status = 'approved') as approved_steps,
+                   (SELECT COUNT(id) FROM user_step_responses usr WHERE usr.progress_id = up.id AND usr.status = 'rejected') as rejected_steps
             FROM user_program_progress up
             JOIN learning_programs p ON up.program_id = p.id
             JOIN program_versions pv ON up.version_id = pv.id
@@ -243,6 +245,9 @@ class LearningController
      */
     public function submitStep(array $params): void
     {
+        // Buffer output to prevent PHP warnings from corrupting JSON response
+        ob_start();
+
         try {
             $tenant = App::tenant();
             $user = App::user();
@@ -257,6 +262,7 @@ class LearningController
             ", [$stepId]);
 
             if (!$step) {
+                ob_end_clean();
                 $this->json(['error' => 'Requisito não encontrado'], 404);
                 return;
             }
@@ -268,6 +274,7 @@ class LearningController
             ", [$step['program_id'], $user['id'], $tenant['id']]);
 
             if (!$progress) {
+                ob_end_clean();
                 $this->json(['error' => 'Acesso negado'], 403);
                 return;
             }
@@ -279,6 +286,7 @@ class LearningController
             if (isset($_POST['answers']) && is_array($_POST['answers'])) {
                 $responseText = json_encode($_POST['answers'], JSON_UNESCAPED_UNICODE);
                 if ($responseText === false) {
+                    ob_end_clean();
                     $this->json(['error' => 'Erro ao processar respostas (JSON Inválido)'], 400);
                     return;
                 }
@@ -303,7 +311,7 @@ class LearningController
             if (isset($_FILES['response_file']) && $_FILES['response_file']['error'] === UPLOAD_ERR_OK) {
                 $uploadDir = BASE_PATH . '/public/uploads/responses/' . $tenant['id'] . '/' . $user['id'] . '/';
                 if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0755, true);
+                    @mkdir($uploadDir, 0755, true);
                 }
                 $filename = time() . '_' . basename($_FILES['response_file']['name']);
                 move_uploaded_file($_FILES['response_file']['tmp_name'], $uploadDir . $filename);
@@ -359,9 +367,10 @@ class LearningController
 
             // Log to approval_logs (only if submitted)
             if ($status === 'submitted') {
+                $responseId = $existing ? (int)$existing['id'] : (int)db()->lastInsertId();
                 db_insert('approval_logs', [
                     'tenant_id' => $tenant['id'],
-                    'response_id' => $existing['id'] ?? db()->lastInsertId(),
+                    'response_id' => $responseId,
                     'action' => 'submitted',
                     'performed_by' => $user['id']
                 ]);
@@ -375,14 +384,15 @@ class LearningController
 
             $message = $status === 'draft' ? 'Rascunho salvo com sucesso!' : 'Resposta enviada! Aguarde aprovação.';
 
+            ob_end_clean();
             $this->json([
                 'success' => true,
                 'message' => $message
             ]);
 
         } catch (\Throwable $e) {
+            ob_end_clean();
             error_log("LearningController::submitStep - CRITICAL: " . $e->getMessage());
-            file_put_contents(BASE_PATH . '/public/debug_error.log', $e->getMessage() . PHP_EOL . $e->getTraceAsString());
             error_log("Trace: " . $e->getTraceAsString());
             $this->json(['error' => 'Erro no servidor: ' . $e->getMessage()], 400);
         }
@@ -438,9 +448,11 @@ class LearningController
 
     private function json(array $data, int $code = 200): void
     {
+        if (ob_get_length()) ob_clean();
         http_response_code($code);
         header('Content-Type: application/json');
         echo json_encode($data);
+        exit;
     }
 
     /**

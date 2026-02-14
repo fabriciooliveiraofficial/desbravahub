@@ -46,7 +46,6 @@ class EmailService
     public function send(string $to, string $subject, string $htmlBody, ?string $textBody = null): bool
     {
         $tenantId = App::tenantId();
-        $tenantId = App::tenantId();
         $userId = null;
 
         // Load Tenant SMTP Settings
@@ -121,7 +120,7 @@ class EmailService
                     'error_message' => $e->getMessage(),
                 ], 'id = ?', [$logId]);
             }
-            $logFile = '/var/www/html/debug_email_errors.log';
+            $logFile = BASE_PATH . '/storage/logs/email_errors.log';
             $timestamp = date('Y-m-d H:i:s');
             file_put_contents($logFile, "[$timestamp] Email Service Error (Send): " . $e->getMessage() . "\nTrace: " . $e->getTraceAsString() . "\n", FILE_APPEND);
             error_log("Email Service Error (Send): " . $e->getMessage() . "\nTrace: " . $e->getTraceAsString());
@@ -162,7 +161,7 @@ class EmailService
 
             return $mail->send();
         } catch (\Exception $e) {
-            $logFile = '/var/www/html/debug_email_errors.log';
+            $logFile = BASE_PATH . '/storage/logs/email_errors.log';
             $timestamp = date('Y-m-d H:i:s');
             file_put_contents($logFile, "[$timestamp] PHPMailer Error: " . $e->getMessage() . "\n", FILE_APPEND);
             error_log("PHPMailer Error: " . $e->getMessage());
@@ -181,7 +180,7 @@ class EmailService
             'From: ' . $this->fromName . ' <' . $this->fromEmail . '>',
         ];
 
-        return mail($to, $subject, $htmlBody, implode("\r\n", $headers));
+        return @mail($to, $subject, $htmlBody, implode("\r\n", $headers));
     }
 
     /**

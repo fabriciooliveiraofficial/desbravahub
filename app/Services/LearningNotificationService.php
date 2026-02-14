@@ -25,7 +25,8 @@ class LearningNotificationService
                 'data' => [
                     'link' => base_url("{$tenantSlug}/aprendizado/{$program['id']}"),
                     'icon' => $program['icon'] ?? '📚'
-                ]
+                ],
+                'channels' => ['toast', 'push']
             ]
         );
     }
@@ -64,17 +65,25 @@ class LearningNotificationService
      */
     public static function stepApproved(int $tenantId, int $userId, array $step, array $program, string $tenantSlug): void
     {
+        $programIcon = $program['icon'] ?? '📘';
+        $title = '✅ Requisito aprovado!';
+        $message = "Seu requisito \"{$step['title']}\" no programa {$programIcon} {$program['name']} foi aprovado! Continue avançando.";
+
         $service = new NotificationService();
         $service->send(
             $userId,
             'step_approved',
-            '✅ Requisito aprovado!',
-            "{$step['title']} foi aprovado em {$program['name']}",
+            $title,
+            $message,
             [
                 'data' => [
                     'link' => base_url("{$tenantSlug}/aprendizado/{$program['id']}"),
-                    'icon' => '✅'
-                ]
+                    'url' => base_url("{$tenantSlug}/aprendizado/{$program['id']}"),
+                    'icon' => '✅',
+                    'program_name' => $program['name'],
+                    'step_name' => $step['title']
+                ],
+                'channels' => ['toast', 'push']
             ]
         );
     }
@@ -84,22 +93,31 @@ class LearningNotificationService
      */
     public static function stepRejected(int $tenantId, int $userId, array $step, array $program, string $feedback, string $tenantSlug): void
     {
-        $message = "{$step['title']} precisa de revisão em {$program['name']}";
+        $programIcon = $program['icon'] ?? '📘';
+        $title = '❌ Revisão necessária';
+        $message = "Seu requisito \"{$step['title']}\" no programa {$programIcon} {$program['name']} precisa de ajustes.";
+        
         if ($feedback) {
-            $message .= ". Feedback: $feedback";
+            // Truncate feedback for push notification readability
+            $shortFeedback = mb_strlen($feedback) > 100 ? mb_substr($feedback, 0, 100) . '...' : $feedback;
+            $message .= " Feedback: {$shortFeedback}";
         }
 
         $service = new NotificationService();
         $service->send(
             $userId,
             'step_rejected',
-            '❌ Revisão necessária',
+            $title,
             $message,
             [
                 'data' => [
                     'link' => base_url("{$tenantSlug}/aprendizado/{$program['id']}"),
-                    'icon' => '❌'
-                ]
+                    'url' => base_url("{$tenantSlug}/aprendizado/{$program['id']}"),
+                    'icon' => '❌',
+                    'program_name' => $program['name'],
+                    'step_name' => $step['title']
+                ],
+                'channels' => ['toast', 'push']
             ]
         );
     }
@@ -119,7 +137,8 @@ class LearningNotificationService
                 'data' => [
                     'link' => base_url("{$tenantSlug}/aprendizado/{$program['id']}"),
                     'icon' => '🎉'
-                ]
+                ],
+                'channels' => ['toast', 'push']
             ]
         );
     }

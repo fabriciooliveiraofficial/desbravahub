@@ -359,25 +359,209 @@
     }
 }
 
-.history-table {
-    width: 100%;
-    border-collapse: collapse;
+/* Modern Command Table */
+.queue-table-container {
     background: #ffffff;
+    border: 1px solid var(--eval-glass-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    margin-top: 24px;
+    animation: fadeInUp 0.5s ease-out;
 }
 
-.history-table th {
+.queue-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: 'Inter', sans-serif;
+}
+
+.queue-table th {
     background: #f8fafc;
-    color: #64748b;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    padding: 16px 20px;
+    padding: 16px 24px;
     text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--eval-glass-border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.history-table td {
-    padding: 16px 20px;
-}
-
-.history-table tr {
+.queue-table td {
+    padding: 20px 24px;
+    vertical-align: middle;
     border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+    color: var(--eval-text-main);
+    transition: background 0.2s ease;
+}
+
+.queue-table tr {
+    transition: all 0.3s ease;
+}
+
+.queue-table tr:hover {
+    background: #f1f5f9;
+}
+
+.queue-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Table Unit/Candidate Identity */
+.table-identity {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.table-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-family: 'Outfit';
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.table-candidate-info h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--eval-text-display);
+}
+
+.table-candidate-info p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Table Program Group */
+.table-program {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.table-program-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(139, 92, 246, 0.08);
+    color: var(--eval-purple);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.table-program-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--eval-text-display);
+}
+
+/* Minimal Progress */
+.table-progress-box {
+    width: 140px;
+}
+
+.table-progress-bar {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.table-progress-inner {
+    height: 100%;
+    background: linear-gradient(to right, var(--eval-cyan), #3b82f6);
+    border-radius: 3px;
+    transition: width 1s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.table-progress-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--eval-cyan);
+}
+
+/* Action Icons Only */
+.action-cluster {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.action-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+    text-decoration: none;
+}
+
+.action-btn.primary {
+    background: rgba(6, 182, 212, 0.1);
+    color: var(--eval-cyan);
+}
+
+.action-btn.primary:hover {
+    background: var(--eval-cyan);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+}
+
+.action-btn.secondary {
+    background: rgba(241, 245, 249, 1);
+    color: #64748b;
+    border-color: #e2e8f0;
+}
+
+.action-btn.secondary:hover {
+    background: #e2e8f0;
+    color: #334155;
+    transform: translateY(-2px);
+}
+
+.tag-pending {
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--eval-purple);
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+/* Timestamp Tech */
+.table-timestamp {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+@media (max-width: 1024px) {
+    .queue-table-container {
+        overflow-x: auto;
+    }
 }

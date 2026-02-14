@@ -262,7 +262,7 @@ class SpecialtyController
                         'program_assigned',
                         '📚 Novo Programa',
                         "Você recebeu o programa '{$specialty['name']}' para completar.",
-                        ['data' => ['program_id' => str_replace('prog_', '', $specialtyId), 'url' => $deepLinkUrl]]
+                        ['data' => ['program_id' => str_replace('prog_', '', $specialtyId), 'url' => $deepLinkUrl], 'channels' => ['toast', 'push']]
                     );
                 } else {
                     $notificationService->send(
@@ -270,7 +270,7 @@ class SpecialtyController
                         'specialty_assigned',
                         '🎯 Nova Especialidade',
                         "Você recebeu a especialidade '{$specialty['name']}' para completar.",
-                        ['data' => ['specialty_id' => $specialtyId, 'url' => $deepLinkUrl]]
+                        ['data' => ['specialty_id' => $specialtyId, 'url' => $deepLinkUrl], 'channels' => ['toast', 'push']]
                     );
                 }
 
@@ -547,7 +547,8 @@ class SpecialtyController
             (int) $assignment['user_id'],
             'specialty_completed',
             '🎉 Especialidade Concluída!',
-            "Parabéns! Você completou '{$specialty['name']}' e ganhou {$xpReward} XP!"
+            "Parabéns! Você completou '{$specialty['name']}' e ganhou {$xpReward} XP!",
+            ['channels' => ['toast', 'push'], 'data' => ['specialty_id' => $assignment['specialty_id']]]
         );
 
         $this->json(['success' => true, 'message' => 'Especialidade concluída!', 'xp' => $xpReward]);
