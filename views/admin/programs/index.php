@@ -179,7 +179,7 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
         </div>
     </div>
 
-    <div class="toast" id="toast"></div>
+
 
     <!-- Create Program Modal -->
     <?php require BASE_PATH . '/views/admin/programs/partials/create_modal.php'; ?>
@@ -394,12 +394,7 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
         }
         window.deleteProgram = deleteProgram;
 
-        function showToast(msg, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.className = 'toast ' + type + ' show';
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
+
 
         // CSS Confirmation Modal System
         var programsConfirmCallback = null;

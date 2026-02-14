@@ -135,27 +135,7 @@ $pageIcon = 'add_circle';
             gap: 12px;
         }
 
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            padding: 16px 24px;
-            background: var(--bg-card);
-            border-left: 4px solid var(--accent-green);
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            transform: translateX(150%);
-            transition: transform 0.3s ease;
-            z-index: 1001;
-        }
 
-        .toast.show {
-            transform: translateX(0);
-        }
-
-        .toast.error {
-            border-left-color: #f44336;
-        }
     </style>
 
     <div class="content-container">
@@ -328,7 +308,7 @@ $pageIcon = 'add_circle';
         </div>
     </main>
 
-    <div class="toast" id="toast"></div>
+
 
     <script>
         var tenantSlug = '<?= $tenant['slug'] ?>';
@@ -345,7 +325,7 @@ $pageIcon = 'add_circle';
                 const data = await resp.json();
 
                 if (data.success && data.redirect) {
-                    showToast('Programa criado com sucesso!');
+                    showToast('Programa criado com sucesso!', 'success');
                     setTimeout(() => window.location = data.redirect, 500);
                 } else {
                     showToast(data.error || 'Erro ao criar', 'error');
@@ -359,12 +339,7 @@ $pageIcon = 'add_circle';
             }
         }
 
-        function showToast(msg, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.className = 'toast ' + type + ' show';
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
+
 
         function openProgramIconPicker() {
             IconPicker.open(document.getElementById('program-icon').value, (icon) => {

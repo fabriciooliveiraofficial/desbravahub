@@ -27,6 +27,8 @@
                         $icon = $specialty['badge_icon'] ?? '🛡️';
                         if (str_contains($icon, 'fa-')): ?>
                             <i class="<?= htmlspecialchars($icon) ?>" style="color: var(--god-blue)"></i>
+                        <?php elseif (str_contains($icon, ':')): ?>
+                            <iconify-icon icon="<?= htmlspecialchars($icon) ?>"></iconify-icon>
                         <?php else: ?>
                             <?= $icon ?>
                         <?php endif; ?>

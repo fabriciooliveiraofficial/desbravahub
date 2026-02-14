@@ -9,6 +9,57 @@ $pageIcon = '📂';
 ?>
 
 
+<style>
+    /* Category Card Actions */
+    .category-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+        width: 100%;
+    }
+
+    .btn-edit,
+    .btn-delete {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+    }
+
+    /* Edit Button - Blue/Cyan */
+    .btn-edit {
+        background: rgba(6, 182, 212, 0.1);
+        color: #0891b2;
+        border: 1px solid rgba(6, 182, 212, 0.2);
+    }
+
+    .btn-edit:hover {
+        background: rgba(6, 182, 212, 0.2);
+        transform: translateY(-2px);
+    }
+
+    /* Delete Button - Red/Danger */
+    .btn-delete {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .btn-delete:hover {
+        background: rgba(239, 68, 68, 0.2);
+        transform: translateY(-2px);
+    }
+</style>
+
 <!-- Page Header -->
 <header class="page-toolbar">
     <div class="page-info">
@@ -78,7 +129,7 @@ $pageIcon = '📂';
 
     <!-- Category Modal -->
     <div class="modal-overlay" id="categoryModal" onclick="closeModal(event)">
-        <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal" onclick="event.stopPropagation()" style="background: var(--bg-card);">
             <div class="modal-header">
                 <h2 id="modalTitle">➕ Nova Categoria</h2>
                 <button class="modal-close" onclick="closeModal()">&times;</button>
@@ -144,7 +195,7 @@ $pageIcon = '📂';
         </div>
     </div>
 
-    <div class="toast" id="toast"></div>
+
 
     <script>
         var tenantSlug = tenantSlug || '<?= $tenant['slug'] ?>';
@@ -195,7 +246,7 @@ $pageIcon = '📂';
                 const data = await resp.json();
 
                 if (data.success) {
-                    showToast(data.message);
+                    showToast(data.message, 'success');
                     setTimeout(() => location.reload(), 500);
                 } else {
                     showToast(data.error || 'Erro ao salvar', 'error');
@@ -223,7 +274,7 @@ $pageIcon = '📂';
                 const data = await resp.json();
 
                 if (data.success) {
-                    showToast(data.message);
+                    showToast(data.message, 'success');
                     setTimeout(() => location.reload(), 500);
                 } else {
                     showToast(data.error || 'Erro ao excluir', 'error');
@@ -233,12 +284,7 @@ $pageIcon = '📂';
             }
         }
 
-        function showToast(msg, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.className = 'toast ' + type + ' show';
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
+
 
         // Confirmation Modal System
         window.confirmCallback = null;

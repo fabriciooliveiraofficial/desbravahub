@@ -28,17 +28,10 @@
         --text-muted: #94a3b8;
     }
 
-    .god-section {
-        background-color: var(--god-bg);
-        color: var(--text-main);
-        padding: 20px;
-        border-radius: 20px;
-        transition: all 0.3s ease;
-    }
-
+    /* .god-section removed for standard layout */
+    
     .god-container {
-        max-width: 1400px;
-        margin: 0 auto;
+        /* max-width and margin removed to fill available space like Dashboard */
     }
 
     /* --- Header & Stats --- */
@@ -452,14 +445,10 @@
     }
 </style>
 
-<div class="god-section">
+<!-- Removed god-section wrapper -->
     <div class="god-container">
         <!-- Header -->
-        <header class="god-header" style="margin-bottom: 20px;">
-            <div class="god-title">
-                <h1><i class="fa-solid fa-eye"></i> Mission Control <span style="font-size: 1rem; color: var(--text-muted); font-weight: 400; margin-left: 10px;">GOD MODE</span></h1>
-            </div>
-        </header>
+
 
         <!-- Intelligent Toolbar -->
         <div class="page-toolbar">
@@ -548,7 +537,6 @@
             <span class="live-dot"></span> Monitoramento em Tempo Real Ativo
         </div>
     </div>
-</div>
 
 <!-- Custom Confirmation Modal -->
 <div id="god-confirm-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">

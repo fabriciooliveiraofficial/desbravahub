@@ -1,6 +1,6 @@
 <!-- Create Program Modal Partial -->
 <div id="createModal" class="modal-overlay"
-    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
     <div class="modal-content"
         style="background: var(--bg-card); padding: 24px; border-radius: 12px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;">
         <div class="modal-header"
@@ -124,7 +124,7 @@
     
     function openCreateProgramModal() {
         const modal = document.getElementById('createModal');
-        modal.style.display = 'flex';
+        modal.classList.add('active');
         
         // Initialize autocomplete if available
         if (typeof setupAutocomplete === 'function') {
@@ -141,7 +141,7 @@
     }
 
     function closeCreateProgramModal() {
-        document.getElementById('createModal').style.display = 'none';
+        document.getElementById('createModal').classList.remove('active');
         // Reset form
         document.getElementById('createProgramFormV2').reset();
         document.getElementById('programNameWarning').style.display = 'none';

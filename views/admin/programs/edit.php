@@ -844,33 +844,7 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
         box-shadow: 0 8px 20px rgba(6, 182, 212, 0.45);
     }
 
-    /* ============ Toast Notifications - Premium ============ */
-    .toast {
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        padding: 18px 28px;
-        background: var(--bg-card);
-        border-left: 4px solid #10b981;
-        border-radius: 14px;
-        box-shadow: 
-            0 20px 40px -10px rgba(0, 0, 0, 0.2),
-            0 0 0 1px rgba(255, 255, 255, 0.05);
-        transform: translateX(150%);
-        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 1001;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
 
-    .toast.show {
-        transform: translateX(0);
-    }
-
-    .toast.error {
-        border-left-color: #ef4444;
-    }
 
     /* ============ Confirmation Modal - Premium ============ */
     .confirm-modal-overlay {
@@ -1399,7 +1373,7 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
         </div>
     </div>
 
-    <div class="toast" id="toast"></div>
+
 
     <script>
         // Initialize button state
@@ -1504,7 +1478,7 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
             list.children[index]?.remove();
             updateStepNumbers();
             updateAddStepButtonState();
-            showToast('Requisito removido');
+            showToast('Requisito removido', 'success');
         }
 
         // ============ Question Modal System ============
@@ -1729,7 +1703,7 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
 
             currentQuestionBtn.previousElementSibling.insertAdjacentHTML('beforeend', html);
             closeQuestionModal();
-            showToast('Pergunta adicionada!');
+            showToast('Pergunta adicionada!', 'success');
         }
 
         function escapeHtml(text) {
@@ -1808,7 +1782,7 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
                 const data = await resp.json();
 
                 if (data.success) {
-                    showToast(data.message);
+                    showToast(data.message, 'success');
                 } else {
                     showToast(data.error || 'Erro ao salvar', 'error');
                 }
@@ -1831,7 +1805,7 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
                 const data = await resp.json();
 
                 if (data.success) {
-                    showToast(data.message);
+                    showToast(data.message, 'success');
                     setTimeout(() => location.reload(), 1000);
                 } else {
                     showToast(data.error || 'Erro', 'error');
@@ -1841,12 +1815,7 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
             }
         }
 
-        function showToast(msg, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.className = 'toast ' + type + ' show';
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
+
 
         // ============ CSS Confirmation Modal System ============
         var confirmCallback = null;
