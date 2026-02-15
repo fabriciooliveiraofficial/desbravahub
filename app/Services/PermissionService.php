@@ -23,6 +23,12 @@ class PermissionService
             return false;
         }
 
+        // Admins and Directors have all permissions (Unify logic with AdminController)
+        $roleName = $user['role_name'] ?? '';
+        if (in_array($roleName, ['admin', 'director', 'associate_director'])) {
+            return true;
+        }
+
         return $this->userCan($user['id'], $permission);
     }
 
@@ -31,6 +37,17 @@ class PermissionService
      */
     public function userCan(int $userId, string $permission): bool
     {
+        // For specific user ID check, we fetch the permissions from DB
+        // But if the user is the current user and we already know they are admin, we could bypass
+        // However, to keep it consistent with role bypass:
+        $user = App::user();
+        if ($user && $user['id'] === $userId) {
+            $roleName = $user['role_name'] ?? '';
+            if (in_array($roleName, ['admin', 'director', 'associate_director'])) {
+                return true;
+            }
+        }
+
         $permissions = $this->getUserPermissions($userId);
         return in_array($permission, $permissions);
     }
