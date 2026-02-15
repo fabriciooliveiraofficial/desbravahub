@@ -41,10 +41,17 @@ jobs:
       - name: Install Production Dependencies
         run: composer install --no-dev --optimize-autoloader
 
+      - name: Test SSH Connectivity
+        run: |
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          echo "Testando conexão SSH..."
+          nc -zv -w 5 ${{ secrets.SSH_HOST }} ${{ secrets.SSH_PORT }} || echo "TIMEOUT: Não foi possível alcançar o servidor na porta ${{ secrets.SSH_PORT }}"
+
       - name: Deploy to Hostinger via rsync
         uses: Burnett01/rsync-deployments@7.0.1
         with:
           switches: -avzr --delete --exclude=.env --exclude=.env.* --exclude=.git* --exclude=.github* --exclude=tests --exclude=phpunit.xml --exclude=public/server-diag.php --exclude=public/test-api.php --exclude=public/fix-permissions.php
+          rsh: ssh -p ${{ secrets.SSH_PORT }} -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o StrictHostKeyChecking=no
           path: ./
           remote_path: ${{ secrets.REMOTE_PATH }}
           remote_host: ${{ secrets.SSH_HOST }}
