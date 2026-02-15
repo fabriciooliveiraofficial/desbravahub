@@ -1,5 +1,5 @@
 <!-- Admin Sidebar (Redesigned - Light/Dark Theme) -->
-<aside class="admin-sidebar" role="navigation" hx-preserve="true" id="admin-sidebar">
+<aside class="admin-sidebar" role="navigation" id="admin-sidebar">
     <!-- Header -->
     <div class="sidebar-header">
         <div class="brand-wrapper">

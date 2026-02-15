@@ -114,8 +114,10 @@ $router->get('/{tenant}/admin/dashboard', [AdminController::class, 'dashboard'],
 $router->get('/{tenant}/admin/atividades', [AdminController::class, 'activities'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/activities', [AdminController::class, 'createActivity'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/activities/{id}', [AdminController::class, 'updateActivity'], [TenantMiddleware::class, AuthMiddleware::class]);
-$router->get('/{tenant}/admin/usuarios', [AdminController::class, 'users'], [TenantMiddleware::class, AuthMiddleware::class]);
-$router->post('/{tenant}/admin/usuarios/{id}/role', [AdminController::class, 'updateUserRole'], [TenantMiddleware::class, AuthMiddleware::class]);
+    $router->get('/{tenant}/admin/usuarios', [AdminController::class, 'users'], [TenantMiddleware::class, AuthMiddleware::class]);
+    $router->post('/{tenant}/admin/usuarios/{id}/role', [AdminController::class, 'updateUserRole'], [TenantMiddleware::class, AuthMiddleware::class]);
+    $router->post('/{tenant}/admin/usuarios/{id}/status', [AdminController::class, 'toggleUserStatus'], [TenantMiddleware::class, AuthMiddleware::class]);
+    $router->post('/{tenant}/admin/usuarios/{id}/delete', [AdminController::class, 'deleteUser'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/provas', [AdminController::class, 'proofs'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/proofs/{id}/review', [AdminController::class, 'reviewUnifiedProof'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/versoes', [AdminController::class, 'versions'], [TenantMiddleware::class, AuthMiddleware::class]);

@@ -9,7 +9,7 @@
         $specialty = $a['specialty'] ?? [];
         ?>
         <tr id="mission-row-<?= $a['assignment_id'] ?>">
-            <td>
+            <td data-label="Desbravador">
                 <div class="member-cell">
                     <div class="member-avatar">
                         <?= strtoupper(substr($a['user_name'], 0, 1)) ?>
@@ -20,7 +20,7 @@
                     </div>
                 </div>
             </td>
-            <td>
+            <td data-label="Missão / Especialidade">
                 <div class="mission-cell">
                     <div class="mission-icon">
                         <?php 
@@ -36,7 +36,7 @@
                     <div class="mission-name"><?= htmlspecialchars($specialty['name'] ?? 'Missão não identificada') ?></div>
                 </div>
             </td>
-            <td>
+            <td data-label="Lifecycle Live">
                 <?php
                 // Determine the highest active step
                 $stepActive = 1;
@@ -64,7 +64,7 @@
                     </div>
                 </div>
             </td>
-            <td>
+            <td data-label="Progresso">
                 <div class="progress-box">
                     <div class="progress-container">
                         <div class="progress-fill" style="width: <?= $a['progress_percentage'] ?>%;"></div>
@@ -75,7 +75,7 @@
                     </div>
                 </div>
             </td>
-            <td>
+            <td data-label="Ações">
                 <div style="display: flex; gap: 8px;" id="actions-<?= $a['assignment_id'] ?>">
                     <?php if (($a['type_label'] ?? '') === 'specialty'): ?>
                         <a href="<?= base_url($tenant['slug'] . '/admin/especialidades/atribuicao/' . ($a['id'] ?? 0)) ?>" class="btn-god-action" title="Avaliar Provas">

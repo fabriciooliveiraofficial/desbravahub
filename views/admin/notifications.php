@@ -1,273 +1,121 @@
 <?php
 /**
- * Admin Notifications - Vibrant Light Edition v1.0
- * High Contrast, Modern Broadcast Interface
+ * Admin Notifications - Master Design v2.0
+ * Standard Admin Layout
  */
 ?>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-<style>
-    :root {
-        --font-primary: 'Inter', sans-serif;
-        --bg-body: #f1f5f9;
-        --bg-card: #ffffff;
-        --text-dark: #0f172a;
-        --text-medium: #334155;
-        --text-light: #475569;
-        
-        --accent-primary: #6366f1; /* Indigo */
-        --accent-hover: #4f46e5;
-        --border-color: #cbd5e1;
-        --accent-warn: #f59e0b;
-    }
+<!-- Header -->
 
-    body {
-        background-color: var(--bg-body) !important;
-        font-family: var(--font-primary);
-        color: var(--text-dark);
-    }
 
-    .broadcast-container {
-        max-width: 700px;
-        margin: 0 auto;
-        padding-bottom: 60px;
-        animation: fadeIn 0.4s ease-out;
-    }
+<div style="max-width: 800px; margin: 0 auto;">
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+    <div class="dashboard-card">
+        <div class="dashboard-card-header">
+            <span class="material-icons-round" style="color: var(--primary);">campaign</span>
+            <h3>Nova Transmissão</h3>
+        </div>
 
-    /* Page Header */
-    .page-header {
-        text-align: center;
-        margin-bottom: 40px;
-    }
-
-    .page-header h1 {
-        font-size: 2.25rem;
-        font-weight: 900;
-        margin: 0;
-        color: #000;
-        letter-spacing: -0.025em;
-    }
-
-    .page-header p {
-        margin: 10px 0 0;
-        color: var(--text-medium);
-        font-weight: 500;
-        font-size: 1.1rem;
-    }
-
-    /* Form Card */
-    .broadcast-card {
-        background: white;
-        border-radius: 32px;
-        border: 2px solid var(--border-color);
-        padding: 48px;
-        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
-    }
-
-    .form-group {
-        margin-bottom: 32px;
-    }
-
-    .form-group label {
-        display: block;
-        font-size: 0.95rem;
-        font-weight: 800;
-        color: var(--text-dark);
-        margin-bottom: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 16px 20px;
-        background: #f8fafc;
-        border: 2px solid #e2e8f0;
-        border-radius: 16px;
-        font-size: 1rem;
-        color: var(--text-dark);
-        transition: all 0.2s;
-        outline: none;
-        font-family: inherit;
-    }
-
-    .form-control:focus {
-        border-color: var(--accent-primary);
-        background: white;
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-    }
-
-    /* Channel Selection Cards */
-    .channels-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-    }
-
-    .channel-card {
-        position: relative;
-        cursor: pointer;
-    }
-
-    .channel-card input {
-        position: absolute;
-        opacity: 0;
-    }
-
-    .channel-ui {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 16px 20px;
-        background: #f8fafc;
-        border: 2px solid #e2e8f0;
-        border-radius: 16px;
-        font-weight: 700;
-        transition: all 0.2s;
-        color: var(--text-medium);
-    }
-
-    .channel-card input:checked + .channel-ui {
-        border-color: var(--accent-primary);
-        background: white;
-        color: var(--accent-primary);
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
-    }
-
-    .channel-ui .material-icons-round { 
-        font-size: 20px; 
-        color: var(--text-light);
-        transition: color 0.2s;
-    }
-    
-    .channel-card input:checked + .channel-ui .material-icons-round {
-        color: var(--accent-primary);
-    }
-
-    /* Warning Box */
-    .warning-box {
-        background: #fffbeb;
-        border: 2px solid #fde68a;
-        border-radius: 20px;
-        padding: 24px;
-        margin-bottom: 32px;
-        display: flex;
-        gap: 16px;
-        align-items: center;
-    }
-
-    .warning-icon {
-        width: 48px;
-        height: 48px;
-        background: #fef3c7;
-        color: #d97706;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        flex-shrink: 0;
-    }
-
-    .warning-text {
-        font-size: 0.95rem;
-        color: #92400e;
-        font-weight: 600;
-        line-height: 1.5;
-    }
-
-    /* Submit Button */
-    .btn-broadcast {
-        width: 100%;
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
-        color: white;
-        padding: 18px 32px;
-        border-radius: 100px;
-        font-weight: 800;
-        font-size: 1.1rem;
-        border: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        transition: all 0.2s;
-        box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
-    }
-
-    .btn-broadcast:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.5);
-    }
-
-    .btn-broadcast:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-</style>
-
-<div class="broadcast-container">
-    
-    <div class="page-header">
-        <h1>📣 Mural de Avisos</h1>
-        <p>Envie notificações urgentes para todos os desbravadores do seu clube</p>
-    </div>
-
-    <div class="broadcast-card">
-        <form id="broadcast-form">
-            <div class="form-group">
-                <label>Título da Notificação</label>
-                <input type="text" name="title" class="form-control" required placeholder="Ex: Novo evento disponível!">
+        <form id="broadcast-form" class="dashboard-card-body">
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="title" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-dark);">
+                    Título da Notificação
+                </label>
+                <div style="position: relative;">
+                     <span class="material-icons-round" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);">title</span>
+                    <input type="text" id="title" name="title" class="form-control" required placeholder="Ex: Novo evento disponível!" style="padding-left: 3rem;">
+                </div>
             </div>
 
-            <div class="form-group">
-                <label>Mensagem Principal</label>
-                <textarea name="message" class="form-control" required rows="4"
-                    placeholder="Escreva sua mensagem aqui..."></textarea>
+            <div class="form-group" style="margin-bottom: 2rem;">
+                <label for="message" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-dark);">
+                    Mensagem Principal
+                </label>
+                <textarea id="message" name="message" class="form-control" required rows="4" placeholder="Escreva sua mensagem aqui..." style="min-height: 120px;"></textarea>
             </div>
 
-            <div class="form-group">
-                <label>Canais de Envio</label>
-                <div class="channels-grid">
-                    <label class="channel-card">
-                        <input type="checkbox" name="channels[]" value="toast" checked>
-                        <div class="channel-ui">
-                            <span class="material-icons-round">notifications_active</span>
-                            Toast (No App)
+            <div class="form-group" style="margin-bottom: 2rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 1rem; color: var(--text-dark);">
+                    Canais de Envio
+                </label>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <label for="channel_toast" style="cursor: pointer; position: relative;">
+                        <input type="checkbox" id="channel_toast" name="channels[]" value="toast" checked 
+                               style="position: absolute; opacity: 0; width: 0; height: 0;"
+                               onchange="this.nextElementSibling.style.borderColor = this.checked ? 'var(--primary)' : 'var(--border-color)';
+                                         this.nextElementSibling.style.backgroundColor = this.checked ? 'rgba(var(--primary-rgb), 0.05)' : 'transparent';
+                                         this.nextElementSibling.querySelector('.icon-box').style.color = this.checked ? 'var(--primary)' : 'var(--text-muted)';
+                                         this.nextElementSibling.querySelector('.icon-box').style.backgroundColor = this.checked ? 'rgba(var(--primary-rgb), 0.1)' : 'var(--bg-hover)';">
+                        <div style="
+                            padding: 1.25rem; 
+                            border: 2px solid var(--primary); 
+                            border-radius: var(--radius-lg); 
+                            display: flex; 
+                            align-items: center; 
+                            gap: 1rem;
+                            transition: all 0.2s;
+                            background-color: rgba(var(--primary-rgb), 0.05);
+                        ">
+                            <div class="icon-box" style="
+                                width: 40px; height: 40px; 
+                                border-radius: 50%; 
+                                display: flex; align-items: center; justify-content: center;
+                                background-color: rgba(var(--primary-rgb), 0.1);
+                                color: var(--primary);
+                                transition: all 0.2s;
+                            ">
+                                <span class="material-icons-round">notifications_active</span>
+                            </div>
+                            <div style="font-weight: 600; color: var(--text-dark);">Toast (No App)</div>
                         </div>
                     </label>
-                    <label class="channel-card">
-                        <input type="checkbox" name="channels[]" value="email">
-                        <div class="channel-ui">
-                            <span class="material-icons-round">alternate_email</span>
-                            E-mail Oficial
+
+                    <label for="channel_email" style="cursor: pointer; position: relative;">
+                        <input type="checkbox" id="channel_email" name="channels[]" value="email"
+                               style="position: absolute; opacity: 0; width: 0; height: 0;"
+                               onchange="this.nextElementSibling.style.borderColor = this.checked ? 'var(--primary)' : 'var(--border-color)';
+                                         this.nextElementSibling.style.backgroundColor = this.checked ? 'rgba(var(--primary-rgb), 0.05)' : 'transparent';
+                                         this.nextElementSibling.querySelector('.icon-box').style.color = this.checked ? 'var(--primary)' : 'var(--text-muted)';
+                                         this.nextElementSibling.querySelector('.icon-box').style.backgroundColor = this.checked ? 'rgba(var(--primary-rgb), 0.1)' : 'var(--bg-hover)';">
+                        <div style="
+                            padding: 1.25rem; 
+                            border: 2px solid var(--border-color); 
+                            border-radius: var(--radius-lg); 
+                            display: flex; 
+                            align-items: center; 
+                            gap: 1rem;
+                            transition: all 0.2s;
+                            background-color: transparent;
+                        ">
+                            <div class="icon-box" style="
+                                width: 40px; height: 40px; 
+                                border-radius: 50%; 
+                                display: flex; align-items: center; justify-content: center;
+                                background-color: var(--bg-hover);
+                                color: var(--text-muted);
+                                transition: all 0.2s;
+                            ">
+                                <span class="material-icons-round">alternate_email</span>
+                            </div>
+                            <div style="font-weight: 600; color: var(--text-dark);">E-mail Oficial</div>
                         </div>
                     </label>
                 </div>
             </div>
 
-            <div class="warning-box">
-                <div class="warning-icon">
-                    <span class="material-icons-round">emergency</span>
-                </div>
-                <div class="warning-text">
-                    Esta mensagem será enviada para <strong>todos</strong> os membros ativos. Use com responsabilidade.
-                </div>
+            <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 1rem; margin-bottom: 2rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; display: flex; gap: 1rem; align-items: center;">
+                 <span class="material-icons-round" style="color: #d97706;">warning_amber</span>
+                 <div style="color: #92400e; font-size: 0.9rem;">
+                     Esta mensagem será enviada para <strong>todos</strong> os membros ativos. Use com responsabilidade.
+                 </div>
             </div>
 
-            <button type="submit" class="btn-broadcast" id="submit-btn">
-                <span class="material-icons-round">send</span>
-                Enviar Notificação agora
-            </button>
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn btn-primary btn-lg" id="submit-btn" style="display: flex; align-items: center; gap: 0.5rem; width: 100%; justify-content: center;">
+                    <span class="material-icons-round">send</span>
+                    Enviar Notificação agora
+                </button>
+            </div>
         </form>
     </div>
 </div>
@@ -281,8 +129,7 @@
         e.preventDefault();
 
         const btn = document.getElementById('submit-btn');
-        const icon = btn.querySelector('.material-icons-round');
-        const originalText = btn.textContent;
+        const originalContent = btn.innerHTML;
         
         btn.disabled = true;
         btn.innerHTML = '<span class="material-icons-round animate-spin">sync</span> Enviando...';
@@ -300,6 +147,7 @@
             if (data.success) {
                 toast.success('Sucesso', 'Notificação enviada com sucesso para o clube!');
                 e.target.reset();
+                // Reset visual state of checkboxes if needed, though they default mostly to unchecked or checked based on HTML
             } else {
                 toast.error('Erro ao Enviar', data.error || 'Não foi possível completar o envio.');
             }
@@ -307,7 +155,7 @@
             toast.error('Erro Fatal', 'Erro de conexão ao servidor.');
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<span class="material-icons-round">send</span> Enviar Notificação agora';
+            btn.innerHTML = originalContent;
         }
     });
 </script>

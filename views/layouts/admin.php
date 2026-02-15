@@ -202,87 +202,106 @@
     </div>
 
     <!-- Sidebar Backdrop -->
-    <div class="sidebar-backdrop" id="sidebar-backdrop" hx-preserve="true"></div>
-
-    <script hx-preserve="true">
-        document.addEventListener('click', (e) => {
-            const sidebar = document.querySelector('.admin-sidebar');
-            const backdrop = document.getElementById('sidebar-backdrop');
-            
-            // Safety check
-            if (!sidebar || !backdrop) return;
-
-            const toggleBtn = e.target.closest('#mobile-sidebar-toggle');
-            const closeBtn = e.target.closest('#mobile-sidebar-close');
-            const isBackdrop = e.target.id === 'sidebar-backdrop';
-            
-            // Handle Toggle Button
-            if (toggleBtn) {
-                e.preventDefault(); // Prevent default if it's a link/button
-                e.stopPropagation();
-                
-                const isOpen = sidebar.classList.contains('open');
-                if (isOpen) {
-                    sidebar.classList.remove('open');
-                    backdrop.classList.remove('visible');
-                } else {
-                    sidebar.classList.add('open');
-                    backdrop.classList.add('visible');
-                }
-                return;
-            }
-
-            // Handle Close Button
-            if (closeBtn) {
-                e.preventDefault();
-                e.stopPropagation();
-                sidebar.classList.remove('open');
-                backdrop.classList.remove('visible');
-                return;
-            }
-
-            // Handle Backdrop Click
-            if (isBackdrop) {
-                sidebar.classList.remove('open');
-                backdrop.classList.remove('visible');
-                return;
-            }
-
-            // Handle Navigation Click (Mobile Only)
-            if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
-                const navLink = e.target.closest('.nav-item, .submenu-item');
-                if (navLink) {
-                    // Don't prevent default, let navigation happen
-                    // But close the sidebar immediately
-                    sidebar.classList.remove('open');
-                    backdrop.classList.remove('visible');
-                }
-            }
-        });
-    </script>
-
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+    <!-- Main Content -->
     <main class="admin-main">
-        <header id="admin-header" hx-preserve="true">
-            <?php
-            // Header
-            require BASE_PATH . '/views/admin/partials/header.php';
-            ?>
-        </header>
+        <?php require BASE_PATH . '/views/admin/partials/header.php'; ?>
 
-        <!-- Content Area -->
         <div id="main-content" class="fade-me-in">
             <?= $content ?>
         </div>
-
     </main>
-
     <script>
-        // Re-initialize logic after HTMX swap
+        // --- Mobile Sidebar Toggle & Active State Logic ---
+        if (!window.sidebarToggleInitialized) {
+            window.sidebarToggleInitialized = true;
+            
+            // Toggle Logic
+            document.addEventListener('click', (e) => {
+                const sidebar = document.querySelector('.admin-sidebar');
+                const backdrop = document.getElementById('sidebar-backdrop');
+                
+                if (!sidebar || !backdrop) return;
+
+                const toggleBtn = e.target.closest('#mobile-sidebar-toggle');
+                const closeBtn = e.target.closest('#mobile-sidebar-close');
+                const isBackdrop = e.target.id === 'sidebar-backdrop';
+                
+                // Toggle Button
+                if (toggleBtn) {
+                    e.preventDefault(); e.stopPropagation();
+                    const isOpen = sidebar.classList.contains('open');
+                    if (isOpen) {
+                        sidebar.classList.remove('open');
+                        backdrop.classList.remove('visible');
+                    } else {
+                        sidebar.classList.add('open');
+                        backdrop.classList.add('visible');
+                    }
+                    return;
+                }
+
+                // Close Button
+                if (closeBtn) {
+                    e.preventDefault(); e.stopPropagation();
+                    sidebar.classList.remove('open');
+                    backdrop.classList.remove('visible');
+                    return;
+                }
+
+                // Backdrop Click
+                if (isBackdrop) {
+                    sidebar.classList.remove('open');
+                    backdrop.classList.remove('visible');
+                    return;
+                }
+
+                // Navigation Click (Mobile Only)
+                if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
+                    const navLink = e.target.closest('.nav-item, .submenu-item');
+                    if (navLink) {
+                        sidebar.classList.remove('open');
+                        backdrop.classList.remove('visible');
+                    }
+                }
+            });
+        }
+
+        // Active State Logic
+        function updateSidebarActiveState() {
+            const currentPath = window.location.pathname;
+            const links = document.querySelectorAll('.admin-sidebar a');
+            
+            links.forEach(link => {
+                try {
+                    const url = new URL(link.href);
+                    const linkPath = url.pathname;
+                    
+                    // Remove active class first
+                    link.classList.remove('active');
+                    
+                    // Check logic (exact or sub-path)
+                    // Note: Base URL logic might affect this if not strict. 
+                    // Using includes() for rudimentary match if path is not exact.
+                    if (currentPath === linkPath || (linkPath !== '/' && currentPath.startsWith(linkPath))) {
+                        link.classList.add('active');
+                    }
+                } catch (e) {
+                    // Ignore relative links or invalid hrefs
+                }
+            });
+        }
+
+        // HTMX Hooks
         document.body.addEventListener('htmx:afterSwap', function (evt) {
-            // Re-run submenu expansion if sidebar was NOT preserved or if we need to update active state
+            updateSidebarActiveState();
             if (typeof expandActiveSubmenus === 'function') {
                 expandActiveSubmenus();
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+             updateSidebarActiveState();
         });
 
         document.body.addEventListener('htmx:beforeSwap', function(evt) {

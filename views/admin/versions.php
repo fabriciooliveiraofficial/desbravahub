@@ -22,10 +22,10 @@
         <tbody>
             <?php foreach ($versions as $version): ?>
                 <tr>
-                    <td>
+                    <td data-label="Versão">
                         <strong><?= htmlspecialchars($version['version']) ?></strong>
                     </td>
-                    <td>
+                    <td data-label="Status">
                         <?php
                         $statusClass = match ($version['status']) {
                             'stable' => 'badge-success',
@@ -36,10 +36,10 @@
                         ?>
                         <span class="badge <?= $statusClass ?>"><?= ucfirst($version['status']) ?></span>
                     </td>
-                    <td>
+                    <td data-label="Lançamento">
                         <?= $version['released_at'] ? date('d/m/Y', strtotime($version['released_at'])) : '-' ?>
                     </td>
-                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
+                    <td data-label="Changelog" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
                         <?= htmlspecialchars($version['changelog'] ?? '-') ?>
                     </td>
                 </tr>

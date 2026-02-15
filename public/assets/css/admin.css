@@ -283,12 +283,15 @@ body {
 
 @media (max-width: 768px) {
     .admin-sidebar {
-        transform: translateX(-100%);
+        transform: translateX(-105%);
         box-shadow: none;
+        visibility: hidden;
+        transition: transform var(--transition-slow), visibility var(--transition-slow);
     }
 
     .admin-sidebar.open {
         transform: translateX(0);
+        visibility: visible;
         box-shadow: var(--shadow-2xl);
     }
 }
@@ -509,15 +512,10 @@ body {
     justify-content: space-between;
     background-color: var(--bg-sidebar);
     margin: -2rem -2rem 2rem -2rem;
-    /* Compensate admin-main padding */
     padding: 1rem 2rem;
     border-bottom: 1px solid var(--border-color);
-}
-
-.admin-header {
-    margin: -1rem -1rem 1.5rem -1rem;
-    padding: 1rem;
     gap: 1rem;
+    z-index: 30;
 }
 
 .mobile-sidebar-toggle {
@@ -536,12 +534,6 @@ body {
 
 .mobile-sidebar-toggle:hover {
     background-color: var(--item-hover);
-}
-
-@media (max-width: 768px) {
-    .mobile-sidebar-toggle {
-        display: flex;
-    }
 }
 
 /* Sidebar Backdrop */
@@ -627,6 +619,51 @@ body {
 .user-info {
     text-align: right;
     display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-sidebar-toggle {
+        display: flex;
+    }
+
+    .admin-header {
+        flex-direction: row;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        gap: 0.5rem;
+        margin: -1rem -1rem 1.5rem -1rem !important;
+        /* Proper mobile margins */
+        width: calc(100% + 2rem) !important;
+    }
+
+    .header-title-group {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .header-icon-box {
+        display: none;
+        /* Hide icon box to save space on mobile */
+    }
+
+    .header-title {
+        font-size: 1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .header-actions {
+        gap: 0.5rem;
+    }
+
+    .user-actions {
+        border-left: none;
+        padding-left: 0;
+    }
 }
 
 @media (min-width: 1280px) {
@@ -1108,6 +1145,72 @@ body {
 
 .data-table tbody tr:last-child td {
     border-bottom: none;
+}
+
+/* Responsive Table (Card View) */
+@media (max-width: 768px) {
+
+    .data-table,
+    .data-table thead,
+    .data-table tbody,
+    .data-table th,
+    .data-table td,
+    .data-table tr,
+    .matrix-table,
+    .matrix-table thead,
+    .matrix-table tbody,
+    .matrix-table th,
+    .matrix-table td,
+    .matrix-table tr {
+        display: block;
+    }
+
+    .data-table thead tr,
+    .matrix-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    .data-table tr,
+    .matrix-table tr {
+        border: 1px solid var(--border-color);
+        margin-bottom: 1rem;
+        border-radius: var(--radius-lg);
+        background: var(--bg-card);
+        padding: 0.5rem;
+    }
+
+    .data-table td,
+    .matrix-table td {
+        border: none;
+        border-bottom: 1px solid var(--bg-dark);
+        position: relative;
+        padding-left: 50%;
+        text-align: right;
+        min-height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .data-table td:last-child {
+        border-bottom: 0;
+    }
+
+    .data-table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 1rem;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-size: 0.7rem;
+    }
 }
 
 /* ============ BUTTONS - Premium ============ */

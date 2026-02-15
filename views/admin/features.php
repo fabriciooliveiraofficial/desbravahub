@@ -12,12 +12,12 @@
         <tbody>
             <?php foreach ($flags as $flag): ?>
                 <tr>
-                    <td>
+                    <td data-label="Flag">
                         <code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px;">
-                                                    <?= htmlspecialchars($flag['key']) ?>
-                                                </code>
+                            <?= htmlspecialchars($flag['key']) ?>
+                        </code>
                     </td>
-                    <td>
+                    <td data-label="Descrição">
                         <strong><?= htmlspecialchars($flag['name']) ?></strong>
                         <?php if ($flag['description']): ?>
                             <p style="color: #888; font-size: 0.85rem; margin-top: 4px;">
@@ -25,15 +25,15 @@
                             </p>
                         <?php endif; ?>
                     </td>
-                    <td>
+                    <td data-label="Global">
                         <span class="badge <?= $flag['is_enabled'] ? 'badge-success' : 'badge-danger' ?>">
                             <?= $flag['is_enabled'] ? 'ON' : 'OFF' ?>
                         </span>
                     </td>
-                    <td>
+                    <td data-label="Rollout">
                         <?= $flag['rollout_percentage'] ?>%
                     </td>
-                    <td>
+                    <td data-label="Override">
                         <?php if ($flag['override_id']): ?>
                             <span class="badge <?= $flag['tenant_enabled'] ? 'badge-success' : 'badge-danger' ?>">
                                 <?= $flag['tenant_enabled'] ? 'Ativo' : 'Inativo' ?>
@@ -55,4 +55,3 @@
         </tbody>
     </table>
 </div>
-</main>

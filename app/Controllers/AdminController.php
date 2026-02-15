@@ -164,9 +164,72 @@ class AdminController
             return;
         }
 
-        db_update('users', ['role_id' => $roleId], 'id = ?', [$userId]);
-        $this->json(['success' => true]);
+    db_update('users', ['role_id' => $roleId], 'id = ?', [$userId]);
+    $this->json(['success' => true]);
+}
+
+/**
+ * Toggle user status (Active/Blocked)
+ */
+public function toggleUserStatus(array $params): void
+{
+    $this->requirePermission('users.manage');
+
+    $userId = (int) $params['id'];
+    $tenant = App::tenant();
+    $currentUser = auth();
+
+    if ($userId === $currentUser['id']) {
+        $this->jsonError('Você não pode bloquear sua própria conta');
+        return;
     }
+
+    $user = db_fetch_one(
+        "SELECT id, status FROM users WHERE id = ? AND tenant_id = ?",
+        [$userId, $tenant['id']]
+    );
+
+    if (!$user) {
+        $this->jsonError('Usuário não encontrado', 404);
+        return;
+    }
+
+    $newStatus = ($user['status'] === 'active') ? 'inactive' : 'active';
+    db_update('users', ['status' => $newStatus], 'id = ?', [$userId]);
+
+    $this->json(['success' => true, 'new_status' => $newStatus]);
+}
+
+/**
+ * Delete user (Soft delete)
+ */
+public function deleteUser(array $params): void
+{
+    $this->requirePermission('users.manage');
+
+    $userId = (int) $params['id'];
+    $tenant = App::tenant();
+    $currentUser = auth();
+
+    if ($userId === $currentUser['id']) {
+        $this->jsonError('Você não pode excluir sua própria conta');
+        return;
+    }
+
+    // Verify user belongs to tenant
+    $user = db_fetch_one(
+        "SELECT id FROM users WHERE id = ? AND tenant_id = ?",
+        [$userId, $tenant['id']]
+    );
+
+    if (!$user) {
+        $this->jsonError('Usuário não encontrado', 404);
+        return;
+    }
+
+    db_update('users', ['deleted_at' => date('Y-m-d H:i:s')], 'id = ?', [$userId]);
+    $this->json(['success' => true]);
+}
 
     /**
      * Proofs pending review

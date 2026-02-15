@@ -21,7 +21,7 @@
             <tbody>
                 <?php foreach ($activities as $activity): ?>
                     <tr>
-                        <td style="text-align: center;">
+                        <td data-label="Ícone" style="text-align: center;">
                             <span style="font-size: 1.5rem;">
                                 <?php if (str_starts_with($activity['badge_icon'] ?? '', 'fa-')): ?>
                                     <i class="<?= htmlspecialchars($activity['badge_icon']) ?>"></i>
@@ -32,7 +32,7 @@
                                 <?php endif; ?>
                             </span>
                         </td>
-                        <td>
+                        <td data-label="Nome">
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <strong><?= htmlspecialchars($activity['name']) ?></strong>
                                 <?php if ($activity['is_custom'] ?? false): ?>
@@ -42,17 +42,17 @@
                             <small
                                 style="color: #888;"><?= htmlspecialchars(substr($activity['description'] ?? '', 0, 50)) ?>...</small>
                         </td>
-                        <td>
+                        <td data-label="Dificuldade">
                             <span title="Nível <?= $activity['difficulty'] ?? 1 ?>">
                                 <?= str_repeat('⭐', $activity['difficulty'] ?? 1) ?>
                             </span>
                         </td>
-                        <td>
+                        <td data-label="XP">
                             <span style="color: #00ff88; font-weight: bold;">
                                 +<?= number_format($activity['xp_reward'] ?? 0) ?> XP
                             </span>
                         </td>
-                        <td>
+                        <td data-label="Tipo">
                             <?php
                             $type = $activity['type'] ?? 'indoor';
                             echo match ($type) {
@@ -62,7 +62,7 @@
                             };
                             ?>
                         </td>
-                        <td>
+                        <td data-label="Ações">
                             <?php if ($activity['is_custom'] ?? false): ?>
                                 <a href="<?= base_url($tenant['slug'] . '/admin/especialidades/' . $activity['id'] . '/requisitos') ?>"
                                     class="btn btn-secondary btn-sm" title="Editar Requisitos">

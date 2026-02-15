@@ -66,7 +66,7 @@
         </div>
         <div class="dashboard-card-body">
             <div class="quick-actions">
-                <a href="<?= base_url($tenant['slug'] . '/admin/especialidades/nova') ?>"
+                <a href="<?= base_url($tenant['slug'] . '/admin/especialidades') ?>"
                     class="action-item action-blue">
                     <div class="action-content">
                         <div class="action-icon-box">
@@ -77,7 +77,7 @@
                     <span class="material-icons-round action-arrow">chevron_right</span>
                 </a>
 
-                <a href="<?= base_url($tenant['slug'] . '/admin/provas') ?>" class="action-item action-orange">
+                <a href="<?= base_url($tenant['slug'] . '/admin/aprovacoes') ?>" class="action-item action-orange">
                     <div class="action-content">
                         <div class="action-icon-box">
                             <span class="material-icons-round">assignment</span>

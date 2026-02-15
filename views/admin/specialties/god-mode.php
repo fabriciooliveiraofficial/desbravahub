@@ -443,6 +443,79 @@
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
     }
+
+    /* --- Responsive Adjustments --- */
+    @media (max-width: 768px) {
+        .god-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .god-stats {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .stat-widget {
+            padding: 16px;
+        }
+
+        .page-toolbar {
+            padding: 16px;
+            gap: 12px;
+        }
+
+        .search-section {
+            max-width: none;
+        }
+
+        .actions-group {
+            width: 100%;
+        }
+
+        .btn-toolbar {
+            flex: 1;
+            justify-content: center;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+
+        .matrix-table td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 1rem;
+            width: 40%; /* Reduced from 45% to give more room */
+            padding-right: 10px;
+            white-space: nowrap;
+            text-align: left;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.75rem; /* Slightly larger for readability */
+        }
+
+        .matrix-table td {
+            min-height: 60px; /* Increased from 45px */
+            padding: 16px 1rem !important; /* Forces vertical spacing */
+            padding-left: 45% !important; /* Aligns content better */
+        }
+
+        .progress-box {
+            width: 100%;
+            margin: 4px 0; /* Add vertical breathing room */
+        }
+
+        .lifecycle-tracker {
+            justify-content: flex-end;
+            width: 100%;
+            padding: 8px 0;
+        }
+        
+        .step {
+            width: 25px;
+        }
+    }
 </style>
 
 <!-- Removed god-section wrapper -->

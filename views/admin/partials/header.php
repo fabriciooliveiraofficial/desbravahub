@@ -4,7 +4,7 @@
  * Requires: $pageTitle (string), $user (array), $tenant (array)
  */
 ?>
-<header class="admin-header" id="admin-header" hx-preserve="true">
+<header class="admin-header" id="admin-header">
     <!-- Left Side: Icon & Title -->
     <div class="header-title-group">
         <button class="mobile-sidebar-toggle" id="mobile-sidebar-toggle">
