@@ -319,12 +319,7 @@
 </style>
 
 <div class="perm-wrapper">
-    <header class="page-toolbar">
-        <div class="page-info">
-            <h2 class="header-title">Permissões do Sistema</h2>
-            <p class="text-muted">Controle granular de acesso por nível hierárquico</p>
-        </div>
-    </header>
+
 
     <div class="role-switcher-container">
         <div class="role-switcher">
