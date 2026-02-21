@@ -1132,21 +1132,48 @@ class SpecialtyService
 
     /**
      * Get specialty XP reward (from JSON or calculate from requirements)
+     * Utilizes the 'Fair Play XP' engine logic to calculate XP based on complexity and duration.
      */
     public static function getXpReward(string $specialtyId): int
     {
         $specialty = self::getSpecialty($specialtyId);
 
-        if ($specialty && isset($specialty['xp_reward'])) {
+        if ($specialty && isset($specialty['xp_reward']) && $specialty['xp_reward'] > 0) {
             return (int) $specialty['xp_reward'];
         }
 
-        // Calculate from requirements points
+        // Calculate from requirements points (Base Points)
         $result = db_fetch_one(
             "SELECT COALESCE(SUM(points), 100) as total FROM specialty_requirements WHERE specialty_id = ?",
             [$specialtyId]
         );
 
-        return (int) ($result['total'] ?? 100);
+        $basePoints = (int) ($result['total'] ?? 100);
+
+        // Fair Play XP Engine logic
+        $difficultyModifier = 1.0;
+        $durationModifier = 1.0;
+
+        if ($specialty) {
+            // Difficulty (1-5): 1=0.8x, 2=1.0x, 3=1.2x, 4=1.5x, 5=2.0x
+            switch ($specialty['difficulty'] ?? 2) {
+                case 1: $difficultyModifier = 0.8; break;
+                case 3: $difficultyModifier = 1.2; break;
+                case 4: $difficultyModifier = 1.5; break;
+                case 5: $difficultyModifier = 2.0; break;
+                default: $difficultyModifier = 1.0; break;
+            }
+
+            // Duration: +10% per hour over 4 hours (cap at 1.5x)
+            $hours = $specialty['duration_hours'] ?? 4;
+            if ($hours > 4) {
+                $durationModifier = min(1.5, 1.0 + (($hours - 4) * 0.1));
+            }
+        }
+
+        $finalXp = round($basePoints * $difficultyModifier * $durationModifier);
+
+        // Cap XP to prevent absurd numbers (max 500 per specialty)
+        return (int) min(500, max(50, $finalXp));
     }
 }

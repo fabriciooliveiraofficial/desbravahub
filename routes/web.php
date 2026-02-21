@@ -31,6 +31,9 @@ use App\Middleware\TenantMiddleware;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use App\Controllers\FixController;
+use App\Controllers\ClubProfileController;
+use App\Controllers\AdminEventController;
+use App\Controllers\PublicController;
 
 $router = new Router();
 
@@ -44,6 +47,11 @@ $router->get('/health/detailed', [HealthController::class, 'detailed']);
 $router->get('/api', [ApiController::class, 'info']);
 $router->get('/api/docs', [ApiController::class, 'docs']);
 $router->get('/api/clubs', [ApiController::class, 'clubs']);
+
+// Public Club Landing Page (Growth & Identity)
+$router->get('/c/{slug}', [PublicController::class, 'clubProfile']);
+$router->get('/c/{club_slug}/evento/{event_slug}', [PublicController::class, 'eventDetails']);
+$router->post('/c/{club_slug}/evento/{id}/inscrever', [PublicController::class, 'registerEvent']);
 
 // Developer Support Panel (global - must be before /{tenant} routes)
 $router->get('/dev/login', [DevSupportController::class, 'showLogin']);
@@ -126,6 +134,19 @@ $router->get('/{tenant}/admin/notificacoes', [AdminController::class, 'notificat
 $router->post('/{tenant}/admin/notifications/broadcast', [AdminController::class, 'sendBroadcast'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/quizzes', [AdminController::class, 'quizzes'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/quizzes', [AdminController::class, 'createQuiz'], [TenantMiddleware::class, AuthMiddleware::class]);
+
+// Club Profile & Growth Edition
+$router->get('/{tenant}/admin/perfil-clube', [ClubProfileController::class, 'edit'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/perfil-clube', [ClubProfileController::class, 'update'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/perfil-clube/qrcode', [ClubProfileController::class, 'generateQRCode'], [TenantMiddleware::class, AuthMiddleware::class]);
+
+// Events Management
+$router->get('/{tenant}/admin/eventos', [AdminEventController::class, 'index'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/admin/eventos/novo', [AdminEventController::class, 'create'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/eventos/novo', [AdminEventController::class, 'store'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/admin/eventos/([0-9]+)/editar', [AdminEventController::class, 'edit'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/eventos/([0-9]+)/editar', [AdminEventController::class, 'update'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/eventos/([0-9]+)/excluir', [AdminEventController::class, 'delete'], [TenantMiddleware::class, AuthMiddleware::class]);
 
 // Mission Control creation/management routes
 $router->post('/{tenant}/admin/mission-control/specialty', [SpecialtyController::class, 'storeSpecialtyComplete'], [TenantMiddleware::class, AuthMiddleware::class]);

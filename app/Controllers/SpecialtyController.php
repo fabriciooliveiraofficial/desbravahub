@@ -1231,6 +1231,17 @@ class SpecialtyController
         $specialtyId = $params['id'] ?? '';
 
         try {
+            // Integrity Lock: Check if specialty has requirements
+            $reqCount = db_fetch_column(
+                "SELECT COUNT(*) FROM specialty_requirements WHERE specialty_id = ?",
+                [$specialtyId]
+            );
+
+            if ($reqCount == 0) {
+                $this->json(['error' => 'A especialidade precisa de pelo menos 1 requisito para ser publicada (Integrity Lock).'], 400);
+                return;
+            }
+
             db_query(
                 "UPDATE specialties SET status = 'active' WHERE id = ? AND tenant_id = ?",
                 [$specialtyId, $tenant['id']]

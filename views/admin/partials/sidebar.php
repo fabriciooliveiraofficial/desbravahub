@@ -53,7 +53,20 @@
             Dashboard
         </a>
 
-        <!-- Mission Control / God Mode -->
+        <!-- Club Profile -->
+        <a href="<?= base_url($tenant['slug'] . '/admin/perfil-clube') ?>"
+            class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], '/admin/perfil-clube') ? 'active' : '' ?>">
+            <span class="material-icons-round" style="color: #10b981;">storefront</span>
+            Perfil do Clube
+        </a>
+
+        <!-- Events Management -->
+        <a href="<?= base_url($tenant['slug'] . '/admin/eventos') ?>"
+            class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], '/admin/eventos') ? 'active' : '' ?>">
+            <span class="material-icons-round" style="color: #6366f1;">event</span>
+            Eventos
+        </a>
+
         <!-- Mission Control / God Mode -->
         <a href="<?= base_url($tenant['slug'] . '/admin/especialidades/god-mode') ?>"
             class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], '/admin/especialidades/god-mode') ? 'active' : '' ?>">
