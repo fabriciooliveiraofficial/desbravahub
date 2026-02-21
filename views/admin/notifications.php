@@ -123,40 +123,45 @@
 <div id="toast-container" style="position: fixed; top: 40px; right: 40px; z-index: 9999; display: flex; flex-direction: column; gap: 12px;"></div>
 
 <script>
-    var toast = window.toast = window.toast || new (window.ToastNotification || ToastNotification)();
+    var toast;
 
-    document.getElementById('broadcast-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
+    document.addEventListener('DOMContentLoaded', () => {
+        toast = window.toast = window.toast || new (window.ToastNotification || ToastNotification)();
 
-        const btn = document.getElementById('submit-btn');
-        const originalContent = btn.innerHTML;
-        
-        btn.disabled = true;
-        btn.innerHTML = '<span class="material-icons-round animate-spin">sync</span> Enviando...';
+        document.getElementById('broadcast-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-        try {
-            const formData = new FormData(e.target);
-            const response = await fetch('<?= base_url($tenant['slug'] . '/admin/notifications/broadcast') ?>', {
-                method: 'POST',
-                body: formData,
-                headers: { 'Accept': 'application/json' }
-            });
+            const btn = document.getElementById('submit-btn');
+            const originalContent = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-icons-round animate-spin">sync</span> Enviando...';
 
-            const data = await response.json();
+            try {
+                const formData = new FormData(e.target);
+                const response = await fetch('<?= base_url($tenant['slug'] . '/admin/notifications/broadcast') ?>', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Accept': 'application/json' }
+                });
 
-            if (data.success) {
-                toast.success('Sucesso', 'Notificação enviada com sucesso para o clube!');
-                e.target.reset();
-                // Reset visual state of checkboxes if needed, though they default mostly to unchecked or checked based on HTML
-            } else {
-                toast.error('Erro ao Enviar', data.error || 'Não foi possível completar o envio.');
+                const data = await response.json();
+
+                if (data.success) {
+                    toast.success('Sucesso', 'Notificação enviada com sucesso para o clube!');
+                    e.target.reset();
+                    // Reset visual state of checkboxes if needed, though they default mostly to unchecked or checked based on HTML
+                } else {
+                    toast.error('Erro ao Enviar', data.error || 'Não foi possível completar o envio.');
+                }
+            } catch (err) {
+                if (toast) toast.error('Erro Fatal', 'Erro de conexão ao servidor.');
+                else alert('Erro de conexão ao servidor.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
             }
-        } catch (err) {
-            toast.error('Erro Fatal', 'Erro de conexão ao servidor.');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalContent;
-        }
+        });
     });
 </script>
 

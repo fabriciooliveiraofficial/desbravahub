@@ -122,7 +122,7 @@
 </div>
 
 <script>
-    var toast = window.toast = window.toast || new (window.ToastNotification || ToastNotification)();
+    var toast;
 
     function togglePaidFields() {
         const isPaid = document.getElementById('is_paid').checked;
@@ -135,39 +135,44 @@
         }
     }
 
-    document.getElementById('create-event-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const btn = document.getElementById('save-btn');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<span class="material-icons-round rotate">sync</span> Salvando...';
-        btn.disabled = true;
+    document.addEventListener('DOMContentLoaded', () => {
+        toast = window.toast = window.toast || new (window.ToastNotification || ToastNotification)();
 
-        const formData = new FormData(e.target);
+        document.getElementById('create-event-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('save-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="material-icons-round rotate">sync</span> Salvando...';
+            btn.disabled = true;
 
-        try {
-            const response = await fetch('<?= base_url($tenant['slug'] . '/admin/eventos/novo') ?>', {
-                method: 'POST',
-                body: formData,
-                headers: { 'Accept': 'application/json' }
-            });
+            const formData = new FormData(e.target);
 
-            const data = await response.json();
+            try {
+                const response = await fetch('<?= base_url($tenant['slug'] . '/admin/eventos/novo') ?>', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Accept': 'application/json' }
+                });
 
-            if (data.success) {
-                toast.success('Sucesso', data.message);
-                setTimeout(() => window.location.href = data.redirect, 1000);
-            } else {
-                toast.error('Erro', data.error || 'Erro ao criar evento');
+                const data = await response.json();
+
+                if (data.success) {
+                    toast.success('Sucesso', data.message);
+                    setTimeout(() => window.location.href = data.redirect, 1000);
+                } else {
+                    toast.error('Erro', data.error || 'Erro ao criar evento');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                console.error(err);
+                if (toast) toast.error('Erro', 'Erro de conexão com o servidor');
+                else alert('Erro de conexão com o servidor');
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
-        } catch (err) {
-            console.error(err);
-            toast.error('Erro', 'Erro de conexão com o servidor');
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
+        });
     });
 </script>
 

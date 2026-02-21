@@ -189,7 +189,7 @@
 
 <?php require BASE_PATH . '/views/admin/partials/icon_picker.php'; ?>
 <script>
-    var toast = window.toast = window.toast || new (window.ToastNotification || ToastNotification)();
+    var toast;
 
     function openModal(id) {
         document.getElementById(id).classList.add('active');
@@ -199,38 +199,47 @@
         document.getElementById(id).classList.remove('active');
     }
 
-    document.getElementById('create-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
+    document.addEventListener('DOMContentLoaded', () => {
+        toast = window.toast = window.toast || new (window.ToastNotification || ToastNotification)();
 
-        const formData = new FormData(e.target);
+        const createForm = document.getElementById('create-form');
+        if (createForm) {
+            createForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
 
-        try {
-            const response = await fetch('<?= base_url($tenant['slug'] . '/admin/especialidades/criar') ?>', {
-                method: 'POST',
-                body: formData,
-                headers: { 'Accept': 'application/json' }
-            });
+                const formData = new FormData(e.target);
 
-            const data = await response.json();
+                try {
+                    const response = await fetch('<?= base_url($tenant['slug'] . '/admin/especialidades/criar') ?>', {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'Accept': 'application/json' }
+                    });
 
-            if (data.success) {
-                toast.success('Sucesso', 'Especialidade criada com sucesso');
-                if (data.redirect) {
-                    setTimeout(() => window.location.href = data.redirect, 500);
-                } else {
-                    setTimeout(() => location.reload(), 1000);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        toast.success('Sucesso', 'Especialidade criada com sucesso');
+                        if (data.redirect) {
+                            setTimeout(() => window.location.href = data.redirect, 500);
+                        } else {
+                            setTimeout(() => location.reload(), 1000);
+                        }
+                    } else {
+                        toast.error('Erro', data.error || 'Erro ao criar especialidade');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    if (toast) toast.error('Erro', 'Erro de conexão');
+                    else alert('Erro de conexão');
                 }
-            } else {
-                toast.error('Erro', data.error || 'Erro ao criar especialidade');
-            }
-        } catch (err) {
-            console.error(err);
-            toast.error('Erro', 'Erro de conexão');
+            });
         }
     });
 
     function editActivity(id) {
         // TODO: Implement edit modal
+        if (!toast) toast = window.toast || new (window.ToastNotification || ToastNotification)();
         toast.info('Em breve', 'Edição será implementada em breve');
     }
 

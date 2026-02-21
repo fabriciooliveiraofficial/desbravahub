@@ -138,43 +138,50 @@
 </div>
 
 <script>
-    var toast = window.toast = window.toast || new (window.ToastNotification || ToastNotification)();
+    var toast;
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        toast = window.toast = window.toast || new (window.ToastNotification || ToastNotification)();
 
-    document.getElementById('profile-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const btn = e.target.querySelector('button[type="submit"]');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<span class="material-icons-round rotate">sync</span> Salvando...';
-        btn.disabled = true;
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="material-icons-round rotate">sync</span> Salvando...';
+            btn.disabled = true;
 
-        const formData = new FormData(e.target);
+            const formData = new FormData(e.target);
 
-        try {
-            const response = await fetch('<?= base_url($tenant['slug'] . '/admin/perfil-clube') ?>', {
-                method: 'POST',
-                body: formData,
-                headers: { 'Accept': 'application/json' }
-            });
+            try {
+                const response = await fetch('<?= base_url($tenant['slug'] . '/admin/perfil-clube') ?>', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Accept': 'application/json' }
+                });
 
-            const data = await response.json();
+                const data = await response.json();
 
-            if (data.success) {
-                toast.success('Sucesso', data.message);
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                toast.error('Erro', data.error || 'Erro ao salvar perfil');
+                if (data.success) {
+                    toast.success('Sucesso', data.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    toast.error('Erro', data.error || 'Erro ao salvar perfil');
+                }
+            } catch (err) {
+                console.error(err);
+                if (toast) toast.error('Erro', 'Erro de conexão com o servidor');
+                else alert('Erro de conexão com o servidor');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
-        } catch (err) {
-            console.error(err);
-            toast.error('Erro', 'Erro de conexão com o servidor');
-        } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
+        });
     });
 
     async function generateQr() {
+        if (!toast) toast = window.toast || new (window.ToastNotification || ToastNotification)();
+        
         try {
             toast.info('Aguarde', 'Gerando QR Code...');
             
@@ -194,7 +201,8 @@
             }
         } catch (err) {
             console.error(err);
-            toast.error('Erro', 'Erro de conexão.');
+            if (toast) toast.error('Erro', 'Erro de conexão.');
+            else alert('Erro de conexão');
         }
     }
 </script>
