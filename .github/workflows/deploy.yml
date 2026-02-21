@@ -43,6 +43,7 @@ jobs:
 
       - name: Test SSH Connectivity
         run: |
+          mkdir -p ~/.ssh
           ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
           echo "Testando conexão SSH..."
           nc -zv -w 5 ${{ secrets.SSH_HOST }} ${{ secrets.SSH_PORT }} || echo "TIMEOUT: Não foi possível alcançar o servidor na porta ${{ secrets.SSH_PORT }}"
