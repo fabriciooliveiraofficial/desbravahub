@@ -356,6 +356,49 @@ class SpecialtyController
     }
 
     /**
+     * Admin: API Endpoint to search master repository specialties for autocomplete
+     */
+    public function searchMaster(): void
+    {
+        $this->requireLeadership();
+
+        $term = trim($_GET['q'] ?? '');
+        if (strlen($term) < 2) {
+            $this->json([]);
+            return;
+        }
+
+        // Get all specialties from the JSON repository
+        $allSpecialties = SpecialtyService::getSpecialties();
+        
+        $results = [];
+        $termLower = mb_strtolower($term, 'UTF-8');
+
+        foreach ($allSpecialties as $spec) {
+            if (str_contains(mb_strtolower($spec['name'], 'UTF-8'), $termLower)) {
+                // Ensure requirements exists, but default to empty array if not present.
+                // This allows the frontend to have a structure to work with, even if data is missing.
+                $results[] = [
+                    'id' => $spec['id'],
+                    'name' => $spec['name'],
+                    'category_id' => $spec['category_id'] ?? '',
+                    'badge_icon' => $spec['badge_icon'] ?? '',
+                    'difficulty' => $spec['difficulty'] ?? 2,
+                    'xp_reward' => $spec['xp_reward'] ?? 100,
+                    'duration_hours' => $spec['duration_hours'] ?? 4,
+                    'requirements' => $spec['requirements'] ?? []
+                ];
+            }
+
+            if (count($results) >= 15) {
+                break;
+            }
+        }
+
+        $this->json($results);
+    }
+
+    /**
      * Admin: "God Mode" Mission Control Dashboard
      */
     public function godMode(): void
@@ -1062,61 +1105,72 @@ class SpecialtyController
         $publish = !empty($input['publish']);
         $requirements = $input['requirements'] ?? [];
 
-        // Generate unique ID
-        $prefix = substr(preg_replace('/[^a-z]/', '', strtolower($categoryId)), 0, 4);
-        $suffix = substr(uniqid(), -5);
-        $specialtyId = $prefix . '_t' . $tenant['id'] . '_' . $suffix;
+        // Generate unique slug
+        $slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $name)) . '-' . substr(uniqid(), -5);
 
         try {
-            // Create specialty
-            db_insert('specialties', [
-                'id' => $specialtyId,
+            db_begin();
+
+            // Create program instead of legacy specialty
+            $programId = db_insert('learning_programs', [
                 'tenant_id' => $tenant['id'],
-                'category_id' => $categoryId,
+                'category_id' => $categoryId ?: null,
+                'type' => 'specialty',
                 'name' => $name,
-                'badge_icon' => $badgeIcon,
-                'type' => $type,
+                'slug' => $slug,
+                'icon' => $badgeIcon,
+                'description' => $description,
+                'is_outdoor' => $type === 'outdoor' ? 1 : 0,
                 'duration_hours' => $durationHours,
                 'difficulty' => $difficulty,
                 'xp_reward' => $xpReward,
-                'description' => $description,
-                'status' => $publish ? 'active' : 'inactive',
-                'created_by' => $user['id'],
+                'status' => $publish ? 'published' : 'draft',
+                'created_by' => $user['id']
             ]);
 
-            // Create requirements
-            foreach ($requirements as $idx => $req) {
-                $questionsJson = null;
-                if (!empty($req['questions'])) {
-                    // Format questions for storage
-                    $formattedQuestions = [];
-                    foreach ($req['questions'] as $q) {
-                        $formattedQuestions[] = [
-                            'text' => $q['text'],
-                            'options' => $q['options'],
-                            'correct_index' => $q['correct_index'] ?? 0
-                        ];
-                    }
-                    $questionsJson = json_encode($formattedQuestions, JSON_UNESCAPED_UNICODE);
-                }
+            // Create initial version for the new structure
+            $versionId = db_insert('program_versions', [
+                'program_id' => $programId,
+                'version_number' => 1,
+                'status' => $publish ? 'published' : 'draft',
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
 
-                db_insert('specialty_requirements', [
-                    'specialty_id' => $specialtyId,
-                    'order_num' => $idx + 1,
-                    'type' => $req['type'] ?? 'text',
-                    'title' => '',
+            // Create steps and questions
+            foreach ($requirements as $idx => $req) {
+                $stepId = db_insert('program_steps', [
+                    'version_id' => $versionId,
+                    'title' => 'Requisito', // Legacy wizard didn't have title
                     'description' => $req['description'] ?? '',
-                    'options' => $questionsJson,
-                    'points' => 10,
-                    'is_required' => 1
+                    'instructions' => '',
+                    'sort_order' => $idx,
+                    'is_required' => 1,
+                    'points' => (int) ($req['points'] ?? 10)
                 ]);
+
+                if (!empty($req['questions'])) {
+                    foreach ($req['questions'] as $qIndex => $q) {
+                        db_insert('program_questions', [
+                            'step_id' => $stepId,
+                            'type' => isset($q['options']) && !empty($q['options']) ? 'multiple_choice' : 'text',
+                            'question_text' => $q['text'] ?? '',
+                            'options' => isset($q['options']) ? json_encode($q['options'], JSON_UNESCAPED_UNICODE) : null,
+                            'correct_answer' => $q['correct_index'] ?? null, // Keep correct_index for logic matching
+                            'points' => 10,
+                            'is_required' => 1,
+                            'sort_order' => $qIndex
+                        ]);
+                    }
+                }
             }
+
+            db_commit();
 
             $this->json([
                 'success' => true,
                 'message' => $publish ? 'Especialidade publicada!' : 'Especialidade salva como rascunho!',
-                'specialty_id' => $specialtyId,
-                'redirect' => $publish ? null : base_url($tenant['slug'] . '/admin/especialidades/' . urlencode($specialtyId) . '/requisitos')
+                'specialty_id' => $programId,
+                'redirect' => $publish ? null : base_url($tenant['slug'] . '/admin/programas/' . $programId . '/editar')
             ]);
 
         } catch (\Exception $e) {

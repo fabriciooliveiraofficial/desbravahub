@@ -127,12 +127,13 @@ class Router
      */
     private function executeHandler(callable|array $handler, array $params): void
     {
-        if (is_array($handler)) {
+        if (is_array($handler) && isset($handler[0]) && is_string($handler[0])) {
             [$class, $method] = $handler;
             $controller = new $class();
             $controller->$method($params);
         } else {
-            $handler($params);
+            // It's a closure
+            call_user_func($handler, $params);
         }
     }
 

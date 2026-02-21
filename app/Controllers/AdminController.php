@@ -628,6 +628,68 @@ public function deleteUser(array $params): void
             // Silently fail if tables missing
         }
 
+        // --- Fetch uncategorized classes (Custom created via God Mode without category) ---
+        try {
+            $uncategorizedPrograms = db_fetch_all(
+                "SELECT * FROM learning_programs 
+                 WHERE tenant_id = ? AND type = 'class' AND category_id IS NULL AND status = 'published'
+                 ORDER BY name",
+                [$tenant['id']]
+            );
+            
+            if (!empty($uncategorizedPrograms)) {
+                $customSpecs = [];
+                foreach ($uncategorizedPrograms as $prog) {
+                    $assignedCount = db_fetch_column(
+                        "SELECT COUNT(*) FROM user_program_progress 
+                         WHERE program_id = ? AND tenant_id = ?",
+                        [$prog['id'], $tenant['id']]
+                    ) ?: 0;
+
+                    $customSpecs[] = [
+                        'id' => $prog['id'],
+                        'db_id' => $prog['id'],
+                        'name' => $prog['name'],
+                        'badge_icon' => $prog['icon'] ?? '📘',
+                        'type' => $prog['is_outdoor'] ? 'outdoor' : 'indoor',
+                        'duration_hours' => $prog['estimated_hours'] ?? 4,
+                        'difficulty' => $prog['difficulty'] ?? 2,
+                        'xp_reward' => $prog['xp_reward'] ?? 100,
+                        'description' => $prog['description'] ?? '',
+                        'member_count' => $assignedCount,
+                        'is_learning_program' => true,
+                        'program_id' => $prog['id'],
+                        'category_id' => 'custom'
+                    ];
+                }
+                
+                $categories[] = [
+                    'id' => 'custom',
+                    'db_id' => 'custom',
+                    'name' => 'Outras Classes',
+                    'icon' => '🌟',
+                    'color' => '#8b5cf6',
+                    'description' => 'Classes personalizadas pelo clube',
+                    'is_learning_category' => true
+                ];
+
+                $grouped['custom'] = [
+                    'category' => [
+                        'id' => 'custom',
+                        'db_id' => 'custom',
+                        'name' => 'Outras Classes',
+                        'icon' => '🌟',
+                        'color' => '#8b5cf6',
+                        'description' => 'Classes personalizadas pelo clube',
+                        'is_learning_category' => true
+                    ],
+                    'specialties' => $customSpecs
+                ];
+            }
+        } catch (\Exception $e) {
+        }
+        // -----------------------------------------------------------------------------------
+
         // Sort tabs A-Z
         usort($categories, fn($a, $b) => strcasecmp($a['name'], $b['name']));
 
@@ -663,30 +725,40 @@ public function deleteUser(array $params): void
         $icon = $input['icon'] ?? '🌱';
         $color = $input['color'] ?? '#4CAF50';
 
-        // Get next sort order
-        $maxOrder = db_fetch_column(
-            "SELECT MAX(sort_order) FROM learning_categories WHERE tenant_id = ?",
-            [$tenant['id']]
-        ) ?: 0;
+        // Generate unique slug
+        $slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $name)) . '-' . substr(uniqid(), -5);
 
         try {
-            db_insert('learning_categories', [
+            db_begin();
+
+            $programId = db_insert('learning_programs', [
                 'tenant_id' => $tenant['id'],
-                'name' => $name,
-                'description' => $description,
-                'icon' => $icon,
-                'color' => $color,
+                'category_id' => null, // Classes usually don't have categories in the same way specialties do
                 'type' => 'class',
-                'status' => 'active',
-                'sort_order' => $maxOrder + 1
+                'name' => $name,
+                'slug' => $slug,
+                'icon' => $icon,
+                'description' => $description,
+                'status' => 'draft',
+                'created_by' => $user['id']
             ]);
 
-            $classId = db_last_insert_id();
+            // Create initial version for the class
+            db_insert('program_versions', [
+                'program_id' => $programId,
+                'version_number' => 1,
+                'status' => 'draft',
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+
+            db_commit();
 
             $this->json([
                 'success' => true,
                 'message' => 'Classe criada com sucesso!',
-                'class_id' => $classId
+                'class_id' => $programId,
+                // Redirect straight to the editor to add requirements for this class
+                'redirect' => base_url($tenant['slug'] . '/admin/programas/' . $programId . '/editar')
             ]);
 
         } catch (\Exception $e) {

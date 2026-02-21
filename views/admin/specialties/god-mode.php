@@ -1149,6 +1149,11 @@ async function saveClass(evt) {
         if (response.ok && data.success) {
             window.Toast.show(data.message || 'Classe criada!', 'success');
             closeModal('class-modal');
+            
+            // Redirect to edit requirements (V3.1 Engine)
+            if (data.redirect) {
+                setTimeout(() => window.location.href = data.redirect, 1500);
+            }
         } else {
             window.Toast.show(data.error || 'Erro ao criar classe', 'error');
         }

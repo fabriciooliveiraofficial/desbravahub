@@ -37,10 +37,29 @@ use App\Controllers\PublicController;
 
 $router = new Router();
 
+// Super Admin Group (Global, Protected by SuperAdminMiddleware)
+use App\Controllers\SuperAdminController;
+use App\Middleware\SuperAdminMiddleware;
+
+$router->get('/super-admin', [SuperAdminController::class, 'dashboard'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
+$router->get('/super-admin/dashboard', [SuperAdminController::class, 'dashboard'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
+$router->get('/super-admin/clubs', [SuperAdminController::class, 'clubs'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
+$router->get('/super-admin/users', [SuperAdminController::class, 'users'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
+$router->get('/super-admin/scraper', [SuperAdminController::class, 'scraper'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
+
+$router->post('/super-admin/api/save-key', [SuperAdminController::class, 'saveApiKey'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
+$router->post('/super-admin/scraper/process', [SuperAdminController::class, 'processScrape'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
+
 // Global public routes (no tenant)
 $router->get('/', [HomeController::class, 'index']);
 $router->get('/cadastrar-clube', [HomeController::class, 'showRegisterClub']);
 $router->post('/cadastrar-clube', [HomeController::class, 'registerClub']);
+
+// Temporary Super Admin Migration Route
+$router->get('/migrate-superadmin', function() {
+    require_once BASE_PATH . '/database/migrate_superadmin.php';
+});
+
 $router->get('/health', [HealthController::class, 'index']);
 $router->get('/health/ping', [HealthController::class, 'ping']);
 $router->get('/health/detailed', [HealthController::class, 'detailed']);
@@ -149,7 +168,7 @@ $router->get('/{tenant}/admin/eventos/([0-9]+)/editar', [AdminEventController::c
 $router->post('/{tenant}/admin/eventos/([0-9]+)/editar', [AdminEventController::class, 'update'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/eventos/([0-9]+)/excluir', [AdminEventController::class, 'delete'], [TenantMiddleware::class, AuthMiddleware::class]);
 
-// Mission Control creation/management routes
+$router->get('/{tenant}/admin/mission-control/search-master', [SpecialtyController::class, 'searchMaster'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/mission-control/specialty', [SpecialtyController::class, 'storeSpecialtyComplete'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/mission-control/class', [AdminController::class, 'storeClass'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/mission-control/class/{id}', [AdminController::class, 'updateClass'], [TenantMiddleware::class, AuthMiddleware::class]);

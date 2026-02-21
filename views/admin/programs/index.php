@@ -42,9 +42,7 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
             </div>
 
             <div class="actions-group">
-                <button class="btn-toolbar primary" onclick="openCreateProgramModal()">
-                    <span class="material-icons-round">add_circle</span> Novo Programa
-                </button>
+                <!-- Criação centralizada no Mission Control -->
             </div>
         </div>
 
@@ -54,11 +52,7 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
             <div class="empty-state">
                 <div class="icon">📚</div>
                 <h3>Nenhum programa encontrado</h3>
-                <p>Crie seu primeiro programa de aprendizagem.</p>
-                <button onclick="openCreateProgramModal()" class="btn-add"
-                    style="margin-top: 16px; display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer;">
-                    ➕ Criar Programa
-                </button>
+                <p>Acesse o Mission Control para criar seu primeiro programa.</p>
             </div>
         <?php else: ?>
             <div class="programs-grid">

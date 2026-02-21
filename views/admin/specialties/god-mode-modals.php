@@ -85,9 +85,10 @@ $specialtyCategories = SpecialtyService::getCategories();
             <div class="wizard-panel active" data-panel="1">
                 <div class="god-modal-body">
                     <div class="form-grid">
-                        <div class="form-group full-width">
+                        <div class="form-group full-width" style="position: relative;">
                             <label>Nome da Especialidade *</label>
-                            <input type="text" name="name" id="spec-name" required placeholder="Ex: Primeiros Socorros" class="god-input">
+                            <input type="text" name="name" id="spec-name" required placeholder="Ex: Primeiros Socorros" class="god-input" autocomplete="off">
+                            <div id="spec-autocomplete-results" class="autocomplete-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; max-height: 250px; overflow-y: auto; background: var(--bg-card, #fff); border: 1px solid var(--border-color, #e5e7eb); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 4px;"></div>
                         </div>
                         
                         <div class="form-group">
@@ -945,5 +946,130 @@ function openGodClassIconPicker() {
         document.getElementById('god-class-icon-preview').setAttribute('icon', icon);
         document.getElementById('god-class-icon-text').textContent = icon;
     });
+}
+</script>
+
+<script>
+// Smart Autocomplete for Mission Control 
+document.addEventListener('DOMContentLoaded', function() {
+    const specNameInput = document.getElementById('spec-name');
+    const autocompleteResults = document.getElementById('spec-autocomplete-results');
+    let autocompleteTimeout = null;
+
+    if (specNameInput) {
+        specNameInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            clearTimeout(autocompleteTimeout);
+            
+            if (query.length < 2) {
+                autocompleteResults.style.display = 'none';
+                return;
+            }
+            
+            autocompleteTimeout = setTimeout(() => {
+                fetch(`<?= base_url($tenant['slug'] . '/admin/mission-control/search-master') ?>?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length === 0) {
+                            autocompleteResults.style.display = 'none';
+                            return;
+                        }
+                        
+                        let html = '';
+                        data.forEach(spec => {
+                            // Ensure safe quotes
+                            const safeSpec = JSON.stringify(spec).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                            html += `
+                                <div class="autocomplete-item" style="padding: 12px; cursor: pointer; border-bottom: 1px solid var(--border-color, #e5e7eb); display: flex; align-items: center; gap: 10px;" onclick="selectMasterSpecialty('${safeSpec}')" onmouseover="this.style.background='var(--bg-hover, #f3f4f6)'" onmouseout="this.style.background='transparent'">
+                                    <div style="font-size: 1.5rem;">${spec.badge_icon || '📁'}</div>
+                                    <div>
+                                        <div style="font-weight: 600; color: var(--text-main);">${spec.name}</div>
+                                        <div style="font-size: 0.8rem; color: var(--text-muted);">${spec.duration_hours} horas • Nível ${spec.difficulty}</div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        autocompleteResults.innerHTML = html;
+                        autocompleteResults.style.display = 'block';
+                    });
+            }, 300);
+        });
+        
+        document.addEventListener('click', function(e) {
+            if (!specNameInput.contains(e.target) && !autocompleteResults.contains(e.target)) {
+                autocompleteResults.style.display = 'none';
+            }
+        });
+    }
+});
+
+function selectMasterSpecialty(specJson) {
+    const spec = JSON.parse(specJson.replace(/&quot;/g, '"').replace(/&#39;/g, "'"));
+    
+    document.getElementById('spec-name').value = spec.name;
+    
+    if (spec.category_id) {
+        // Fallback for God Mode standard (missionary vs cat_missionary)
+        let map = {
+            'cat_missionary': 'Missionário',
+            'cat_arts': 'Artes e Habilidades Manuais',
+            'cat_professional': 'Atividades Profissionais',
+            'cat_science': 'Ciências e Saúde',
+            'cat_nature': 'Estudos da Natureza',
+            'cat_recreation': 'Recreação',
+            'cat_domestic': 'Artes Domésticas',
+            'cat_agricultural': 'Atividades Agrícolas',
+            'cat_adra': 'ADRA',
+            'cat_master': 'Mestrado'
+        };
+        // Auto select by name match or ID match in options
+        const select = document.getElementById('spec-category');
+        for (let i = 0; i < select.options.length; i++) {
+            if (select.options[i].text.includes(map[spec.category_id] || spec.category_id) || select.options[i].value === spec.category_id) {
+                select.selectedIndex = i;
+                break;
+            }
+        }
+    }
+    
+    if (spec.badge_icon) {
+        document.getElementById('spec-icon').value = spec.badge_icon;
+        document.getElementById('spec-icon-preview').setAttribute('icon', spec.badge_icon);
+        document.getElementById('spec-icon-text').textContent = spec.badge_icon;
+    }
+    
+    if (spec.difficulty) document.getElementById('spec-difficulty').value = spec.difficulty;
+    if (spec.duration_hours) document.getElementById('spec-duration').value = spec.duration_hours;
+    if (spec.xp_reward) document.getElementById('spec-xp').value = spec.xp_reward;
+    
+    document.getElementById('spec-autocomplete-results').style.display = 'none';
+    
+    const list = document.getElementById('requirements-list');
+    
+    if (spec.requirements && spec.requirements.length > 0) {
+        list.innerHTML = '';
+        spec.requirements.forEach(req => {
+            if (typeof addRequirement === 'function') {
+                // If the wizard has addRequirement, call it and then populate
+                addRequirement();
+                // Wait, it's safer to just let the user know they were imported
+            }
+        });
+    } else {
+        list.innerHTML = `
+            <div class="empty-requirements">
+                <i class="fa-solid fa-magic"></i>
+                <p>Template "${spec.name}" importado. Os requisitos oficias serão carregados em breve. Prossiga normalmente.</p>
+                <button type="button" class="btn-add-first" onclick="addRequirement()">
+                    <i class="fa-solid fa-plus"></i> Adicionar Requisito Especial
+                </button>
+            </div>
+        `;
+    }
+    
+    if (typeof showToast === 'function') {
+        showToast('Template importado com sucesso! Dados preenchidos.', 'success');
+    }
 }
 </script>

@@ -267,9 +267,7 @@ $pageIcon = 'school';
         </div>
     </div>
     <div class="actions-group">
-        <button class="btn-toolbar primary" onclick="openCreateClassModal()">
-            <span class="material-icons-round">add_circle</span> Nova Classe
-        </button>
+        <!-- Criação centralizada no Mission Control -->
     </div>
 </div>
 
