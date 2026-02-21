@@ -17,6 +17,12 @@ class TenantMiddleware
      */
     public function handle(array $params, array $mwParams = []): bool
     {
+        // Bypass for system/migration routes
+        $uri = $_SERVER['REQUEST_URI'];
+        if (strpos($uri, 'run-migration') !== false || strpos($uri, 'database/') !== false) {
+            return true;
+        }
+
         // Check if we have a tenant slug in the route params
         $slug = $params['tenant'] ?? null;
 
