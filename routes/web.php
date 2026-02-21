@@ -48,10 +48,6 @@ $router->get('/api', [ApiController::class, 'info']);
 $router->get('/api/docs', [ApiController::class, 'docs']);
 $router->get('/api/clubs', [ApiController::class, 'clubs']);
 
-// Temporary: Run V3.1 Migration without tenant middleware
-$router->get('/run-migration-v3-1', function() {
-    require_once BASE_PATH . '/database/migrate_v3_1_core.php';
-});
 
 // Public Club Landing Page (Growth & Identity)
 $router->get('/c/{slug}', [PublicController::class, 'clubProfile']);
