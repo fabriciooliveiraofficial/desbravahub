@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'desbravahub-v20';
+const CACHE_VERSION = 'desbravahub-v21';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const DYNAMIC_CACHE = CACHE_VERSION + '-dynamic';
 const OFFLINE_URL = '/offline.html';
@@ -79,6 +79,28 @@ self.addEventListener('fetch', (event) => {
 // ==========================================
 
 /**
+ * Fetch helper with timeout
+ */
+async function fetchWithTimeout(resource, options = {}) {
+    const { timeout = FETCH_TIMEOUT } = options;
+
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+
+    try {
+        const response = await fetch(resource, {
+            ...options,
+            signal: controller.signal
+        });
+        clearTimeout(id);
+        return response;
+    } catch (error) {
+        clearTimeout(id);
+        throw error;
+    }
+}
+
+/**
  * Cache First - For static assets (CSS, JS, images, fonts)
  */
 async function cacheFirst(request) {
@@ -86,7 +108,7 @@ async function cacheFirst(request) {
     if (cached) return cached;
 
     try {
-        const networkResponse = await fetch(request);
+        const networkResponse = await fetchWithTimeout(request);
         if (networkResponse.ok) {
             const cache = await caches.open(STATIC_CACHE);
             cache.put(request, networkResponse.clone());
@@ -103,7 +125,7 @@ async function cacheFirst(request) {
  */
 async function networkFirst(request) {
     try {
-        const networkResponse = await fetch(request);
+        const networkResponse = await fetchWithTimeout(request);
         if (networkResponse.ok) {
             const cache = await caches.open(DYNAMIC_CACHE);
             cache.put(request, networkResponse.clone());
@@ -112,7 +134,7 @@ async function networkFirst(request) {
     } catch (err) {
         const cached = await caches.match(request);
         if (cached) return cached;
-        return new Response(JSON.stringify({ offline: true, error: 'Sem conexão' }), {
+        return new Response(JSON.stringify({ offline: true, error: 'Sem conexão ou tempo esgotado' }), {
             headers: { 'Content-Type': 'application/json' }
         });
     }
@@ -126,21 +148,25 @@ async function staleWhileRevalidate(request) {
     const cache = await caches.open(DYNAMIC_CACHE);
     const cached = await cache.match(request);
 
-    const fetchPromise = fetch(request).then(networkResponse => {
+    // Background fetch with timeout
+    const fetchPromise = fetchWithTimeout(request).then(networkResponse => {
         if (networkResponse.ok) {
             cache.put(request, networkResponse.clone());
         }
         return networkResponse;
-    }).catch(() => null);
+    }).catch(err => {
+        console.warn('[SW v21] Network fetch failed or timed out:', err);
+        return null;
+    });
 
     // Return cached immediately if available, or wait for network
     if (cached) {
-        // Update in background (stale-while-revalidate)
+        // Update in background
         fetchPromise;
         return cached;
     }
 
-    // No cache → must wait for network
+    // No cache → must wait for network (with timeout)
     const networkResponse = await fetchPromise;
     if (networkResponse) return networkResponse;
 

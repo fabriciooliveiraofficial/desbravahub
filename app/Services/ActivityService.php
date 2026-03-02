@@ -85,22 +85,48 @@ class ActivityService
         $completedIds = array_column($completed, 'activity_id');
 
         // Get all active activities
-        $activities = db_fetch_all(
-            "SELECT a.*, 
-                    CASE WHEN ua.id IS NOT NULL THEN ua.status ELSE 'not_started' END as user_status,
-                    ua.started_at, ua.completed_at
-             FROM activities a
-             LEFT JOIN user_activities ua ON a.id = ua.activity_id AND ua.user_id = ?
-             WHERE a.tenant_id = ? AND a.status = 'active' AND a.min_level <= ?
-             ORDER BY a.order_position",
-            [$userId, $tenantId, $userLevel]
-        );
+    $activities = db_fetch_all(
+        "SELECT a.*, 
+                CASE WHEN ua.id IS NOT NULL THEN ua.status ELSE 'not_started' END as user_status,
+                ua.started_at, ua.completed_at
+         FROM activities a
+         LEFT JOIN user_activities ua ON a.id = ua.activity_id AND ua.user_id = ?
+         WHERE a.tenant_id = ? AND a.status = 'active' AND a.min_level <= ?
+         ORDER BY a.order_position",
+        [$userId, $tenantId, $userLevel]
+    );
 
-        // Filter by prerequisites
-        return array_filter($activities, function ($activity) use ($completedIds) {
-            return $this->checkPrerequisites($activity['id'], $completedIds);
-        });
+    if (empty($activities)) {
+        return [];
     }
+
+    // 1. Fetch all prerequisites for these activities in one go
+    $activityIds = array_column($activities, 'id');
+    $placeholders = implode(',', array_fill(0, count($activityIds), '?'));
+    $allPrereqs = db_fetch_all(
+        "SELECT activity_id, prerequisite_activity_id 
+         FROM activity_prerequisites 
+         WHERE activity_id IN ($placeholders)",
+        $activityIds
+    );
+
+    // Group prerequisites by activity_id
+    $groupedPrereqs = [];
+    foreach ($allPrereqs as $p) {
+        $groupedPrereqs[$p['activity_id']][] = $p['prerequisite_activity_id'];
+    }
+
+    // Filter by prerequisites
+    return array_filter($activities, function ($activity) use ($completedIds, $groupedPrereqs) {
+        $prereqs = $groupedPrereqs[$activity['id']] ?? [];
+        foreach ($prereqs as $prereqId) {
+            if (!in_array($prereqId, $completedIds)) {
+                return false;
+            }
+        }
+        return true;
+    });
+}
 
     /**
      * Check if prerequisites are met

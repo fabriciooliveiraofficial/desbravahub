@@ -3,7 +3,7 @@
  * Push Notification Opt-in Banner
  */
 ?>
-<div id="push-banner" style="display: none; position: fixed; bottom: 120px; left: 16px; right: 16px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 20px; padding: 20px; z-index: 10000; box-shadow: 0 15px 35px rgba(0,0,0,0.1); animation: slideUpBanner 0.6s cubic-bezier(0.16, 1, 0.3, 1);">
+<div id="push-banner" class="push-banner-container" style="display: none;">
     <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 16px;">
         <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
             <span class="material-icons-round" style="color: #fff; font-size: 22px;">notifications_active</span>
@@ -24,6 +24,30 @@
 </div>
 
 <style>
+.push-banner-container {
+    position: fixed;
+    bottom: 120px;
+    left: 16px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 20px;
+    padding: 20px;
+    z-index: 10000;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    animation: slideUpBanner 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 1024px) {
+    .push-banner-container {
+        left: calc(16px + 100px); /* 100px sidebar offset */
+        bottom: 24px;
+        max-width: 360px;
+    }
+}
+
 @keyframes slideUpBanner {
     from { transform: translateY(100px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }

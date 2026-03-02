@@ -35,6 +35,9 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Iconify (For specialized icons) -->
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    
     <!-- Core Styles -->
     <link rel="stylesheet" href="<?= asset_url('css/app.css') ?>">
     <link rel="stylesheet" href="<?= asset_url('css/hud-theme.css') ?>">

@@ -96,7 +96,7 @@
                                     </a>
                                 <?php elseif ($proof['type'] === 'text'): ?>
                                     <div style="background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; color: #e2e8f0; font-style: italic;">
-                                        "<?= htmlspecialchars(mb_strimwidth($proof['content'], 0, 80, '...')) ?>"
+                                        "<?= htmlspecialchars(mb_strimwidth((string)($proof['content'] ?? ''), 0, 80, '...')) ?>"
                                     </div>
                                 <?php else: ?>
                                     <a href="<?= base_url('storage/' . $proof['content']) ?>" target="_blank" style="color: var(--accent-cyan); text-decoration: none; font-weight: 700; font-size: 0.75rem;">

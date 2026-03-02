@@ -359,6 +359,7 @@ $isPerfil = strpos($currentPath, '/perfil') !== false;
 /* Mobile Safety Padding - Main Body */
 body {
     padding-bottom: 120px !important; 
+    transition: padding-left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 /* Modal Content Safety Padding */
@@ -376,20 +377,110 @@ body {
     opacity: 0;
     pointer-events: none;
 }
+
+/* ==========================================
+   DESKTOP SIDEBAR OVERRIDES (App Navigation)
+   ========================================== */
+@media (min-width: 1024px) {
+    .dock-premium {
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: auto;
+        padding: 24px 16px;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        width: 100px;
+    }
+
+    .dock-inner {
+        flex-direction: column;
+        justify-content: center;
+        height: auto;
+        width: 100%;
+        padding: 24px 10px;
+        gap: 16px;
+        /* Sidebar slide-in from left */
+        animation: dockSlideInLeft 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    @keyframes dockSlideInLeft {
+        from { transform: translateX(-100%) scale(0.9); opacity: 0; }
+        to { transform: translateX(0) scale(1); opacity: 1; }
+    }
+
+    .dock-item {
+        width: 100%;
+        padding: 10px 8px;
+    }
+
+    /* Undo horizontal magnification and apply vertical subtle scale */
+    .dock-item:hover, .dock-item.active:hover {
+        transform: translateY(-4px) scale(1.05);
+    }
+    
+    .dock-item.active .dock-icon-wrap,
+    .dock-item:hover .dock-icon-wrap {
+        transform: rotate(0deg);
+    }
+    
+    .dock-icon-wrap {
+        width: 50px;
+        height: 50px;
+    }
+
+    /* Move tooltips to the right */
+    .dock-item::before {
+        bottom: 50%;
+        left: 100%;
+        transform: translateX(10px) translateY(50%);
+    }
+
+    .dock-item:hover::before {
+        transform: translateX(16px) translateY(50%);
+    }
+    
+    /* Active dot on right instead of bottom */
+    .active-dot {
+        bottom: auto;
+        right: -6px;
+        top: 50%;
+        transform: translateY(-50%);
+        animation: dotPulseVertical 2s ease-in-out infinite;
+    }
+
+    @keyframes dotPulseVertical {
+        0%, 100% { transform: translateY(-50%) scale(1); opacity: 1; }
+        50% { transform: translateY(-50%) scale(1.5); opacity: 0.7; }
+    }
+
+    /* Desktop layout adjustment - leave space for sidebar */
+    body {
+        padding-bottom: 20px !important; 
+        padding-left: 100px !important; 
+    }
+    
+    /* Fix HUD Top Bar offset */
+    .hud-top-bar {
+        padding-left: calc(20px + 10px);
+    }
+}
 </style>
 
 
 <script>
-// macOS Dock-style magnification effect
+// macOS Dock-style magnification effect (Mobile/Tablet only)
 document.addEventListener('DOMContentLoaded', () => {
-   // ... script keeps running ...
     const dock = document.querySelector('.dock-inner');
     const items = document.querySelectorAll('.dock-item');
     
     if (!dock || items.length === 0) return;
     
     dock.addEventListener('mousemove', (e) => {
-        // ... magnification logic ...
+        // Disable on desktop (sidebar mode)
+        if (window.innerWidth >= 1024) return;
+        
         const dockRect = dock.getBoundingClientRect();
         const mouseX = e.clientX - dockRect.left;
         
@@ -422,6 +513,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const nav = document.getElementById('dockNav');
 
     window.addEventListener('scroll', () => {
+        // Disable hide-on-scroll for desktop sidebar mode
+        if (window.innerWidth >= 1024) return;
+
         // 1. Hide on Scroll
         if (window.scrollY > 50) { // Only active after small threshold
             nav.classList.add('dock-hidden');

@@ -48,7 +48,15 @@ $overallPercent = $totalNodes > 0 ? round(($completedNodes / $totalNodes) * 100)
             <section class="lp-category stagger-<?= ($catIdx % 4) + 1 ?>">
                 <!-- Category Header -->
                 <div class="lp-cat-header" style="--cat-color: <?= htmlspecialchars($category['color']) ?>">
-                    <div class="lp-cat-icon"><?= $category['icon'] ?></div>
+                    <div class="lp-cat-icon">
+                        <?php if (str_contains($category['icon'], ':')): ?>
+                            <iconify-icon icon="<?= htmlspecialchars($category['icon']) ?>"></iconify-icon>
+                        <?php elseif (strlen($category['icon']) > 4): ?>
+                            <span class="material-icons-round"><?= htmlspecialchars($category['icon']) ?></span>
+                        <?php else: ?>
+                            <?= $category['icon'] ?>
+                        <?php endif; ?>
+                    </div>
                     <div class="lp-cat-info">
                         <h2 class="lp-cat-title"><?= htmlspecialchars($catName) ?></h2>
                         <?php
@@ -98,7 +106,15 @@ $overallPercent = $totalNodes > 0 ? round(($completedNodes / $totalNodes) * 100)
                                     </div>
                                 <?php endif; ?>
                                 
-                                <div class="lp-node-icon"><?= $node['icon'] ?></div>
+                                <div class="lp-node-icon">
+                                    <?php if (str_contains($node['icon'], ':')): ?>
+                                        <iconify-icon icon="<?= htmlspecialchars($node['icon']) ?>"></iconify-icon>
+                                    <?php elseif (strlen($node['icon']) > 4): ?>
+                                        <span class="material-icons-round"><?= htmlspecialchars($node['icon']) ?></span>
+                                    <?php else: ?>
+                                        <?= $node['icon'] ?>
+                                    <?php endif; ?>
+                                </div>
                                 <div class="lp-node-content">
                                     <span class="lp-node-type"><?= $node['type'] === 'specialty' ? 'ESPECIALIDADE' : 'PROGRAMA' ?></span>
                                     <h3 class="lp-node-title"><?= htmlspecialchars($node['title']) ?></h3>

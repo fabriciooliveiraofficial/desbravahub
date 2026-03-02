@@ -68,6 +68,13 @@
     z-index: 999;
 }
 
+@media (min-width: 1024px) {
+    .sos-wrapper {
+        bottom: 24px;
+        right: 24px;
+    }
+}
+
 .sos-btn {
     width: 48px;
     height: 48px;
