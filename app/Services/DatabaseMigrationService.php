@@ -18,7 +18,7 @@ class DatabaseMigrationService
 
     public function __construct()
     {
-        $this->pdo = \App\Core\App::get('db');
+        $this->pdo = db();
         
         if (!$this->pdo instanceof PDO) {
             throw new RuntimeException("Falha ao obter conexão com o banco de dados.");
