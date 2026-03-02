@@ -16,7 +16,19 @@ class SuperAdminMiddleware
      */
     public function handle(array $params = [], array $mwParams = []): bool
     {
-        $user = App::user();
+        $authService = new \App\Services\AuthService();
+        $token = $authService->getTokenFromRequest();
+        $user = null;
+
+        if ($token) {
+            $user = $authService->validateSession($token);
+            if ($user) {
+                App::setUser($user);
+            }
+        } else {
+            // Fallback to check if AuthMiddleware already set it (just in case they are stacked accidentally)
+            $user = App::user();
+        }
 
         // Check if user is logged in and has the super admin flag
         if (!$user || !isset($user['is_superadmin']) || $user['is_superadmin'] != 1) {
@@ -32,19 +44,9 @@ class SuperAdminMiddleware
                 return false;
             }
 
-            // Redirect to home/dashboard if standard web request
-            $_SESSION['flash_error'] = 'Acesso negado à área de Super Admin.';
-            
-            // Try to redirect back to the tenant dashboard if tenant exists in URL
-            $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-            preg_match('#^/([^/]+)/#', $uri, $matches);
-            
-            if (!empty($matches[1]) && $matches[1] !== 'super-admin') {
-                $tenant = $matches[1];
-                header("Location: /{$tenant}/admin/dashboard");
-            } else {
-                header("Location: /");
-            }
+            // Redirect to standalone login for standard web request
+            $_SESSION['flash_error'] = 'Acesso exclusivo para Super Admin.';
+            header("Location: /super-admin/login");
             return false;
         }
 

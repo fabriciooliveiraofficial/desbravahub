@@ -9,9 +9,82 @@ namespace App\Controllers;
 
 use App\Core\App;
 use App\Core\View;
+use App\Services\AuthService;
 
 class SuperAdminController
 {
+    private AuthService $authService;
+
+    public function __construct()
+    {
+        $this->authService = new AuthService();
+    }
+
+    // =========================================================================
+    // AUTHENTICATION
+    // =========================================================================
+
+    /**
+     * Show standalone login page
+     */
+    public function showLogin(): void
+    {
+        // If already logged in as super admin, redirect to dashboard
+        $user = App::user();
+        if ($user && isset($user['is_superadmin']) && $user['is_superadmin'] == 1) {
+            header('Location: /super-admin/dashboard');
+            exit;
+        }
+
+        View::render('superadmin/login', [
+            'pageTitle' => 'Super Admin Access',
+        ], 'blank'); // No sidebar layout!
+    }
+
+    /**
+     * Handle login attempt
+     */
+    public function login(): void
+    {
+        $email = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+
+        if (empty($email) || empty($password)) {
+            $this->jsonError('Email e senha são obrigatórios', 400);
+            return;
+        }
+
+        $user = $this->authService->attemptSuperAdmin($email, $password);
+
+        if (!$user) {
+            $this->jsonError('Credenciais inválidas ou acesso não autorizado.', 401);
+            return;
+        }
+
+        // Create session independently
+        $token = $this->authService->createSession($user['id']);
+        $this->authService->setAuthCookie($token);
+
+        $this->json(['success' => true, 'redirect' => '/super-admin/dashboard']);
+    }
+
+    /**
+     * Handle logout
+     */
+    public function logout(): void
+    {
+        $token = $this->authService->getTokenFromRequest();
+
+        if ($token) {
+            $this->authService->destroySession($token);
+            $this->authService->clearAuthCookie();
+        }
+
+        // Redirect to Super Admin login
+        header('Location: /super-admin/login');
+        exit;
+    }
+
     /**
      * Dashboard Home
      */

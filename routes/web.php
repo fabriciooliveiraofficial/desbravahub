@@ -40,14 +40,21 @@ $router = new Router();
 use App\Controllers\SuperAdminController;
 use App\Middleware\SuperAdminMiddleware;
 
-$router->get('/super-admin', [SuperAdminController::class, 'dashboard'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
-$router->get('/super-admin/dashboard', [SuperAdminController::class, 'dashboard'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
-$router->get('/super-admin/clubs', [SuperAdminController::class, 'clubs'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
-$router->get('/super-admin/users', [SuperAdminController::class, 'users'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
-$router->get('/super-admin/scraper', [SuperAdminController::class, 'scraper'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
+// Standalone Auth for Super Admin (No middleware here to allow login)
+$router->get('/super-admin/login', [SuperAdminController::class, 'showLogin']);
+$router->post('/super-admin/login', [SuperAdminController::class, 'login']);
+$router->get('/super-admin/logout', [SuperAdminController::class, 'logout']);
+$router->post('/super-admin/logout', [SuperAdminController::class, 'logout']);
 
-$router->post('/super-admin/api/save-key', [SuperAdminController::class, 'saveApiKey'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
-$router->post('/super-admin/scraper/process', [SuperAdminController::class, 'processScrape'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
+// Protected Super Admin Routes (Only SuperAdminMiddleware)
+$router->get('/super-admin', [SuperAdminController::class, 'dashboard'], [SuperAdminMiddleware::class]);
+$router->get('/super-admin/dashboard', [SuperAdminController::class, 'dashboard'], [SuperAdminMiddleware::class]);
+$router->get('/super-admin/clubs', [SuperAdminController::class, 'clubs'], [SuperAdminMiddleware::class]);
+$router->get('/super-admin/users', [SuperAdminController::class, 'users'], [SuperAdminMiddleware::class]);
+$router->get('/super-admin/scraper', [SuperAdminController::class, 'scraper'], [SuperAdminMiddleware::class]);
+
+$router->post('/super-admin/api/save-key', [SuperAdminController::class, 'saveApiKey'], [SuperAdminMiddleware::class]);
+$router->post('/super-admin/scraper/process', [SuperAdminController::class, 'processScrape'], [SuperAdminMiddleware::class]);
 
 // Global public routes (no tenant)
 $router->get('/', [HomeController::class, 'index']);
@@ -73,10 +80,10 @@ $router->get('/c/{club_slug}/evento/{event_slug}', [PublicController::class, 'ev
 $router->post('/c/{club_slug}/evento/{id}/inscrever', [PublicController::class, 'registerEvent']);
 
 // Support Ticket Management (merged into Super Admin)
-$router->get('/super-admin/suporte', [SuperAdminController::class, 'supportDashboard'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
-$router->get('/super-admin/suporte/{id}', [SuperAdminController::class, 'supportShow'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
-$router->post('/super-admin/suporte/{id}/responder', [SuperAdminController::class, 'supportReply'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
-$router->post('/super-admin/suporte/{id}/status', [SuperAdminController::class, 'supportUpdateStatus'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
+$router->get('/super-admin/suporte', [SuperAdminController::class, 'supportDashboard'], [SuperAdminMiddleware::class]);
+$router->get('/super-admin/suporte/{id}', [SuperAdminController::class, 'supportShow'], [SuperAdminMiddleware::class]);
+$router->post('/super-admin/suporte/{id}/responder', [SuperAdminController::class, 'supportReply'], [SuperAdminMiddleware::class]);
+$router->post('/super-admin/suporte/{id}/status', [SuperAdminController::class, 'supportUpdateStatus'], [SuperAdminMiddleware::class]);
 
 
 // Public landing page (per tenant)

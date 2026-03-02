@@ -27,6 +27,12 @@ class TenantMiddleware
             $slug = $segments[0] ?? null;
         }
 
+        // Bypass tenant resolution for Super Admin routes
+        // This prevents 'Invalid tenant' errors when accessing /super-admin directly
+        if ($slug === 'super-admin') {
+            return true;
+        }
+
         if (!$slug) {
             $this->forbid('No tenant specified');
             return false;

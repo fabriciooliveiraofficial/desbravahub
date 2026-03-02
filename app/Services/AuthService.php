@@ -44,6 +44,34 @@ class AuthService
     }
 
     /**
+     * Attempt login as Super Admin
+     * Ignores tenant limitations
+     */
+    public function attemptSuperAdmin(string $email, string $password): ?array
+    {
+        $user = db_fetch_one(
+            "SELECT u.*, r.name as role_name 
+             FROM users u 
+             LEFT JOIN roles r ON u.role_id = r.id 
+             WHERE u.email = ? AND u.is_superadmin = 1 AND u.status = 'active' AND u.deleted_at IS NULL",
+            [$email]
+        );
+
+        if (!$user) {
+            return null;
+        }
+
+        if (!password_verify($password, $user['password_hash'])) {
+            return null;
+        }
+
+        // Update last login
+        db_update('users', ['last_login_at' => date('Y-m-d H:i:s')], 'id = ?', [$user['id']]);
+
+        return $user;
+    }
+
+    /**
      * Create a new session for user
      */
     public function createSession(int $userId): string
