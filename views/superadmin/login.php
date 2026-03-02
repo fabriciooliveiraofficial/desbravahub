@@ -16,7 +16,8 @@
     <!-- Google Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     
-    <!-- Tailwind CSS via CDN (Development only - consider using local build in production) -->
+    <!-- Tailwind CSS via CDN -->
+    <script>/* suppress tw cdn warn */const _cw=console.warn;console.warn=(...a)=>{if(a[0]&&typeof a[0]==='string'&&a[0].includes('cdn.tailwindcss.com'))return;_cw.apply(console,a)};</script>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script>
@@ -130,7 +131,7 @@
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <span class="material-symbols-rounded text-sa-text_muted">mail</span>
                         </div>
-                        <input type="email" id="email" name="email" required
+                        <input type="email" id="email" name="email" required autocomplete="username"
                                class="sa-input w-full rounded-xl pl-10 pr-4 py-3" 
                                placeholder="nome@desbravahub.com">
                     </div>

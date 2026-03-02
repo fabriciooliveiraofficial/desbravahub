@@ -47,26 +47,38 @@ class SuperAdminController
      */
     public function login(): void
     {
-        $email = trim($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
+        // Ensure we ALWAYS return JSON, even on unexpected errors
+        header('Content-Type: application/json');
 
-        if (empty($email) || empty($password)) {
-            $this->jsonError('Email e senha são obrigatórios', 400);
-            return;
+        try {
+            $email = trim($_POST['email'] ?? '');
+            $password = $_POST['password'] ?? '';
+
+            if (empty($email) || empty($password)) {
+                $this->jsonError('Email e senha são obrigatórios', 400);
+                return;
+            }
+
+            $user = $this->authService->attemptSuperAdmin($email, $password);
+
+            if (!$user) {
+                $this->jsonError('Credenciais inválidas ou acesso não autorizado.', 401);
+                return;
+            }
+
+            // Create session independently
+            $token = $this->authService->createSession($user['id']);
+            $this->authService->setAuthCookie($token);
+
+            $this->json(['success' => true, 'redirect' => '/super-admin/dashboard']);
+        } catch (\Throwable $e) {
+            // Catch ANY error (PDO, missing columns, etc.) and return clean JSON
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Erro interno do servidor: ' . $e->getMessage()
+            ]);
         }
-
-        $user = $this->authService->attemptSuperAdmin($email, $password);
-
-        if (!$user) {
-            $this->jsonError('Credenciais inválidas ou acesso não autorizado.', 401);
-            return;
-        }
-
-        // Create session independently
-        $token = $this->authService->createSession($user['id']);
-        $this->authService->setAuthCookie($token);
-
-        $this->json(['success' => true, 'redirect' => '/super-admin/dashboard']);
     }
 
     /**
