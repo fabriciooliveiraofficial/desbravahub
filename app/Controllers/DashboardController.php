@@ -240,34 +240,36 @@ class DashboardController
     }
 
     /**
-     * Página de ranking
+     * Página de ranking de unidades
      */
-    public function leaderboard(): void
+    public function unitLeaderboard(): void
     {
         $user = App::user();
         $tenant = App::tenant();
 
-        $leaderboard = $this->progressionService->getLeaderboard(50);
-        $progress = $this->progressionService->getUserProgress($user['id']);
-
-        // Encontrar posição do usuário
-        $userPosition = null;
-        foreach ($leaderboard as $index => $member) {
-            if ($member['id'] === $user['id']) {
-                $userPosition = $index + 1;
-                break;
+        $unitLeaderboard = $this->progressionService->getUnitLeaderboard(100);
+        
+        // Unidade do usuário
+        $userUnitId = $user['unit_id'] ?? null;
+        $unitPosition = null;
+        if ($userUnitId) {
+            foreach ($unitLeaderboard as $index => $unit) {
+                if ($unit['id'] == $userUnitId) {
+                    $unitPosition = $index + 1;
+                    break;
+                }
             }
         }
 
         // Notificações não lidas
         $unreadCount = $this->notificationService->getUnreadCount($user['id']);
 
-        View::render('dashboard/leaderboard', [
+        View::render('dashboard/unit-leaderboard', [
             'tenant' => $tenant,
             'user' => $user,
-            'leaderboard' => $leaderboard,
-            'progress' => $progress,
-            'userPosition' => $userPosition,
+            'unitLeaderboard' => $unitLeaderboard,
+            'userUnitId' => $userUnitId,
+            'unitPosition' => $unitPosition,
             'unreadCount' => $unreadCount
         ], 'member');
     }

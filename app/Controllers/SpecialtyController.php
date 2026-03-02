@@ -678,6 +678,38 @@ class SpecialtyController
     }
 
     /**
+     * Redirect to learning interface for a specific requirement
+     */
+    public function viewRequirement(array $params): void
+    {
+        $tenant = App::tenant();
+        $user = App::user();
+        $assignmentId = $params['id'] ?? 0;
+        $reqId = $params['reqId'] ?? '';
+
+        $assignment = SpecialtyService::getAssignment((int) $assignmentId, $tenant['id']);
+
+        if (!$assignment || $assignment['user_id'] != $user['id']) {
+            header('Location: ' . base_url($tenant['slug'] . '/especialidades'));
+            return;
+        }
+
+        // Get all requirements to find the order index
+        $requirements = SpecialtyService::getRequirementsWithProgress((int) $assignmentId, $assignment['specialty_id']);
+        
+        $targetIndex = 1;
+        foreach ($requirements as $idx => $req) {
+            if ($req['id'] == $reqId) {
+                $targetIndex = $idx + 1;
+                break;
+            }
+        }
+
+        // Redirect to learning interface with the correct question index
+        header('Location: ' . base_url($tenant['slug'] . '/especialidades/' . $assignmentId . '/aprender?q=' . $targetIndex));
+    }
+
+    /**
      * Submit proof for a specific requirement
      */
     public function submitRequirementProof(array $params): void

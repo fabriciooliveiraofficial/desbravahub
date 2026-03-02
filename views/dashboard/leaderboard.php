@@ -127,9 +127,15 @@
 
     <main class="main-content">
         <div class="container">
-            <header class="page-header" style="margin-bottom: 20px;">
-                <h1>🏆 Ranking</h1>
+            <header class="page-header" style="margin-bottom: 25px;">
+                <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 10px;">🏆 Ranking Geral</h1>
+                <p style="color: var(--text-secondary);">Os desbravadores lendários do clube!</p>
             </header>
+
+            <div class="ranking-tabs" style="display: flex; gap: 10px; margin-bottom: 25px; background: rgba(255, 255, 255, 0.05); padding: 5px; border-radius: 12px; width: fit-content;">
+                <a href="<?= base_url($tenant['slug'] . '/ranking') ?>" class="ranking-tab active" style="padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; background: var(--gradient-primary); color: var(--bg-dark);">Geral (Membros)</a>
+                <a href="<?= base_url($tenant['slug'] . '/ranking-unidades') ?>" class="ranking-tab" style="padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; color: var(--text-secondary);">Unidades</a>
+            </div>
 
             <?php if ($userPosition): ?>
                 <div class="your-position">

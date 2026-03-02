@@ -232,6 +232,7 @@ $router->get('/{tenant}/atividades', [DashboardController::class, 'activities'],
 $router->get('/{tenant}/atividades/{id}', [DashboardController::class, 'activityDetail'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/conquistas', [DashboardController::class, 'achievements'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/ranking', [DashboardController::class, 'leaderboard'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/ranking-unidades', [DashboardController::class, 'unitLeaderboard'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/perfil', [DashboardController::class, 'profile'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/provas', [DashboardController::class, 'proofs'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/notificacoes', [DashboardController::class, 'notifications'], [TenantMiddleware::class, AuthMiddleware::class]);
@@ -286,6 +287,7 @@ $router->post('/{tenant}/api/specialties/{id}/delete', [SpecialtyController::cla
 // Pathfinder Specialty routes
 $router->get('/{tenant}/especialidades', [SpecialtyController::class, 'mySpecialties'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/especialidades/{id}', [SpecialtyController::class, 'show'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/especialidades/{id}/requisito/{reqId}', [SpecialtyController::class, 'viewRequirement'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/especialidades/{id}/aprender', [SpecialtyController::class, 'learn'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/especialidades/{id}/responder', [SpecialtyController::class, 'submitAnswer'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/especialidades/{id}/proximo', [SpecialtyController::class, 'nextRequirement'], [TenantMiddleware::class, AuthMiddleware::class]);
