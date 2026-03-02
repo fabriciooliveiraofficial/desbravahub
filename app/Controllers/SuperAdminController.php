@@ -532,7 +532,7 @@ class SuperAdminController
         View::render('superadmin/migration', [
             'pageTitle' => 'Migração de Banco de Dados',
             'user' => App::user(),
-        ]);
+        ], 'superadmin');
     }
 
     /**
