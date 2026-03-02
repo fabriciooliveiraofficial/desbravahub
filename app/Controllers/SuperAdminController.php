@@ -261,6 +261,177 @@ class SuperAdminController
         return json_decode($content, true);
     }
 
+    // =========================================================================
+    // SUPPORT TICKET MANAGEMENT
+    // =========================================================================
+
+    /**
+     * Support dashboard - list all tickets
+     */
+    public function supportDashboard(): void
+    {
+        $user = App::user();
+
+        $status = $_GET['status'] ?? '';
+        $category = $_GET['category'] ?? '';
+        $priority = $_GET['priority'] ?? '';
+
+        $sql = "SELECT t.*, tn.name as tenant_name, u.name as user_name
+                FROM support_tickets t
+                LEFT JOIN tenants tn ON t.tenant_id = tn.id
+                LEFT JOIN users u ON t.user_id = u.id
+                WHERE 1=1";
+        $params = [];
+
+        if ($status) {
+            $sql .= " AND t.status = ?";
+            $params[] = $status;
+        }
+        if ($category) {
+            $sql .= " AND t.category = ?";
+            $params[] = $category;
+        }
+        if ($priority) {
+            $sql .= " AND t.priority = ?";
+            $params[] = $priority;
+        }
+
+        $sql .= " ORDER BY 
+            CASE t.priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
+            t.updated_at DESC";
+
+        $tickets = db_fetch_all($sql, $params);
+
+        // Stats
+        $stats = [
+            'open' => db_fetch_column("SELECT COUNT(*) FROM support_tickets WHERE status = 'open'"),
+            'in_progress' => db_fetch_column("SELECT COUNT(*) FROM support_tickets WHERE status = 'in_progress'"),
+            'waiting' => db_fetch_column("SELECT COUNT(*) FROM support_tickets WHERE status = 'waiting'"),
+            'resolved' => db_fetch_column("SELECT COUNT(*) FROM support_tickets WHERE status = 'resolved'"),
+        ];
+
+        View::render('superadmin/support_dashboard', [
+            'user' => $user,
+            'tickets' => $tickets,
+            'stats' => $stats,
+            'pageTitle' => 'Central de Suporte',
+            'pageIcon' => 'support_agent'
+        ], 'superadmin');
+    }
+
+    /**
+     * View single ticket
+     */
+    public function supportShow(array $params): void
+    {
+        $user = App::user();
+        $ticketId = (int) $params['id'];
+
+        $ticket = db_fetch_one(
+            "SELECT t.*, tn.name as tenant_name, tn.slug as tenant_slug, u.name as user_name, u.email as user_email
+             FROM support_tickets t
+             LEFT JOIN tenants tn ON t.tenant_id = tn.id
+             LEFT JOIN users u ON t.user_id = u.id
+             WHERE t.id = ?",
+            [$ticketId]
+        );
+
+        if (!$ticket) {
+            http_response_code(404);
+            echo "Ticket não encontrado";
+            return;
+        }
+
+        $messages = db_fetch_all(
+            "SELECT * FROM support_messages WHERE ticket_id = ? ORDER BY created_at ASC",
+            [$ticketId]
+        );
+
+        $attachments = db_fetch_all(
+            "SELECT * FROM support_attachments WHERE ticket_id = ?",
+            [$ticketId]
+        );
+
+        View::render('superadmin/support_ticket', [
+            'user' => $user,
+            'ticket' => $ticket,
+            'messages' => $messages,
+            'attachments' => $attachments ?? [],
+            'pageTitle' => 'Ticket #' . $ticket['id'],
+            'pageIcon' => 'confirmation_number'
+        ], 'superadmin');
+    }
+
+    /**
+     * Reply to ticket
+     */
+    public function supportReply(array $params): void
+    {
+        $user = App::user();
+        $ticketId = (int) $params['id'];
+
+        $message = trim($_POST['message'] ?? '');
+        $isInternal = isset($_POST['is_internal']) ? 1 : 0;
+        $newStatus = $_POST['status'] ?? null;
+
+        if (empty($message)) {
+            $this->jsonError('Mensagem é obrigatória');
+            return;
+        }
+
+        db_insert('support_messages', [
+            'ticket_id' => $ticketId,
+            'sender_type' => 'developer',
+            'sender_id' => $user['id'],
+            'sender_name' => $user['name'],
+            'message' => $message,
+            'is_internal' => $isInternal,
+        ]);
+
+        // Update ticket status
+        $updates = ['updated_at' => date('Y-m-d H:i:s')];
+        if ($newStatus) {
+            $updates['status'] = $newStatus;
+            if ($newStatus === 'resolved') {
+                $updates['resolved_at'] = date('Y-m-d H:i:s');
+            }
+        } else {
+            $updates['status'] = 'in_progress';
+        }
+
+        db_update('support_tickets', $updates, 'id = ?', [$ticketId]);
+
+        $this->json(['success' => true, 'message' => 'Resposta enviada!']);
+    }
+
+    /**
+     * Update ticket status
+     */
+    public function supportUpdateStatus(array $params): void
+    {
+        $ticketId = (int) $params['id'];
+        $status = $_POST['status'] ?? '';
+
+        $valid = ['open', 'in_progress', 'waiting', 'resolved', 'closed'];
+        if (!in_array($status, $valid)) {
+            $this->jsonError('Status inválido');
+            return;
+        }
+
+        $updates = ['status' => $status];
+        if ($status === 'resolved') {
+            $updates['resolved_at'] = date('Y-m-d H:i:s');
+        }
+
+        db_update('support_tickets', $updates, 'id = ?', [$ticketId]);
+
+        $this->json(['success' => true]);
+    }
+
+    // =========================================================================
+    // HELPERS
+    // =========================================================================
+
     /**
      * Helper to return standard JSON
      */

@@ -286,6 +286,10 @@ $theme = 'dark'; // Force dark mode for Super Admin
                 <span class="material-symbols-rounded">group</span>
                 Usuários Globais
             </a>
+            <a href="/super-admin/suporte" class="sa-nav-item <?= strpos($_SERVER['REQUEST_URI'], '/super-admin/suporte') !== false ? 'active' : '' ?>">
+                <span class="material-symbols-rounded">support_agent</span>
+                Central de Suporte
+            </a>
             
             <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 16px 0;"></div>
             

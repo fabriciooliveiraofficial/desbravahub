@@ -61,6 +61,13 @@ class Router
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $uri = rtrim($uri, '/') ?: '/';
 
+        // Strip /public/ from the beginning if it exists (common for misconfigured document roots)
+        if ($uri === '/public') {
+            $uri = '/';
+        } elseif (str_starts_with($uri, '/public/')) {
+            $uri = substr($uri, 7);
+        }
+
         // Find matching route
         foreach ($this->routes as $route) {
             $params = $this->matchRoute($route['path'], $uri);

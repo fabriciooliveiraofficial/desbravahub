@@ -19,7 +19,6 @@ use App\Controllers\LandingController;
 use App\Controllers\EventController;
 use App\Controllers\HomeController;
 use App\Controllers\SupportController;
-use App\Controllers\DevSupportController;
 use App\Controllers\SpecialtyController;
 use App\Controllers\UnitController;
 use App\Controllers\CategoryController;
@@ -73,14 +72,12 @@ $router->get('/c/{slug}', [PublicController::class, 'clubProfile']);
 $router->get('/c/{club_slug}/evento/{event_slug}', [PublicController::class, 'eventDetails']);
 $router->post('/c/{club_slug}/evento/{id}/inscrever', [PublicController::class, 'registerEvent']);
 
-// Developer Support Panel (global - must be before /{tenant} routes)
-$router->get('/dev/login', [DevSupportController::class, 'showLogin']);
-$router->post('/dev/login', [DevSupportController::class, 'login']);
-$router->get('/dev/logout', [DevSupportController::class, 'logout']);
-$router->get('/dev/suporte', [DevSupportController::class, 'dashboard']);
-$router->get('/dev/suporte/{id}', [DevSupportController::class, 'show']);
-$router->post('/dev/suporte/{id}/responder', [DevSupportController::class, 'reply']);
-$router->post('/dev/suporte/{id}/status', [DevSupportController::class, 'updateStatus']);
+// Support Ticket Management (merged into Super Admin)
+$router->get('/super-admin/suporte', [SuperAdminController::class, 'supportDashboard'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
+$router->get('/super-admin/suporte/{id}', [SuperAdminController::class, 'supportShow'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
+$router->post('/super-admin/suporte/{id}/responder', [SuperAdminController::class, 'supportReply'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
+$router->post('/super-admin/suporte/{id}/status', [SuperAdminController::class, 'supportUpdateStatus'], [AuthMiddleware::class, SuperAdminMiddleware::class]);
+
 
 // Public landing page (per tenant)
 $router->get('/{tenant}', [LandingController::class, 'index'], [TenantMiddleware::class]);
