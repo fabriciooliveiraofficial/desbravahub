@@ -40,20 +40,24 @@ class DatabaseMigrationService
 
         $tables = $this->getTables();
 
+        // 1. Drop all tables first to avoid FK compatibility issues with existing tables
+        $sql .= "-- Drop existing tables\n";
         foreach ($tables as $table) {
-            // Drop table
-            $sql .= "-- Table structure for table `{$table}`\n";
             $sql .= "DROP TABLE IF EXISTS `{$table}`;\n";
+        }
+        $sql .= "\n";
 
-            // Create table
+        // 2. Create tables and export data
+        foreach ($tables as $table) {
+            $sql .= "-- Structure for table `{$table}`\n";
             $createTableQuery = $this->pdo->query("SHOW CREATE TABLE `{$table}`")->fetch(PDO::FETCH_ASSOC);
             $sql .= $createTableQuery['Create Table'] . ";\n\n";
 
             // Export data
             $rows = $this->pdo->query("SELECT * FROM `{$table}`")->fetchAll(PDO::FETCH_ASSOC);
             if (!empty($rows)) {
-                $sql .= "-- Dumping data for table `{$table}`\n";
-                $chunks = array_chunk($rows, 100); // 100 rows per insert statement
+                $sql .= "-- Data for table `{$table}`\n";
+                $chunks = array_chunk($rows, 100);
 
                 foreach ($chunks as $chunk) {
                     $insertQuery = $this->buildInsertQuery($table, $chunk);
@@ -88,14 +92,20 @@ class DatabaseMigrationService
         }
 
         try {
-            // We disable foreign key checks inside the script normally, 
-            // but let's enforce it on the PDO connection just in case the transaction fails
+            // Disable foreign key checks and set UTF8
+            $this->pdo->exec("SET NAMES utf8mb4");
             $this->pdo->exec("SET FOREIGN_KEY_CHECKS=0");
             
-            // Execute the raw dump
-            // Note: PDO::exec can handle multiple statements if configured, 
-            // but for large dumps it's better to run it. By default MySQL driver supports multistatement if emulated.
-            $this->pdo->exec($sql);
+            // Split SQL by semicolon followed by any combination of newline characters
+            // This handles \n, \r\n, and \r reliably across different OS environments
+            $statements = preg_split("/;[\s]*[\r\n]+/", $sql);
+            
+            foreach ($statements as $statement) {
+                $statement = trim($statement);
+                if (!empty($statement)) {
+                    $this->pdo->exec($statement);
+                }
+            }
             
             $this->pdo->exec("SET FOREIGN_KEY_CHECKS=1");
             return true;

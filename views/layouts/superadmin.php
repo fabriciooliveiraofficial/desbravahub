@@ -12,7 +12,7 @@ $theme = 'dark'; // Force dark mode for Super Admin
     <title><?= htmlspecialchars($pageTitle ?? 'Super Admin') ?> - DesbravaHub</title>
     
     <!-- CSS -->
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/app.css">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
