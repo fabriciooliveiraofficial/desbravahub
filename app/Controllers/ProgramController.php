@@ -404,6 +404,13 @@ class ProgramController
         try {
             db_begin();
 
+            // Get program metadata for Fair Play Engine
+            $program = db_fetch_one("SELECT xp_reward FROM learning_programs WHERE id = ?", [$programId]);
+            $totalXp = (int) ($program['xp_reward'] ?? 100);
+            $stepCount = count($steps);
+            $xpPerStep = $stepCount > 0 ? floor($totalXp / $stepCount) : 0;
+            $remainderXp = $stepCount > 0 ? ($totalXp % $stepCount) : 0;
+
             // Delete existing steps and questions for this version
             $existingSteps = db_fetch_all("SELECT id FROM program_steps WHERE version_id = ?", [$version['id']]);
             foreach ($existingSteps as $existingStep) {
@@ -413,6 +420,12 @@ class ProgramController
 
             // Insert new steps and questions
             foreach ($steps as $stepIndex => $step) {
+                // Apply Fair Play XP Engine: Divide total XP by number of steps
+                $calcPoints = $xpPerStep;
+                if ($stepIndex === $stepCount - 1) {
+                    $calcPoints += $remainderXp; // Add remainder to last step
+                }
+
                 $stepId = db_insert('program_steps', [
                     'version_id' => $version['id'],
                     'title' => $step['title'] ?? 'Requisito',
@@ -420,7 +433,7 @@ class ProgramController
                     'instructions' => $step['instructions'] ?? '',
                     'sort_order' => $stepIndex,
                     'is_required' => ($step['is_required'] ?? true) ? 1 : 0,
-                    'points' => (int) ($step['points'] ?? 10)
+                    'points' => $calcPoints
                 ]);
 
                 // Insert questions for this step
@@ -466,15 +479,28 @@ class ProgramController
         $programId = (int) ($params['id'] ?? 0);
 
         try {
+            // Rule 2.2: Integrity Lock (Trava de Segurança)
+            $version = db_fetch_one(
+                "SELECT id FROM program_versions WHERE program_id = ? AND status = 'draft' ORDER BY version_number DESC LIMIT 1",
+                [$programId]
+            );
+
+            if (!$version) {
+                $this->json(['error' => 'Nenhuma versão de rascunho encontrada para publicar.'], 400);
+                return;
+            }
+
+            $stepCount = (int) db_fetch_column("SELECT COUNT(*) FROM program_steps WHERE version_id = ?", [$version['id']]);
+            if ($stepCount === 0) {
+                $this->json(['error' => 'Integrity Lock: Não é possível publicar um programa sem requisitos/passos configurados.'], 400);
+                return;
+            }
+
             // Update program status
             db_update('learning_programs', ['status' => 'published'], 'id = ? AND tenant_id = ?', [$programId, $tenant['id']]);
 
             // Update current version to published
-            db_query(
-                "UPDATE program_versions SET status = 'published', published_at = NOW() 
-                 WHERE program_id = ? AND status = 'draft' ORDER BY version_number DESC LIMIT 1",
-                [$programId]
-            );
+            db_query("UPDATE program_versions SET status = 'published', published_at = NOW() WHERE id = ?", [$version['id']]);
 
             $this->json(['success' => true, 'message' => 'Programa publicado!']);
 

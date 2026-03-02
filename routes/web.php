@@ -226,6 +226,7 @@ $router->post('/{tenant}/admin/permissoes', [AdminController::class, 'savePermis
 
 // Dashboard routes (Pathfinder App)
 $router->get('/{tenant}/dashboard', [DashboardController::class, 'index'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/trilhas', [DashboardController::class, 'learningPaths'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/dashboard/mission/{id}/details', [DashboardController::class, 'missionDetails'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/atividades', [DashboardController::class, 'activities'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/atividades/{id}', [DashboardController::class, 'activityDetail'], [TenantMiddleware::class, AuthMiddleware::class]);
@@ -243,6 +244,9 @@ $router->get('/{tenant}/aprendizado/{id}', [LearningController::class, 'show'], 
 $router->get('/{tenant}/aprendizado/step/{step_id}/modal', [LearningController::class, 'stepModal'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/aprendizado/step/{step_id}/submit', [LearningController::class, 'submitStep'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/aprendizado/{id}/submit-all', [LearningController::class, 'submitProgram'], [TenantMiddleware::class, AuthMiddleware::class]);
+
+// SOS Emergency Alert
+$router->post('/{tenant}/api/sos/trigger', [\App\Controllers\SosController::class, 'trigger'], [TenantMiddleware::class, AuthMiddleware::class]);
 
 // Event routes
 $router->get('/{tenant}/eventos', [EventController::class, 'index'], [TenantMiddleware::class, AuthMiddleware::class]);

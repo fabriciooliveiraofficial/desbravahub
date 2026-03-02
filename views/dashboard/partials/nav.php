@@ -5,6 +5,7 @@
  */
 $currentPath = $_SERVER['REQUEST_URI'];
 $isHome = strpos($currentPath, '/dashboard') !== false && strpos($currentPath, '/atividades') === false;
+$isTrilhas = strpos($currentPath, '/trilhas') !== false;
 $isClasses = strpos($currentPath, '/aprendizado') !== false;
 $isAgenda = strpos($currentPath, '/eventos') !== false;
 $isDesafios = strpos($currentPath, '/provas') !== false;
@@ -24,17 +25,17 @@ $isPerfil = strpos($currentPath, '/perfil') !== false;
             <?php if ($isHome): ?><span class="active-dot"></span><?php endif; ?>
         </a>
 
-        <!-- Missões -->
-        <a href="<?= base_url($tenant['slug'] . '/aprendizado') ?>" 
-           class="dock-item <?= $isClasses ? 'active' : '' ?>" 
-           data-tooltip="Minhas Missões"
+        <!-- Trilhas (Mapa de Nodos) -->
+        <a href="<?= base_url($tenant['slug'] . '/trilhas') ?>" 
+           class="dock-item <?= $isTrilhas ? 'active' : '' ?>" 
+           data-tooltip="Mapa de Trilhas"
            hx-boost="false">
             <div class="dock-icon-wrap">
-                <span class="material-icons-round">auto_stories</span>
+                <span class="material-icons-round">route</span>
                 <div class="icon-glow"></div>
             </div>
-            <span class="dock-label">Missões</span>
-            <?php if ($isClasses): ?><span class="active-dot"></span><?php endif; ?>
+            <span class="dock-label">Trilhas</span>
+            <?php if ($isTrilhas): ?><span class="active-dot"></span><?php endif; ?>
         </a>
 
         <!-- Agenda -->

@@ -68,6 +68,9 @@
     <!-- Push Notifications Banner & Logic -->
     <?php require BASE_PATH . '/views/dashboard/partials/push_banner.php'; ?>
 
+    <!-- SOS Emergency Button -->
+    <?php require BASE_PATH . '/views/dashboard/partials/sos_button.php'; ?>
+
     <!-- Push Notifications Core -->
     <script src="<?= asset_url('js/push-notifications.js') ?>"></script>
     <script src="<?= asset_url('js/pwa-install.js') ?>"></script>

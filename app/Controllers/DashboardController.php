@@ -486,4 +486,141 @@ class DashboardController
             'unreadCount' => $unreadCount
         ], 'member');
     }
+
+    /**
+     * Mapa de Trilhas (Learning Paths) - Visualização estilo Duolingo
+     */
+    public function learningPaths(): void
+    {
+        $user = App::user();
+        $tenant = App::tenant();
+
+        // 1. Get all assigned specialties
+        $specialtyNodes = [];
+        try {
+            $assignments = db_fetch_all("
+                SELECT sa.id, sa.specialty_id, sa.status, sa.created_at, sa.completed_at,
+                       sa.progress_percent,
+                       lp.name, lp.icon, lp.difficulty, lp.xp_reward, lp.description,
+                       lc.name as category_name, lc.color as category_color, lc.icon as category_icon
+                FROM specialty_assignments sa
+                JOIN learning_programs lp ON sa.specialty_id = lp.id
+                LEFT JOIN learning_categories lc ON lp.category_id = lc.id
+                WHERE sa.user_id = ? AND sa.tenant_id = ?
+                ORDER BY lc.sort_order, lc.name, sa.created_at
+            ", [$user['id'], $tenant['id']]);
+
+            foreach ($assignments as $a) {
+                $status = $a['status'] ?? 'not_started';
+                $nodeStatus = 'locked';
+                if ($status === 'completed' || $status === 'approved') {
+                    $nodeStatus = 'completed';
+                } elseif ($status === 'in_progress' || $status === 'pending' || $status === 'submitted') {
+                    $nodeStatus = 'in_progress';
+                } elseif ($status === 'not_started') {
+                    $nodeStatus = 'available';
+                }
+
+                $specialtyNodes[] = [
+                    'id' => 'spec_' . $a['id'],
+                    'title' => $a['name'],
+                    'icon' => $a['icon'] ?? '🎯',
+                    'xp' => $a['xp_reward'] ?? 100,
+                    'difficulty' => $a['difficulty'] ?? 2,
+                    'status' => $nodeStatus,
+                    'progress' => (int)($a['progress_percent'] ?? 0),
+                    'category' => $a['category_name'] ?? 'Sem Categoria',
+                    'category_color' => $a['category_color'] ?? '#6366f1',
+                    'category_icon' => $a['category_icon'] ?? '📂',
+                    'type' => 'specialty',
+                    'link' => base_url($tenant['slug'] . '/especialidades/' . $a['id'])
+                ];
+            }
+        } catch (\Exception $e) {
+            // Silently continue if specialty_assignments table doesn't exist
+        }
+
+        // 2. Get all assigned programs
+        $programNodes = [];
+        try {
+            $programs = db_fetch_all("
+                SELECT up.id, up.program_id, up.status, up.progress_percent, up.started_at, up.completed_at,
+                       p.name, p.icon, p.difficulty, p.xp_reward, p.description, p.type as program_type,
+                       c.name as category_name, c.color as category_color, c.icon as category_icon,
+                       (SELECT COUNT(*) FROM program_steps ps JOIN program_versions pv ON ps.version_id = pv.id WHERE pv.program_id = p.id) as total_steps,
+                       (SELECT COUNT(*) FROM user_step_responses usr WHERE usr.progress_id = up.id AND usr.status = 'approved') as completed_steps
+                FROM user_program_progress up
+                JOIN learning_programs p ON up.program_id = p.id
+                LEFT JOIN learning_categories c ON p.category_id = c.id
+                WHERE up.user_id = ? AND up.tenant_id = ?
+                ORDER BY c.sort_order, c.name, up.created_at
+            ", [$user['id'], $tenant['id']]);
+
+            foreach ($programs as $p) {
+                $status = $p['status'] ?? 'not_started';
+                $nodeStatus = 'locked';
+                if ($status === 'completed' || $status === 'approved') {
+                    $nodeStatus = 'completed';
+                } elseif ($status === 'in_progress' || $status === 'submitted' || $status === 'rejected') {
+                    $nodeStatus = 'in_progress';
+                } elseif ($status === 'not_started') {
+                    $nodeStatus = 'available';
+                }
+
+                $programNodes[] = [
+                    'id' => 'prog_' . $p['id'],
+                    'title' => $p['name'],
+                    'icon' => $p['icon'] ?? '📘',
+                    'xp' => $p['xp_reward'] ?? 100,
+                    'difficulty' => $p['difficulty'] ?? 2,
+                    'status' => $nodeStatus,
+                    'progress' => (int)($p['progress_percent'] ?? 0),
+                    'total_steps' => (int)($p['total_steps'] ?? 0),
+                    'completed_steps' => (int)($p['completed_steps'] ?? 0),
+                    'category' => $p['category_name'] ?? 'Sem Categoria',
+                    'category_color' => $p['category_color'] ?? '#8b5cf6',
+                    'category_icon' => $p['category_icon'] ?? '📂',
+                    'type' => 'program',
+                    'link' => base_url($tenant['slug'] . '/aprendizado/' . $p['id'])
+                ];
+            }
+        } catch (\Exception $e) {
+            // Silently continue if tables don't exist
+        }
+
+        // 3. Merge all nodes and group by category
+        $allNodes = array_merge($specialtyNodes, $programNodes);
+        $grouped = [];
+        foreach ($allNodes as $node) {
+            $cat = $node['category'];
+            if (!isset($grouped[$cat])) {
+                $grouped[$cat] = [
+                    'name' => $cat,
+                    'color' => $node['category_color'],
+                    'icon' => $node['category_icon'],
+                    'nodes' => []
+                ];
+            }
+            $grouped[$cat]['nodes'][] = $node;
+        }
+
+        // 4. Stats
+        $totalNodes = count($allNodes);
+        $completedNodes = count(array_filter($allNodes, fn($n) => $n['status'] === 'completed'));
+        $inProgressNodes = count(array_filter($allNodes, fn($n) => $n['status'] === 'in_progress'));
+        $totalXp = array_sum(array_column(array_filter($allNodes, fn($n) => $n['status'] === 'completed'), 'xp'));
+
+        $unreadCount = $this->notificationService->getUnreadCount($user['id']);
+
+        View::render('dashboard/learning_paths', [
+            'tenant' => $tenant,
+            'user' => $user,
+            'grouped' => $grouped,
+            'totalNodes' => $totalNodes,
+            'completedNodes' => $completedNodes,
+            'inProgressNodes' => $inProgressNodes,
+            'totalXp' => $totalXp,
+            'unreadCount' => $unreadCount
+        ], 'member');
+    }
 }

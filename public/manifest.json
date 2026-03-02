@@ -1,12 +1,21 @@
 {
-    "name": "DesbravaHub",
+    "name": "DesbravaHub - Clube de Desbravadores",
     "short_name": "DesbravaHub",
+    "description": "Plataforma de gamificação e gestão para Clubes de Desbravadores",
     "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#1a1a2e",
     "theme_color": "#1a1a2e",
     "orientation": "portrait",
+    "lang": "pt-BR",
+    "categories": ["education", "productivity"],
     "icons": [
+        {
+            "src": "/assets/images/badge-72.png",
+            "sizes": "72x72",
+            "type": "image/png"
+        },
         {
             "src": "/assets/images/icon-192.png",
             "sizes": "192x192",
@@ -17,11 +26,14 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
-        },
+        }
+    ],
+    "shortcuts": [
         {
-            "src": "/assets/images/badge-72.png",
-            "sizes": "72x72",
-            "type": "image/png"
+            "name": "Minhas Trilhas",
+            "short_name": "Trilhas",
+            "url": "/",
+            "icons": [{ "src": "/assets/images/icon-192.png", "sizes": "192x192" }]
         }
     ]
 }

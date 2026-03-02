@@ -1,39 +1,241 @@
-const CACHE_NAME = 'desbravahub-v14'; // Single tab navigation support
-const urlsToCache = [
+const CACHE_VERSION = 'desbravahub-v20';
+const STATIC_CACHE = CACHE_VERSION + '-static';
+const DYNAMIC_CACHE = CACHE_VERSION + '-dynamic';
+const OFFLINE_URL = '/offline.html';
+
+// Core assets to pre-cache on install
+const PRECACHE_ASSETS = [
     '/assets/css/app.css',
+    '/assets/css/hud-theme.css',
     '/assets/js/toast.js',
-    '/assets/js/push-notifications.js'
+    '/assets/js/push-notifications.js',
+    '/assets/js/pwa-install.js',
+    '/assets/js/offline-sync.js',
+    '/offline.html'
 ];
 
-// Install event - cache assets
+// ==========================================
+// INSTALL - Pre-cache core shell
+// ==========================================
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing version', CACHE_NAME);
+    console.log('[SW v20] Installing...');
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => cache.addAll(urlsToCache))
+        caches.open(STATIC_CACHE)
+            .then(cache => {
+                console.log('[SW v20] Pre-caching core assets');
+                return cache.addAll(PRECACHE_ASSETS);
+            })
+            .catch(err => console.warn('[SW v20] Pre-cache failed (non-critical):', err))
     );
     self.skipWaiting();
 });
 
-// Activate event - clean old caches
+// ==========================================
+// ACTIVATE - Clean old caches
+// ==========================================
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activated');
+    console.log('[SW v20] Activated');
     event.waitUntil(
-        caches.keys().then((cacheNames) => {
+        caches.keys().then(cacheNames => {
             return Promise.all(
-                cacheNames.filter((name) => name !== CACHE_NAME)
-                    .map((name) => caches.delete(name))
+                cacheNames
+                    .filter(name => name !== STATIC_CACHE && name !== DYNAMIC_CACHE)
+                    .map(name => {
+                        console.log('[SW v20] Deleting old cache:', name);
+                        return caches.delete(name);
+                    })
             );
         })
     );
     self.clients.claim();
 });
 
-// Push notification received
-self.addEventListener('push', (event) => {
-    console.log('[SW v13] Push Received!', event);
+// ==========================================
+// FETCH - Stale-While-Revalidate + Offline
+// ==========================================
+self.addEventListener('fetch', (event) => {
+    const request = event.request;
+    const url = new URL(request.url);
 
-    // Default notification data
+    // Skip non-GET, cross-origin, chrome-extension, etc.
+    if (request.method !== 'GET') return;
+    if (url.origin !== self.location.origin) return;
+
+    // Strategy selection based on request type
+    if (isStaticAsset(url.pathname)) {
+        // STATIC ASSETS → Cache First, Network Fallback
+        event.respondWith(cacheFirst(request));
+    } else if (isAPIRoute(url.pathname)) {
+        // API ROUTES → Network First, Cache Fallback
+        event.respondWith(networkFirst(request));
+    } else if (isNavigationRequest(request)) {
+        // HTML PAGES → Stale-While-Revalidate
+        event.respondWith(staleWhileRevalidate(request));
+    }
+});
+
+// ==========================================
+// CACHING STRATEGIES
+// ==========================================
+
+/**
+ * Cache First - For static assets (CSS, JS, images, fonts)
+ */
+async function cacheFirst(request) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+
+    try {
+        const networkResponse = await fetch(request);
+        if (networkResponse.ok) {
+            const cache = await caches.open(STATIC_CACHE);
+            cache.put(request, networkResponse.clone());
+        }
+        return networkResponse;
+    } catch (err) {
+        // Asset not available offline
+        return new Response('', { status: 408, statusText: 'Offline' });
+    }
+}
+
+/**
+ * Network First - For API calls (fresh data preferred)
+ */
+async function networkFirst(request) {
+    try {
+        const networkResponse = await fetch(request);
+        if (networkResponse.ok) {
+            const cache = await caches.open(DYNAMIC_CACHE);
+            cache.put(request, networkResponse.clone());
+        }
+        return networkResponse;
+    } catch (err) {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        return new Response(JSON.stringify({ offline: true, error: 'Sem conexão' }), {
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+}
+
+/**
+ * Stale-While-Revalidate - For HTML pages
+ * Serves cached version instantly, updates cache in background
+ */
+async function staleWhileRevalidate(request) {
+    const cache = await caches.open(DYNAMIC_CACHE);
+    const cached = await cache.match(request);
+
+    const fetchPromise = fetch(request).then(networkResponse => {
+        if (networkResponse.ok) {
+            cache.put(request, networkResponse.clone());
+        }
+        return networkResponse;
+    }).catch(() => null);
+
+    // Return cached immediately if available, or wait for network
+    if (cached) {
+        // Update in background (stale-while-revalidate)
+        fetchPromise;
+        return cached;
+    }
+
+    // No cache → must wait for network
+    const networkResponse = await fetchPromise;
+    if (networkResponse) return networkResponse;
+
+    // Completely offline, no cache → show offline page
+    return caches.match(OFFLINE_URL) || new Response('Offline', { status: 503 });
+}
+
+// ==========================================
+// HELPER FUNCTIONS
+// ==========================================
+
+function isStaticAsset(pathname) {
+    return /\.(css|js|png|jpg|jpeg|gif|svg|woff2?|ttf|eot|ico|webp)$/i.test(pathname)
+        || pathname.startsWith('/assets/');
+}
+
+function isAPIRoute(pathname) {
+    return pathname.includes('/api/');
+}
+
+function isNavigationRequest(request) {
+    return request.mode === 'navigate'
+        || (request.method === 'GET' && request.headers.get('accept')?.includes('text/html'));
+}
+
+// ==========================================
+// BACKGROUND SYNC - Offline Form Queue
+// ==========================================
+self.addEventListener('sync', (event) => {
+    if (event.tag === 'offline-form-sync') {
+        console.log('[SW v20] Background Sync triggered');
+        event.waitUntil(replayOfflineQueue());
+    }
+});
+
+/**
+ * Replay queued offline form submissions from IndexedDB
+ */
+async function replayOfflineQueue() {
+    try {
+        const db = await openOfflineDB();
+        const tx = db.transaction('offline_queue', 'readwrite');
+        const store = tx.objectStore('offline_queue');
+        const allRequests = await getAllFromStore(store);
+
+        for (const item of allRequests) {
+            try {
+                const response = await fetch(item.url, {
+                    method: item.method,
+                    headers: item.headers,
+                    body: item.body
+                });
+
+                if (response.ok) {
+                    // Remove from queue on success
+                    const deleteTx = db.transaction('offline_queue', 'readwrite');
+                    deleteTx.objectStore('offline_queue').delete(item.id);
+                    console.log('[SW v20] Synced queued request:', item.url);
+                }
+            } catch (err) {
+                console.warn('[SW v20] Retry failed for:', item.url);
+                // Will be retried on next sync
+            }
+        }
+    } catch (err) {
+        console.error('[SW v20] Replay queue error:', err);
+    }
+}
+
+function openOfflineDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open('DesbravaHubOffline', 1);
+        req.onupgradeneeded = () => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains('offline_queue')) {
+                db.createObjectStore('offline_queue', { keyPath: 'id', autoIncrement: true });
+            }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+function getAllFromStore(store) {
+    return new Promise((resolve, reject) => {
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+// ==========================================
+// PUSH NOTIFICATIONS (preserved from v14)
+// ==========================================
+self.addEventListener('push', (event) => {
     let data = {
         title: 'DesbravaHub',
         body: 'Você tem uma nova notificação!',
@@ -44,30 +246,22 @@ self.addEventListener('push', (event) => {
     if (event.data) {
         try {
             const rawText = event.data.text();
-            console.log('[SW v13] Push data raw:', rawText);
             const json = JSON.parse(rawText);
             data = { ...data, ...json };
-
-            // Handle body/message aliasing from PHP side
             if (json.message && !json.body) {
                 data.body = json.message;
             }
         } catch (e) {
-            console.error('[SW v13] JSON parse error:', e);
             data.body = event.data ? event.data.text() : 'Nova notificação';
         }
     }
-
-    console.log('[SW v13] Showing notification:', data.title, data.body);
 
     const options = {
         body: data.body,
         icon: data.icon,
         badge: data.badge,
         vibrate: [200, 100, 200],
-        data: {
-            url: data.url || '/'
-        },
+        data: { url: data.url || '/' },
         actions: [
             { action: 'open', title: 'Abrir' },
             { action: 'close', title: 'Fechar' }
@@ -80,73 +274,25 @@ self.addEventListener('push', (event) => {
 
     event.waitUntil(
         self.registration.showNotification(data.title, options)
-            .then(() => console.log('[SW v13] Notification shown successfully'))
-            .catch(err => console.error('[SW v13] Failed to show notification:', err))
     );
 });
 
 // Notification click handler
 self.addEventListener('notificationclick', (event) => {
-    console.log('[SW v13] Notification clicked:', event.action);
     event.notification.close();
-
-    // If user clicked "close" action, just close notification
     if (event.action === 'close') return;
 
-    // Get URL from notification data
     const targetUrl = event.notification.data?.url || '/';
-    console.log('[SW v13] Opening URL:', targetUrl);
 
-    // Focus existing window or open new one
     event.waitUntil(
-        clients.matchAll({
-            type: 'window',
-            includeUncontrolled: true
-        }).then(windowClients => {
-            let matchingClient = null;
-
-            // Check if there is already a window/tab open
-            for (let i = 0; i < windowClients.length; i++) {
-                const client = windowClients[i];
-                // Check if same origin (part of our app)
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+            for (const client of windowClients) {
                 if (new URL(client.url).origin === new URL(targetUrl).origin) {
-                    matchingClient = client;
-                    break;
+                    return client.focus().then(() => client.navigate(targetUrl))
+                        .catch(() => clients.openWindow ? clients.openWindow(targetUrl) : null);
                 }
             }
-
-            if (matchingClient) {
-                return matchingClient.focus()
-                    .then(() => matchingClient.navigate(targetUrl))
-                    .catch(err => {
-                        console.error('[SW v14] Focus/Navigate failed:', err);
-                        if (clients.openWindow) return clients.openWindow(targetUrl);
-                    });
-            }
-
-            // If no window is open, open a new one
-            if (clients.openWindow) {
-                return clients.openWindow(targetUrl);
-            }
+            if (clients.openWindow) return clients.openWindow(targetUrl);
         })
-    );
-});
-
-// Fetch event
-self.addEventListener('fetch', (event) => {
-    if (event.request.method !== 'GET') return;
-
-    const url = new URL(event.request.url);
-    if (url.origin !== self.location.origin) return;
-
-    // Don't cache API or dynamic routes
-    if (url.pathname.includes('/api/') || url.pathname.includes('/admin/') || url.pathname.includes('/dashboard/')) return;
-
-    event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                if (response) return response;
-                return fetch(event.request);
-            })
     );
 });

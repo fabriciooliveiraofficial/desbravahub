@@ -142,26 +142,45 @@ class ProgressionService
     }
 
     /**
-     * Get leaderboard
+     * Get leaderboard (Global or by Unit)
      */
-    public function getLeaderboard(int $limit = 10): array
+    public function getLeaderboard(int $limit = 10, ?int $unitId = null): array
     {
         $tenantId = App::tenantId();
+        $sql = "SELECT u.id, u.name, u.avatar_url, u.xp_points, l.level_number, l.name as level_name
+                FROM users u
+                LEFT JOIN levels l ON u.level_id = l.id
+                WHERE u.tenant_id = ? AND u.status = 'active' AND u.deleted_at IS NULL";
+        $params = [$tenantId];
 
+        if ($unitId !== null) {
+            $sql .= " AND u.unit_id = ?";
+            $params[] = $unitId;
+        }
+
+        $sql .= " ORDER BY u.xp_points DESC LIMIT ?";
+        $params[] = $limit;
+
+        return db_fetch_all($sql, $params);
+    }
+
+    /**
+     * Get Unit Leaderboard (Ranking of Units by total XP)
+     */
+    public function getUnitLeaderboard(int $limit = 5): array
+    {
+        $tenantId = App::tenantId();
         return db_fetch_all(
-            "SELECT u.id, u.name, u.avatar_url, u.xp_points, l.level_number, l.name as level_name
-             FROM users u
-             LEFT JOIN levels l ON u.level_id = l.id
-             WHERE u.tenant_id = ? AND u.status = 'active' AND u.deleted_at IS NULL
-             ORDER BY u.xp_points DESC
+            "SELECT u.id, u.name, u.color, u.mascot, SUM(us.xp_points) as total_xp
+             FROM units u
+             JOIN users us ON us.unit_id = u.id
+             WHERE u.tenant_id = ? AND u.status = 'active' AND us.deleted_at IS NULL
+             GROUP BY u.id
+             ORDER BY total_xp DESC
              LIMIT ?",
             [$tenantId, $limit]
         );
     }
-
-    /**
-     * Check and award achievements
-     */
     private function checkAchievements(int $userId, int $totalXp, int $levelNumber): void
     {
         $tenantId = App::tenantId();
