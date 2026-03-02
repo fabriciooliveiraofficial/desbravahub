@@ -96,8 +96,7 @@ $isPerfil = strpos($currentPath, '/perfil') !== false;
     left: 0;
     right: 0;
     z-index: 1000;
-    /* Consistent 16px margins on all screen sizes */
-    padding: 0 16px 16px;
+    padding: 0; /* App style, full width */
     display: flex;
     justify-content: center;
     pointer-events: none;
@@ -106,23 +105,21 @@ $isPerfil = strpos($currentPath, '/perfil') !== false;
 .dock-inner {
     display: flex;
     align-items: flex-end;
-    justify-content: center;
+    justify-content: space-around; /* Distribute items evenly */
     gap: 4px;
     padding: 10px 16px 12px;
     /* Dark Glass Aesthetic */
-    background: linear-gradient(135deg, rgba(26, 26, 46, 0.9), rgba(22, 33, 62, 0.9));
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(22, 33, 62, 0.95));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 24px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px 16px 0 0; /* Top rounded corners only */
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.05),
+        0 -10px 40px rgba(0, 0, 0, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     pointer-events: auto;
     animation: dockSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-    width: fit-content;
-    max-width: 100%;
+    width: 100%;
 }
 
 @keyframes dockSlideIn {
@@ -293,8 +290,8 @@ $isPerfil = strpos($currentPath, '/perfil') !== false;
 
 /* Safe Area for iOS */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
-    .dock-premium {
-        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    .dock-inner {
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
     }
 }
 
@@ -310,12 +307,13 @@ $isPerfil = strpos($currentPath, '/perfil') !== false;
     .dock-inner {
         gap: 2px;
         padding: 8px 10px 10px;
-        border-radius: 20px;
+        border-radius: 16px 16px 0 0;
     }
     
     .dock-item {
-        padding: 6px 6px;
-        min-width: 50px;
+        padding: 6px 4px;
+        flex: 1; /* Allow items to flex and fill space equally */
+        min-width: 0;
     }
     
     .dock-icon-wrap {
@@ -338,12 +336,11 @@ $isPerfil = strpos($currentPath, '/perfil') !== false;
 @media (max-width: 360px) {
     .dock-inner {
         gap: 0;
-        padding: 6px 6px 8px;
+        padding: 6px 4px 8px;
     }
     
     .dock-item {
         padding: 4px 2px;
-        min-width: 45px;
     }
     
     .dock-icon-wrap {
@@ -370,12 +367,6 @@ body {
 /* Dynamic State */
 .dock-premium {
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
-}
-
-.dock-premium.dock-hidden {
-    transform: translateY(150%);
-    opacity: 0;
-    pointer-events: none;
 }
 
 /* ==========================================
@@ -505,30 +496,8 @@ document.addEventListener('DOMContentLoaded', () => {
             item.style.transform = '';
         });
     });
-
-    // ==========================================
-    // DYNAMIC SCROLL BEHAVIOR (Immersive Mode)
-    // ==========================================
-    let isScrolling;
-    const nav = document.getElementById('dockNav');
-
-    window.addEventListener('scroll', () => {
-        // Disable hide-on-scroll for desktop sidebar mode
-        if (window.innerWidth >= 1024) return;
-
-        // 1. Hide on Scroll
-        if (window.scrollY > 50) { // Only active after small threshold
-            nav.classList.add('dock-hidden');
-        }
-
-        // 2. Show on Stop (Debounce)
-        window.clearTimeout(isScrolling);
-
-        isScrolling = setTimeout(() => {
-            nav.classList.remove('dock-hidden');
-        }, 250); // Show after 250ms of no scrolling
-    }, { passive: true });
 });
+
 </script>
 <script>
     // ... active state logic ...
