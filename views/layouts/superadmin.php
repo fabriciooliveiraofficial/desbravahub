@@ -292,10 +292,14 @@ $theme = 'dark'; // Force dark mode for Super Admin
             </a>
             
             <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 16px 0;"></div>
-            
             <a href="/super-admin/scraper" class="sa-nav-item <?= strpos($_SERVER['REQUEST_URI'], '/super-admin/scraper') !== false ? 'active' : '' ?>">
                 <span class="material-symbols-rounded" style="color: var(--sa-neon)">smart_toy</span>
                 Super Scraper (IA)
+            </a>
+
+            <a href="/super-admin/migracao" class="sa-nav-item <?= strpos($_SERVER['REQUEST_URI'], '/super-admin/migracao') !== false ? 'active' : '' ?>">
+                <span class="material-symbols-rounded" style="color: #ef4444">database</span>
+                Migração DB
             </a>
             
             <a href="/" class="sa-nav-item" style="margin-top: auto;">

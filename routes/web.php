@@ -52,9 +52,13 @@ $router->get('/super-admin/dashboard', [SuperAdminController::class, 'dashboard'
 $router->get('/super-admin/clubs', [SuperAdminController::class, 'clubs'], [SuperAdminMiddleware::class]);
 $router->get('/super-admin/users', [SuperAdminController::class, 'users'], [SuperAdminMiddleware::class]);
 $router->get('/super-admin/scraper', [SuperAdminController::class, 'scraper'], [SuperAdminMiddleware::class]);
-
 $router->post('/super-admin/api/save-key', [SuperAdminController::class, 'saveApiKey'], [SuperAdminMiddleware::class]);
 $router->post('/super-admin/scraper/process', [SuperAdminController::class, 'processScrape'], [SuperAdminMiddleware::class]);
+
+// Migration Tool Routes
+$router->get('/super-admin/migracao', [SuperAdminController::class, 'migrationDashboard'], [SuperAdminMiddleware::class]);
+$router->get('/super-admin/migracao/exportar', [SuperAdminController::class, 'exportDatabase'], [SuperAdminMiddleware::class]);
+$router->post('/super-admin/migracao/importar', [SuperAdminController::class, 'importDatabase'], [SuperAdminMiddleware::class]);
 
 // Global public routes (no tenant)
 $router->get('/', [HomeController::class, 'index']);

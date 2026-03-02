@@ -144,7 +144,7 @@
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <span class="material-symbols-rounded text-sa-text_muted">lock</span>
                         </div>
-                        <input type="password" id="password" name="password" required
+                        <input type="password" id="password" name="password" required autocomplete="current-password"
                                class="sa-input w-full rounded-xl pl-10 pr-4 py-3" 
                                placeholder="••••••••">
                     </div>

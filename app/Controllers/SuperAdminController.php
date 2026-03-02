@@ -10,6 +10,7 @@ namespace App\Controllers;
 use App\Core\App;
 use App\Core\View;
 use App\Services\AuthService;
+use App\Services\DatabaseMigrationService;
 
 class SuperAdminController
 {
@@ -499,6 +500,94 @@ class SuperAdminController
         db_update('support_tickets', $updates, 'id = ?', [$ticketId]);
 
         $this->json(['success' => true]);
+    }
+
+    // =========================================================================
+    // DATABASE MIGRATION
+    // =========================================================================
+
+    /**
+     * Show Migration Dashboard
+     */
+    public function migrationDashboard(): void
+    {
+        // Require Super Admin
+        if (!App::isAuthenticated() || !isset(App::user()['is_superadmin']) || App::user()['is_superadmin'] != 1) {
+            header('Location: /');
+            exit;
+        }
+
+        View::render('superadmin/migration', [
+            'pageTitle' => 'Migração de Banco de Dados',
+            'user' => App::user(),
+        ]);
+    }
+
+    /**
+     * Export Database
+     */
+    public function exportDatabase(): void
+    {
+        // Require Super Admin
+        if (!App::isAuthenticated() || !isset(App::user()['is_superadmin']) || App::user()['is_superadmin'] != 1) {
+            $this->jsonError('Não autorizado', 403);
+            return;
+        }
+
+        try {
+            $migrationService = new DatabaseMigrationService();
+            $sql = $migrationService->exportDatabase();
+
+            $date = date('Y-m-d_H-i-s');
+            $filename = "desbravahub_dump_{$date}.sql";
+
+            header('Content-Type: application/octet-stream');
+            header("Content-Transfer-Encoding: Binary"); 
+            header("Content-disposition: attachment; filename=\"{$filename}\""); 
+            echo $sql;
+            exit;
+        } catch (\Exception $e) {
+            die("Erro na exportação: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Import Database
+     */
+    public function importDatabase(): void
+    {
+        // Require Super Admin
+        if (!App::isAuthenticated() || !isset(App::user()['is_superadmin']) || App::user()['is_superadmin'] != 1) {
+            $this->jsonError('Não autorizado', 403);
+            return;
+        }
+
+        if (!isset($_FILES['dump_file']) || $_FILES['dump_file']['error'] !== UPLOAD_ERR_OK) {
+            $this->jsonError('Nenhum arquivo de importação enviado ou ocorreu um erro no upload.');
+            return;
+        }
+
+        $file = $_FILES['dump_file'];
+
+        // Extra validation (check extension)
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        if ($ext !== 'sql') {
+            $this->jsonError('O arquivo deve ter a extensão .sql');
+            return;
+        }
+
+        try {
+            $migrationService = new DatabaseMigrationService();
+            $success = $migrationService->importDatabase($file['tmp_name']);
+
+            if ($success) {
+                $this->json(['success' => true, 'message' => 'Banco de Dados importado com sucesso!']);
+            } else {
+                $this->jsonError('Falha desconhecida ao importar.');
+            }
+        } catch (\Exception $e) {
+            $this->jsonError($e->getMessage(), 500);
+        }
     }
 
     // =========================================================================
