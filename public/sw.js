@@ -1,7 +1,8 @@
-const CACHE_VERSION = 'desbravahub-v21';
+const CACHE_VERSION = 'desbravahub-v22';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const DYNAMIC_CACHE = CACHE_VERSION + '-dynamic';
 const OFFLINE_URL = '/offline.html';
+const FETCH_TIMEOUT = 10000; // 10 seconds timeout for network requests
 
 // Core assets to pre-cache on install
 const PRECACHE_ASSETS = [
@@ -18,14 +19,14 @@ const PRECACHE_ASSETS = [
 // INSTALL - Pre-cache core shell
 // ==========================================
 self.addEventListener('install', (event) => {
-    console.log('[SW v20] Installing...');
+    console.log('[SW v22] Installing...');
     event.waitUntil(
         caches.open(STATIC_CACHE)
             .then(cache => {
-                console.log('[SW v20] Pre-caching core assets');
+                console.log('[SW v22] Pre-caching core assets');
                 return cache.addAll(PRECACHE_ASSETS);
             })
-            .catch(err => console.warn('[SW v20] Pre-cache failed (non-critical):', err))
+            .catch(err => console.warn('[SW v22] Pre-cache failed (non-critical):', err))
     );
     self.skipWaiting();
 });
@@ -34,14 +35,14 @@ self.addEventListener('install', (event) => {
 // ACTIVATE - Clean old caches
 // ==========================================
 self.addEventListener('activate', (event) => {
-    console.log('[SW v20] Activated');
+    console.log('[SW v22] Activated');
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames
                     .filter(name => name !== STATIC_CACHE && name !== DYNAMIC_CACHE)
                     .map(name => {
-                        console.log('[SW v20] Deleting old cache:', name);
+                        console.log('[SW v22] Deleting old cache:', name);
                         return caches.delete(name);
                     })
             );
@@ -155,7 +156,7 @@ async function staleWhileRevalidate(request) {
         }
         return networkResponse;
     }).catch(err => {
-        console.warn('[SW v21] Network fetch failed or timed out:', err);
+        console.warn('[SW v22] Network fetch failed or timed out:', err);
         return null;
     });
 
@@ -197,7 +198,7 @@ function isNavigationRequest(request) {
 // ==========================================
 self.addEventListener('sync', (event) => {
     if (event.tag === 'offline-form-sync') {
-        console.log('[SW v20] Background Sync triggered');
+        console.log('[SW v22] Background Sync triggered');
         event.waitUntil(replayOfflineQueue());
     }
 });
@@ -224,15 +225,15 @@ async function replayOfflineQueue() {
                     // Remove from queue on success
                     const deleteTx = db.transaction('offline_queue', 'readwrite');
                     deleteTx.objectStore('offline_queue').delete(item.id);
-                    console.log('[SW v20] Synced queued request:', item.url);
+                    console.log('[SW v22] Synced queued request:', item.url);
                 }
             } catch (err) {
-                console.warn('[SW v20] Retry failed for:', item.url);
+                console.warn('[SW v22] Retry failed for:', item.url);
                 // Will be retried on next sync
             }
         }
     } catch (err) {
-        console.error('[SW v20] Replay queue error:', err);
+        console.error('[SW v22] Replay queue error:', err);
     }
 }
 
