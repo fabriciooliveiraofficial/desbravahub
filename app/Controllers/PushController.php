@@ -16,7 +16,7 @@ class PushController
      */
     public function publicKey(): void
     {
-        $key = env('VAPID_PUBLIC_KEY', '');
+        $key = config('vapid.public_key', '');
 
         $this->json(['publicKey' => $key]);
     }

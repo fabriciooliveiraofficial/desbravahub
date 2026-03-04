@@ -62,6 +62,13 @@ self.addEventListener('fetch', (event) => {
     if (request.method !== 'GET') return;
     if (url.origin !== self.location.origin) return;
 
+    // By-pass Service Worker entirely for logout routes
+    // This prevents the SW from intercepting the logout redirect and mistakenly showing the offline page
+    if (url.pathname.includes('/logout')) {
+        event.respondWith(fetch(request));
+        return;
+    }
+
     // Strategy selection based on request type
     if (isStaticAsset(url.pathname)) {
         // STATIC ASSETS → Cache First, Network Fallback

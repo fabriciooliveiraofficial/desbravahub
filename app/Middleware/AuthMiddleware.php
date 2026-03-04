@@ -98,9 +98,21 @@ class AuthMiddleware
      */
     private function unauthorized(string $message): void
     {
-        http_response_code(401);
-        header('Content-Type: application/json');
-        echo json_encode(['error' => $message]);
+        if ($this->isAjaxRequest()) {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            
+            $tenant = App::tenant();
+            $redirect = $tenant ? base_url($tenant['slug'] . '/login') : base_url('login');
+            
+            echo json_encode(['error' => $message, 'redirect' => $redirect]);
+            exit;
+        }
+
+        $tenant = App::tenant();
+        $redirect = $tenant ? base_url($tenant['slug'] . '/login') : base_url('login');
+        header('Location: ' . $redirect);
+        exit;
     }
 
     /**
@@ -108,8 +120,27 @@ class AuthMiddleware
      */
     private function forbidden(string $message): void
     {
-        http_response_code(403);
-        header('Content-Type: application/json');
-        echo json_encode(['error' => $message]);
+        if ($this->isAjaxRequest()) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $message]);
+            exit;
+        }
+
+        // Send a simple forbidden page or redirect to dashboard with an error parameter
+        $tenant = App::tenant();
+        $redirect = $tenant ? base_url($tenant['slug'] . '/dashboard') : base_url();
+        header('Location: ' . $redirect);
+        exit;
+    }
+
+    /**
+     * Determine if request is AJAX/HTMX
+     */
+    private function isAjaxRequest(): bool
+    {
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) 
+            || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+            || !empty($_SERVER['HTTP_HX_REQUEST']);
     }
 }

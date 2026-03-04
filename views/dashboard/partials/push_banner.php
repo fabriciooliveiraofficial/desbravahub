@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             // Ensure push notifications are initialized before subscribing
             if (!pushNotifications.initialized) {
-                const publicKey = '<?= env('VAPID_PUBLIC_KEY', '') ?>';
+                const publicKey = '<?= config('vapid.public_key', '') ?>';
                 if (!publicKey) {
                     throw new Error('VAPID key not configured');
                 }

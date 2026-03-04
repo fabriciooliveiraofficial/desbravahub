@@ -7,6 +7,9 @@
 // Decode JSON fields if they exist
 $medicalConditions = json_decode($userProfile['medical_conditions'] ?? '{}', true) ?: [];
 $allergies = json_decode($userProfile['allergies'] ?? '{}', true) ?: [];
+
+// Determine initial active tab
+$activeTab = $_GET['tab'] ?? (isset($_GET['incomplete']) ? 'registry' : 'overview');
 ?>
 <style>
     /* Profile Specifics */
@@ -368,18 +371,18 @@ $allergies = json_decode($userProfile['allergies'] ?? '{}', true) ?: [];
 
         <!-- Custom Profile Tabs -->
         <div class="profile-tabs">
-            <button class="profile-tab-btn active" onclick="switchProfileTab('overview')">
+            <button class="profile-tab-btn <?= $activeTab === 'overview' ? 'active' : '' ?>" onclick="switchProfileTab('overview')">
                 <span class="material-icons-round" style="font-size: 18px;">dashboard</span>
                 Visão Geral
             </button>
-            <button class="profile-tab-btn" onclick="switchProfileTab('registry')">
+            <button class="profile-tab-btn <?= $activeTab === 'registry' ? 'active' : '' ?>" onclick="switchProfileTab('registry')">
                 <span class="material-icons-round" style="font-size: 18px;">medical_information</span>
                 Livro de Registro
             </button>
         </div>
 
         <!-- TAB: OVERVIEW (HUD) -->
-        <div id="tab-overview" class="profile-tab-content active">
+        <div id="tab-overview" class="profile-tab-content <?= $activeTab === 'overview' ? 'active' : '' ?>">
             <div class="profile-avatar-hud">
                 <div class="avatar-img-hud">
                     <?= strtoupper(substr($user['name'], 0, 1)) ?>
@@ -454,13 +457,18 @@ $allergies = json_decode($userProfile['allergies'] ?? '{}', true) ?: [];
             </a>
         </div>
 
-        <!-- Warning for incomplete profile -->
         <?php if (isset($_GET['incomplete'])): ?>
-        <div id="incomplete-notice" style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); border-radius: 12px; padding: 15px; margin: 20px; display: flex; align-items: center; gap: 12px; animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;">
-            <span class="material-icons-round" style="color: var(--danger);">warning</span>
-            <p style="color: var(--danger); margin: 0; font-size: 0.9rem; font-weight: bold;">
-                Para liberar o acesso ao painel, você precisa preencher todas as informações obrigatórias do seu Livro de Registro abaixo.
-            </p>
+        <div id="incomplete-notice" style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); border-radius: 12px; padding: 15px; margin: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span class="material-icons-round" style="color: var(--danger);">warning</span>
+                <p style="color: var(--danger); margin: 0; font-size: 0.9rem; font-weight: bold;">
+                    Para liberar o acesso ao painel, você precisa preencher todas as informações obrigatórias do seu Livro de Registro.
+                </p>
+            </div>
+            <button onclick="switchProfileTab('registry')" class="hud-btn" style="background: var(--danger); color: #fff; padding: 8px 16px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">edit_note</span>
+                PREENCHER AGORA
+            </button>
         </div>
         <style>
             @keyframes shake {
@@ -473,7 +481,7 @@ $allergies = json_decode($userProfile['allergies'] ?? '{}', true) ?: [];
         <?php endif; ?>
 
         <!-- TAB: REGISTRY BOOK (Medical & Full Form) -->
-        <div id="tab-registry" class="profile-tab-content">
+        <div id="tab-registry" class="profile-tab-content <?= $activeTab === 'registry' ? 'active' : '' ?>">
             <form id="registryForm" onsubmit="saveProfile(event)">
                 
                 <div class="section-title">
@@ -488,7 +496,16 @@ $allergies = json_decode($userProfile['allergies'] ?? '{}', true) ?: [];
                 <div class="form-row">
                     <div class="form-col form-group">
                         <label>Data de Nascimento <span style="color: var(--danger);">*</span></label>
-                        <input type="date" class="form-control" name="birth_date" id="birth_date" value="<?= htmlspecialchars($user['birth_date'] ?? '') ?>" required onchange="calculateAge()">
+                        <?php
+                            $formattedBirthDate = '';
+                            if (!empty($user['birth_date'])) {
+                                $dateObj = date_create($user['birth_date']);
+                                if ($dateObj) {
+                                    $formattedBirthDate = date_format($dateObj, 'Y-m-d');
+                                }
+                            }
+                        ?>
+                        <input type="date" class="form-control" name="birth_date" id="birth_date" value="<?= htmlspecialchars($formattedBirthDate) ?>" required onchange="calculateAge()">
                     </div>
                     <div class="form-col form-group">
                         <label>Idade (Calculada)</label>
@@ -630,15 +647,37 @@ function calculateAge() {
     ageDisplay.value = age + ' anos';
 }
 
-// Initial calculation
-document.addEventListener('DOMContentLoaded', calculateAge);
+// Run calculation immediately and on DOM load/swap
+document.addEventListener('DOMContentLoaded', () => setTimeout(calculateAge, 100));
+document.body.addEventListener('htmx:afterSwap', () => setTimeout(calculateAge, 100));
+setTimeout(calculateAge, 100); // Immediate call for partial loads
 
 function switchProfileTab(tab) {
     document.querySelectorAll('.profile-tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.remove('active'));
     
-    event.currentTarget.classList.add('active');
-    document.getElementById('tab-' + tab).classList.add('active');
+    // Safely find the target button to highlight
+    let targetBtn = null;
+    if (window.event && window.event.currentTarget && window.event.currentTarget.classList.contains('profile-tab-btn')) {
+        targetBtn = window.event.currentTarget;
+    } else {
+        targetBtn = document.querySelector(`.profile-tab-btn[onclick*="${tab}"]`);
+    }
+    
+    if (targetBtn) targetBtn.classList.add('active');
+    
+    const tabContent = document.getElementById('tab-' + tab);
+    if (tabContent) tabContent.classList.add('active');
+    
+    // Update URL to persist tab state
+    const url = new URL(window.location);
+    url.searchParams.set('tab', tab);
+    window.history.pushState({}, '', url);
+
+    // Recalculate age if switching to registry tab where the input is
+    if (tab === 'registry') {
+        setTimeout(calculateAge, 50);
+    }
 }
 
 async function saveProfile(e) {

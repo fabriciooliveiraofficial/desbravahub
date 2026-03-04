@@ -181,6 +181,33 @@ $profileLocked = is_pathfinder() && !is_profile_complete();
     z-index: 10;
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
 }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Persistent Alert for Incomplete Profile
+    <?php if ($profileLocked && !$isPerfil): ?>
+    if (typeof window.toast !== 'undefined') {
+        const title = 'Ação Necessária';
+        const msg = 'Termine de preencher o seu Livro de Registro (Dados Gerais e Ficha Médica) para liberar todos os recursos da plataforma.';
+        
+        window.toast.confirm(title, msg, {
+            type: 'warning',
+            icon: 'fa-solid fa-clipboard-user',
+            confirmText: 'Preencher Agora',
+            cancelText: 'Mais tarde',
+            confirmBg: '#f59e0b'
+        }).then((confirmed) => {
+            if (confirmed) {
+                window.location.href = '<?= base_url($tenant['slug'] . '/perfil?tab=livro-registro') ?>';
+            }
+        });
+    }
+    <?php endif; ?>
+});
+</script>
+
+<style>
 
 /* Dock Item */
 .dock-item {

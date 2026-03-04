@@ -100,7 +100,7 @@
         // Init Push Notifications Core
         document.addEventListener('DOMContentLoaded', async () => {
             if (typeof pushNotifications !== 'undefined' && pushNotifications.isSupported()) {
-                const publicKey = '<?= env('VAPID_PUBLIC_KEY', '') ?>';
+                const publicKey = '<?= config('vapid.public_key', '') ?>';
                 const apiEndpoint = '<?= base_url("{$tenant['slug']}/api/push/subscribe") ?>';
                 if (publicKey) {
                     await pushNotifications.init(publicKey, apiEndpoint);
@@ -110,6 +110,50 @@
 
         // Re-initialize Toast on page load/swap
         const toast = new ToastNotification();
+
+        // =============================================
+        // NOTIFICATION BADGE POLLING (Live counter)
+        // =============================================
+        (function() {
+            const BADGE_POLL_INTERVAL = 30000; // 30 seconds
+            const API_URL = '<?= base_url("{$tenant['slug']}/api/notifications") ?>';
+            const bellBtn = document.getElementById('notificationBtn');
+
+            function updateBadge(count) {
+                if (!bellBtn) return;
+
+                // Remove existing badge
+                let badge = bellBtn.querySelector('.hud-notification-badge');
+
+                if (count > 0) {
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'hud-notification-badge';
+                        bellBtn.appendChild(badge);
+                    }
+                    badge.textContent = count > 9 ? '9+' : count;
+                    badge.style.display = 'flex';
+                } else if (badge) {
+                    badge.style.display = 'none';
+                }
+            }
+
+            async function pollBadge() {
+                try {
+                    const res = await fetch(API_URL, {
+                        credentials: 'include',
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    updateBadge(data.unread_count || 0);
+                } catch (e) { /* silent */ }
+            }
+
+            // Initial fetch + interval
+            pollBadge();
+            setInterval(pollBadge, BADGE_POLL_INTERVAL);
+        })();
         
         // Handle HTMX events
         document.body.addEventListener('htmx:afterSwap', function(event) {

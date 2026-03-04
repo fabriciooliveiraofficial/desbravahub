@@ -41,7 +41,7 @@ function env_load(?string $path = null): void
     }
 
     foreach ($lines as $line) {
-        $line = trim($line);
+        $line = trim($line, " \t\n\r\0\x0B\xEF\xBB\xBF"); // Also strip BOM
         
         // Skip comments and empty lines
         if (empty($line) || str_starts_with($line, '#')) {
@@ -51,8 +51,8 @@ function env_load(?string $path = null): void
         // Parse key=value
         if (str_contains($line, '=')) {
             list($key, $value) = explode('=', $line, 2);
-            $key = trim($key);
-            $value = trim($value);
+            $key = trim($key, " \t\n\r\0\x0B\xEF\xBB\xBF"); // Clean key
+            $value = trim($value, " \t\n\r\0\x0B"); // Clean value
 
             // Remove surrounding quotes
             if (preg_match('/^(["\'])(.*)\1$/', $value, $matches)) {

@@ -66,6 +66,17 @@ if (typeof window.ToastNotification !== 'undefined') {
                 pointer-events: none !important;
             }
 
+            /* Mobile: center toasts for visibility */
+            @media (max-width: 768px) {
+                #toast-container {
+                    top: 16px !important;
+                    right: 50% !important;
+                    transform: translateX(50%) !important;
+                    width: 92vw !important;
+                    max-width: 400px !important;
+                }
+            }
+
             .toast {
                 /* Reset & Base */
                 all: initial; 
@@ -319,12 +330,42 @@ if (typeof window.ToastNotification !== 'undefined') {
 
             this.container.appendChild(toast);
 
+            // Play notification sound
+            this.playSound();
+
             // Auto dismiss
             if (duration > 0) {
                 setTimeout(() => this.dismiss(toast), duration);
             }
 
             return toast;
+        }
+
+        /**
+         * Play a subtle notification sound using Web Audio API
+         */
+        playSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                // Two-tone "ding" sound
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(830, ctx.currentTime);
+                osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.4);
+            } catch (e) {
+                // Silently fail if AudioContext isn't available
+            }
         }
 
         /**
