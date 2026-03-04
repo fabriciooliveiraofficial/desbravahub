@@ -84,17 +84,21 @@
         // Initialize Per-Tab Session Guard
         if (typeof SessionGuard !== 'undefined') {
             <?php
-            // Pick up flash token from invitation auto-login
+            // Pick up flash token from invitation
             $flashToken = $_SESSION['flash_auth_token'] ?? null;
             $flashUserId = $_SESSION['flash_auth_user_id'] ?? null;
             if ($flashToken) {
                 unset($_SESSION['flash_auth_token'], $_SESSION['flash_auth_user_id']);
             }
+            
+            // Get current token for hydration
+            $authService = new \App\Services\AuthService();
+            $currentToken = $authService->getTokenFromRequest($tenant['slug'] ?? null);
             ?>
             <?php if ($flashToken): ?>
             SessionGuard.storeSession(<?= json_encode($flashToken) ?>, <?= json_encode($flashUserId) ?>);
             <?php endif; ?>
-            SessionGuard.init(<?= json_encode($user['id'] ?? null) ?>);
+            SessionGuard.init(<?= json_encode($user['id'] ?? null) ?>, <?= json_encode($currentToken) ?>);
         }
 
         // Init Push Notifications Core

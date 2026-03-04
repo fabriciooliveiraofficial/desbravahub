@@ -139,6 +139,91 @@ $createdAt = new DateTime($ticket['created_at']);
         font-weight: 600;
     }
 
+    /* Attachments */
+    .attachments-container {
+        margin-bottom: 28px;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+    }
+    .attachments-title {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #94a3b8;
+        font-weight: 700;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .attachments-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    .attachment-img-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.2s, border-color 0.2s;
+        display: block;
+        text-decoration: none;
+    }
+    .attachment-img-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--sa-primary);
+    }
+    .attachment-img {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        display: block;
+    }
+    .attachment-info {
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--sa-surface);
+    }
+    .attachment-name {
+        font-size: 0.75rem;
+        color: #cbd5e1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 120px;
+    }
+    .attachment-files {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .attachment-file-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: var(--sa-surface);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        color: #cbd5e1;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .attachment-file-card:hover {
+        border-color: var(--sa-primary);
+        background: rgba(139, 92, 246, 0.05);
+    }
+    .attachment-file-name {
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
     /* Reply Form */
     .reply-card {
         background: var(--sa-surface);
@@ -325,6 +410,52 @@ $createdAt = new DateTime($ticket['created_at']);
         </div>
     <?php endforeach; ?>
 </div>
+
+<!-- Attachments -->
+<?php if (!empty($attachments)): ?>
+    <div class="attachments-container">
+        <div class="attachments-title">
+            <span class="material-symbols-rounded" style="font-size: 18px;">attachment</span>
+            Anexos do Chamado (<?= count($attachments) ?>)
+        </div>
+        
+        <?php 
+        $images = [];
+        $files = [];
+        foreach ($attachments as $att) {
+            $isImage = str_starts_with($att['mime_type'], 'image/');
+            if ($isImage) $images[] = $att;
+            else $files[] = $att;
+        }
+        ?>
+
+        <?php if (!empty($images)): ?>
+            <div class="attachments-gallery">
+                <?php foreach ($images as $img): ?>
+                    <a href="<?= base_url('storage/' . $img['path']) ?>" target="_blank" class="attachment-img-card" title="<?= htmlspecialchars($img['filename']) ?>">
+                        <img src="<?= base_url('storage/' . $img['path']) ?>" alt="Anexo" class="attachment-img">
+                        <div class="attachment-info">
+                            <span class="attachment-name"><?= htmlspecialchars($img['filename']) ?></span>
+                            <span class="material-symbols-rounded" style="font-size: 16px; color: #94a3b8;">open_in_new</span>
+                        </div>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($files)): ?>
+            <div class="attachment-files">
+                <?php foreach ($files as $file): ?>
+                    <a href="<?= base_url('storage/' . $file['path']) ?>" target="_blank" class="attachment-file-card">
+                        <span class="material-symbols-rounded" style="color: #94a3b8;">draft</span>
+                        <span class="attachment-file-name"><?= htmlspecialchars($file['filename']) ?></span>
+                        <span class="material-symbols-rounded" style="margin-left: auto; font-size: 18px; color: #64748b;">download</span>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
 
 <!-- Reply Form -->
 <div class="reply-card">

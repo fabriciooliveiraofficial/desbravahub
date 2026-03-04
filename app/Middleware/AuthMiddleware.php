@@ -36,6 +36,13 @@ class AuthMiddleware
             return false;
         }
 
+        // Refresh session to keep it alive (Rolling Session for PWA persistence)
+        $authService->refreshSession(
+            $token, 
+            $tenant ? '/' . $tenant['slug'] . '/' : '/', 
+            $tenant['slug'] ?? null
+        );
+
         // Verify user belongs to current tenant
         $tenant = App::tenant();
         if ($tenant && $user['tenant_id'] != $tenant['id']) {

@@ -65,8 +65,16 @@
 
         /**
          * Initialize: attach HTMX header injection + session mismatch detection
+         * @param {string|number} renderedUserId The ID of the authenticated user
+         * @param {string} serverToken The current session token (hydration from cookies)
          */
-        init(renderedUserId) {
+        init(renderedUserId, serverToken) {
+            // --- Hydration Phase: Convert Cookie Session -> Tab Session ---
+            if (serverToken && !SessionGuard.getToken()) {
+                console.log('[SessionGuard] Hydrating new tab from server token...');
+                SessionGuard.storeSession(serverToken, renderedUserId);
+            }
+
             // --- HTMX: Inject Authorization header on every request ---
             document.body.addEventListener('htmx:configRequest', function (event) {
                 const token = SessionGuard.getToken();

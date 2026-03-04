@@ -12,7 +12,7 @@ use App\Core\App;
 class AuthService
 {
     private const TOKEN_LENGTH = 64;
-    private const SESSION_LIFETIME_HOURS = 24;
+    private const SESSION_LIFETIME_HOURS = 8760; // 1 year
 
     /**
      * Attempt login with credentials
@@ -134,6 +134,20 @@ class AuthService
     public function destroyAllSessions(int $userId): void
     {
         db_delete('user_sessions', 'user_id = ?', [$userId]);
+    }
+
+    /**
+     * Refresh a session's expiration time (Rolling Session)
+     */
+    public function refreshSession(string $token, string $cookiePath = '/', ?string $slug = null): void
+    {
+        $tokenHash = hash('sha256', $token);
+        $expiresAt = date('Y-m-d H:i:s', strtotime('+' . self::SESSION_LIFETIME_HOURS . ' hours'));
+
+        db_update('user_sessions', ['expires_at' => $expiresAt], 'token_hash = ?', [$tokenHash]);
+
+        // Re-issue cookie to extend its lifetime in the browser
+        $this->setAuthCookie($token, $cookiePath, $slug);
     }
 
     /**

@@ -224,11 +224,15 @@
             if ($flashToken) {
                 unset($_SESSION['flash_auth_token'], $_SESSION['flash_auth_user_id']);
             }
+            
+            // Get current token for hydration
+            $authService = new \App\Services\AuthService();
+            $currentToken = $authService->getTokenFromRequest($tenant['slug'] ?? null);
             ?>
             <?php if ($flashToken): ?>
             SessionGuard.storeSession(<?= json_encode($flashToken) ?>, <?= json_encode($flashUserId) ?>);
             <?php endif; ?>
-            SessionGuard.init(<?= json_encode($user['id'] ?? null) ?>);
+            SessionGuard.init(<?= json_encode($user['id'] ?? null) ?>, <?= json_encode($currentToken) ?>);
         }
 
         // --- Mobile Sidebar Toggle & Active State Logic ---
