@@ -62,7 +62,7 @@
                                 <a href="<?= base_url($tenant['slug'] . '/admin/eventos/' . $event['id'] . '/editar') ?>" class="btn btn-sm btn-secondary" title="Editar">
                                     <span class="material-icons-round" style="font-size: 18px;">edit</span>
                                 </a>
-                                <a href="<?= base_url('c/' . $tenant['slug'] . '/evento/' . $event['slug']) ?>" target="_blank" class="btn btn-sm btn-secondary" title="Página Pública">
+                                <a href="<?= base_url($tenant['slug'] . '/eventos/' . ($event['slug'] ?: $event['id'])) ?>" target="_blank" class="btn btn-sm btn-secondary" title="Página Pública">
                                     <span class="material-icons-round" style="font-size: 18px;">open_in_new</span>
                                 </a>
                             </div>

@@ -628,4 +628,31 @@ class SuperAdminController
         http_response_code($code);
         $this->json(['success' => false, 'error' => $message]);
     }
+    /**
+     * Delete ticket and all related data
+     */
+    public function supportDelete(array $params): void
+    {
+        $ticketId = (int) $params['id'];
+
+        try {
+            // 1. Delete actual files from disk
+            $attachments = db_fetch_all("SELECT path FROM support_attachments WHERE ticket_id = ?", [$ticketId]);
+            foreach ($attachments as $att) {
+                $fullPath = BASE_PATH . '/public/storage/' . $att['path'];
+                if (file_exists($fullPath)) {
+                    @unlink($fullPath);
+                }
+            }
+            
+            // 2. Delete database records
+            db_query("DELETE FROM support_attachments WHERE ticket_id = ?", [$ticketId]);
+            db_query("DELETE FROM support_messages WHERE ticket_id = ?", [$ticketId]);
+            db_query("DELETE FROM support_tickets WHERE id = ?", [$ticketId]);
+
+            $this->json(['success' => true, 'message' => 'Chamado excluído permanentemente.']);
+        } catch (\Exception $e) {
+            $this->jsonError('Erro ao excluir chamado: ' . $e->getMessage());
+        }
+    }
 }

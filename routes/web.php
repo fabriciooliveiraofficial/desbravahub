@@ -88,6 +88,7 @@ $router->get('/super-admin/suporte', [SuperAdminController::class, 'supportDashb
 $router->get('/super-admin/suporte/{id}', [SuperAdminController::class, 'supportShow'], [SuperAdminMiddleware::class]);
 $router->post('/super-admin/suporte/{id}/responder', [SuperAdminController::class, 'supportReply'], [SuperAdminMiddleware::class]);
 $router->post('/super-admin/suporte/{id}/status', [SuperAdminController::class, 'supportUpdateStatus'], [SuperAdminMiddleware::class]);
+$router->post('/super-admin/suporte/{id}/delete', [SuperAdminController::class, 'supportDelete'], [SuperAdminMiddleware::class]);
 
 
 // Public landing page (per tenant)
@@ -350,16 +351,40 @@ $router->post('/{tenant}/admin/convites/membros/enviar', [\App\Controllers\Invit
 $router->post('/{tenant}/admin/convites/membros/{id}/reenviar', [\App\Controllers\InvitationController::class, 'membersResend'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/convites/membros/{id}/revogar', [\App\Controllers\InvitationController::class, 'membersRevoke'], [TenantMiddleware::class, AuthMiddleware::class]);
 
-// Stripe payment routes (admin)
-$router->get('/{tenant}/admin/financeiro', [\App\Controllers\StripeController::class, 'settings'], [TenantMiddleware::class, AuthMiddleware::class]);
-$router->get('/{tenant}/admin/pagamentos/conectar', [\App\Controllers\StripeController::class, 'connect'], [TenantMiddleware::class, AuthMiddleware::class]);
-$router->get('/{tenant}/admin/pagamentos/callback', [\App\Controllers\StripeController::class, 'callback'], [TenantMiddleware::class, AuthMiddleware::class]);
-$router->post('/{tenant}/admin/pagamentos/desconectar', [\App\Controllers\StripeController::class, 'disconnect'], [TenantMiddleware::class, AuthMiddleware::class]);
-$router->get('/{tenant}/admin/pagamentos/historico', [\App\Controllers\StripeController::class, 'history'], [TenantMiddleware::class, AuthMiddleware::class]);
-$router->get('/{tenant}/admin/pagamentos/dashboard', [\App\Controllers\StripeController::class, 'dashboard'], [TenantMiddleware::class, AuthMiddleware::class]);
+// Stripe payment routes (legacy - admin)
+$router->get('/{tenant}/admin/financeiro-stripe', [\App\Controllers\StripeController::class, 'settings'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/admin/pagamentos-stripe/conectar', [\App\Controllers\StripeController::class, 'connect'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/admin/pagamentos-stripe/callback', [\App\Controllers\StripeController::class, 'callback'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/pagamentos-stripe/desconectar', [\App\Controllers\StripeController::class, 'disconnect'], [TenantMiddleware::class, AuthMiddleware::class]);
 
-// Stripe webhook (public, no auth)
+// Asaas Payment routes (admin)
+$router->get('/{tenant}/admin/financeiro', [\App\Controllers\AsaasController::class, 'index'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/pagamentos/conectar', [\App\Controllers\AsaasController::class, 'connect'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/pagamentos/desconectar', [\App\Controllers\AsaasController::class, 'disconnect'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/pagamentos/configuracoes', [\App\Controllers\AsaasController::class, 'updateSettings'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/pagamentos/cobranca', [\App\Controllers\AsaasController::class, 'createCharge'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/admin/pagamentos/parcelas', [\App\Controllers\AsaasController::class, 'installmentOptions'], [TenantMiddleware::class, AuthMiddleware::class]);
+
+// Asaas Subscriptions (admin)
+$router->get('/{tenant}/admin/pagamentos/mensalidades', [\App\Controllers\AsaasController::class, 'subscriptions'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/pagamentos/planos', [\App\Controllers\AsaasController::class, 'createPlan'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/pagamentos/assinar', [\App\Controllers\AsaasController::class, 'subscribeMember'], [TenantMiddleware::class, AuthMiddleware::class]);
+
+// Asaas Store (admin)
+$router->get('/{tenant}/admin/pagamentos/loja', [\App\Controllers\AsaasController::class, 'store'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/pagamentos/produtos', [\App\Controllers\AsaasController::class, 'createProduct'], [TenantMiddleware::class, AuthMiddleware::class]);
+
+// Asaas Webhook (public, no auth)
+$router->post('/{tenant}/webhook/asaas', [\App\Controllers\AsaasController::class, 'webhook'], [TenantMiddleware::class]);
+
+// Stripe webhook (legacy - public, no auth)
 $router->post('/{tenant}/webhook/stripe', [\App\Controllers\StripeController::class, 'webhook'], [TenantMiddleware::class]);
+
+// Public Events routes
+$router->get('/{tenant}/eventos', [\App\Controllers\ClubPublicEventController::class, 'index'], [TenantMiddleware::class]);
+$router->get('/{tenant}/eventos/([A-Za-z0-9-]+)', [\App\Controllers\ClubPublicEventController::class, 'show'], [TenantMiddleware::class]);
+$router->post('/{tenant}/eventos/([A-Za-z0-9-]+)/inscrever', [\App\Controllers\ClubPublicEventController::class, 'enroll'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/eventos/([A-Za-z0-9-]+)/checkout-asaas', [\App\Controllers\ClubPublicEventController::class, 'checkoutAsaas'], [TenantMiddleware::class, AuthMiddleware::class]);
 
 // Temporary fix route
 $router->get('/{tenant}/fix-xp', [FixController::class, 'run'], [TenantMiddleware::class, AuthMiddleware::class]);

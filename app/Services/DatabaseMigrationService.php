@@ -36,6 +36,7 @@ class DatabaseMigrationService
         $sql .= "-- Generated at: " . date('Y-m-d H:i:s') . "\n\n";
         $sql .= "SET FOREIGN_KEY_CHECKS=0;\n";
         $sql .= "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";\n";
+        $sql .= "SET NAMES utf8mb4;\n";
         $sql .= "START TRANSACTION;\n\n";
 
         $tables = $this->getTables();
@@ -53,18 +54,31 @@ class DatabaseMigrationService
             $createTableQuery = $this->pdo->query("SHOW CREATE TABLE `{$table}`")->fetch(PDO::FETCH_ASSOC);
             $sql .= $createTableQuery['Create Table'] . ";\n\n";
 
-            // Export data
-            $rows = $this->pdo->query("SELECT * FROM `{$table}`")->fetchAll(PDO::FETCH_ASSOC);
-            if (!empty($rows)) {
-                $sql .= "-- Data for table `{$table}`\n";
-                $chunks = array_chunk($rows, 100);
-
-                foreach ($chunks as $chunk) {
-                    $insertQuery = $this->buildInsertQuery($table, $chunk);
-                    $sql .= $insertQuery . ";\n";
+            // Export data using unbuffered or chunked selection to save memory
+            $sql .= "-- Data for table `{$table}`\n";
+            
+            $offset = 0;
+            $limit = 500;
+            
+            while (true) {
+                // Fetch in chunks to avoid memory exhaustion
+                $rows = $this->pdo->query("SELECT * FROM `{$table}` LIMIT {$limit} OFFSET {$offset}")->fetchAll(PDO::FETCH_ASSOC);
+                
+                if (empty($rows)) {
+                    break;
                 }
-                $sql .= "\n";
+
+                $insertQuery = $this->buildInsertQuery($table, $rows);
+                $sql .= $insertQuery . ";\n";
+                
+                $offset += $limit;
+                
+                // If we fetched fewer rows than the limit, we're done with this table
+                if (count($rows) < $limit) {
+                    break;
+                }
             }
+            $sql .= "\n";
         }
 
         $sql .= "COMMIT;\n";
@@ -86,30 +100,37 @@ class DatabaseMigrationService
             throw new RuntimeException("Arquivo de importação não encontrado.");
         }
 
-        $sql = file_get_contents($filePath);
-        if (empty(trim($sql))) {
-            throw new RuntimeException("O arquivo de importação está vazio.");
+        $handle = fopen($filePath, "r");
+        if (!$handle) {
+            throw new RuntimeException("Não foi possível abrir o arquivo de importação.");
         }
 
         try {
-            // Disable foreign key checks and set UTF8
             $this->pdo->exec("SET NAMES utf8mb4");
             $this->pdo->exec("SET FOREIGN_KEY_CHECKS=0");
-            
-            // Split SQL by semicolon followed by any combination of newline characters
-            // This handles \n, \r\n, and \r reliably across different OS environments
-            $statements = preg_split("/;[\s]*[\r\n]+/", $sql);
-            
-            foreach ($statements as $statement) {
-                $statement = trim($statement);
-                if (!empty($statement)) {
-                    $this->pdo->exec($statement);
+
+            $query = "";
+            while (($line = fgets($handle)) !== false) {
+                // Skip comments
+                if (str_starts_with(trim($line), "--") || str_starts_with(trim($line), "/*") || empty(trim($line))) {
+                    continue;
+                }
+
+                $query .= $line;
+
+                // Check if the query is finished (ends with a semicolon)
+                // This is still a bit primitive for complex triggers/procedures, but works for standard dumps
+                if (str_ends_with(trim($line), ";")) {
+                    $this->pdo->exec($query);
+                    $query = "";
                 }
             }
-            
+
+            fclose($handle);
             $this->pdo->exec("SET FOREIGN_KEY_CHECKS=1");
             return true;
         } catch (Exception $e) {
+            if ($handle) fclose($handle);
             $this->pdo->exec("SET FOREIGN_KEY_CHECKS=1");
             throw new RuntimeException("Erro ao importar banco de dados: " . $e->getMessage());
         }

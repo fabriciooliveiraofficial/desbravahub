@@ -106,7 +106,7 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
             <?php if (empty($questions)): ?>
                 <div style="margin-bottom: 24px;">
                     <label class="hud-stat-label" style="display: block; margin-bottom: 12px; color: #fff;">RELATÓRIO DE EXECUÇÃO</label>
-                    <textarea name="response_text" class="hud-input" style="min-height: 120px; resize: none;"
+                    <textarea name="response_text" id="q-text-consolidated" class="hud-input" style="min-height: 120px; resize: none;"
                         placeholder="Descreva detalhadamente como o requisito foi cumprido..."><?= htmlspecialchars($existingText) ?></textarea>
                     
                     <?php if (isset($itemEvals['consolidated'])): 
@@ -155,7 +155,7 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
                             </div>
                         <?php else: ?>
                             <i class="material-icons-round" style="position: absolute; left: 16px; top: 14px; color: var(--hud-text-dim); font-size: 1.2rem;">link</i>
-                            <input type="url" name="response_url" class="hud-input" style="padding-left: 48px;" placeholder="https://youtube.com/watch?v=..."
+                            <input type="url" name="response_url" id="q-url-main" class="hud-input" style="padding-left: 48px;" placeholder="https://youtube.com/watch?v=..."
                                 value="<?= htmlspecialchars((string)$existingUrl) ?>">
                         <?php endif; ?>
                     </div>
@@ -236,7 +236,7 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
                                     <?php endif; ?>
                                 </div>
                             <?php else: ?>
-                                <textarea name="answers[<?= $q['id'] ?>]" class="hud-input" style="min-height: 100px; resize: none;"
+                                <textarea name="answers[<?= $q['id'] ?>]" id="q-text-<?= $q['id'] ?>" class="hud-input" style="min-height: 100px; resize: none;"
                                     placeholder="Insira sua resposta..."><?= htmlspecialchars((string)$currentAnswer) ?></textarea>
                             <?php endif; ?>
 
@@ -284,18 +284,25 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
                                 <input type="file" name="response_file" onchange="this.parentElement.querySelector('.file-status').innerText = this.files[0].name" style="display: none;" id="file-q-<?= $q['id'] ?>">
                                 <label for="file-q-<?= $q['id'] ?>" style="cursor: pointer; display: block;">
                                     <i class="material-icons-round" style="font-size: 1.5rem; color: var(--accent-cyan); opacity: 0.5;">attach_file</i>
-                                    <div class="file-status" style="font-size: 0.8rem; color: var(--hud-text-dim);">Anexar Documento</div>
+                                    <div class="file-status" style="font-size: 0.8rem; color: var(--hud-text-dim);">
+                                        <?= $existingFile ? basename($existingFile) : 'Anexar Documento' ?>
+                                    </div>
                                 </label>
                             </div>
+                            <?php if ($existingFile && str_starts_with($existingFile, '/uploads/')): ?>
+                                <a href="<?= $existingFile ?>" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 0.7rem; color: var(--accent-cyan); text-decoration: none; opacity: 0.8;">
+                                    <i class="material-icons-round" style="font-size: 0.9rem; vertical-align: middle;">visibility</i> Ver arquivo atual
+                                </a>
+                            <?php endif; ?>
 
                         <?php elseif ($q['type'] === 'url'): ?>
                             <div style="position: relative;">
                                 <i class="material-icons-round" style="position: absolute; left: 14px; top: 12px; color: var(--hud-text-dim); font-size: 1.1rem;">link</i>
-                                <input type="url" name="answers[<?= $q['id'] ?>]" class="hud-input" placeholder="https://..." style="padding-left: 42px;"
+                                <input type="url" name="answers[<?= $q['id'] ?>]" id="q-url-<?= $q['id'] ?>" class="hud-input" placeholder="https://..." style="padding-left: 42px;"
                                     value="<?= htmlspecialchars($currentAnswer) ?>">
                             </div>
                         <?php elseif ($q['type'] === 'manual'): ?>
-                            <textarea name="answers[<?= $q['id'] ?>]" class="hud-input" style="min-height: 80px; resize: none;"
+                            <textarea name="answers[<?= $q['id'] ?>]" id="q-manual-<?= $q['id'] ?>" class="hud-input" style="min-height: 80px; resize: none;"
                                 placeholder="Relatório de atividade prática..."><?= htmlspecialchars((string)$currentAnswer) ?></textarea>
                         <?php elseif ($q['type'] === 'structured'): ?>
                             <div style="display: flex; flex-direction: column; gap: 16px;">
@@ -330,11 +337,11 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
                                         <?php elseif ($subType === 'url'): ?>
                                             <div style="position: relative;">
                                                 <i class="material-icons-round" style="position: absolute; left: 12px; top: 10px; color: var(--hud-text-dim); font-size: 1rem;">link</i>
-                                                <input type="url" name="answers[<?= $q['id'] ?>][<?= $sIdx ?>]" class="hud-input" placeholder="https://youtube.com/..." style="padding-left: 38px; min-height: 40px;"
+                                                <input type="url" name="answers[<?= $q['id'] ?>][<?= $sIdx ?>]" id="q-structured-url-<?= $q['id'] ?>-<?= $sIdx ?>" class="hud-input" placeholder="https://youtube.com/..." style="padding-left: 38px; min-height: 40px;"
                                                     value="<?= htmlspecialchars((string)$subAns) ?>">
                                             </div>
                                         <?php else: // text ?>
-                                            <textarea name="answers[<?= $q['id'] ?>][<?= $sIdx ?>]" class="hud-input" style="min-height: 80px; resize: none;"
+                                            <textarea name="answers[<?= $q['id'] ?>][<?= $sIdx ?>]" id="q-structured-text-<?= $q['id'] ?>-<?= $sIdx ?>" class="hud-input" style="min-height: 80px; resize: none;"
                                                 placeholder="Sua resposta para o item <?= htmlspecialchars($subQ['label'] ?? '') ?>..."><?= htmlspecialchars((string)$subAns) ?></textarea>
                                         <?php endif; ?>
                                     </div>
@@ -373,7 +380,7 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
                     <button type="button" class="hud-btn secondary modal-btn-save" onclick="submitStepForm(<?= $step['id'] ?>, this.form, 'draft')">
                         <i class="material-icons-round">save</i> <span class="btn-text">SALVAR</span>
                     </button>
-                    <button type="submit" class="hud-btn primary modal-btn-submit">
+                    <button type="submit" class="hud-btn primary modal-btn-submit disabled" disabled>
                         <i class="material-icons-round">rocket_launch</i> <span class="btn-text">ENVIAR</span>
                     </button>
                 <?php endif; ?>
@@ -486,6 +493,16 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
     #modal-content-area::-webkit-scrollbar { width: 6px; }
     #modal-content-area::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
     #modal-content-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+    /* Submission Guard Styles */
+    .modal-btn-submit.disabled {
+        opacity: 0.3 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+        filter: grayscale(1) !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
 
     .modal-content-scroll {
         padding: 24px;

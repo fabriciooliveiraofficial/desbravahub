@@ -8,6 +8,7 @@
 namespace App\Controllers;
 
 use App\Core\App;
+use App\Core\View;
 
 class SupportController
 {
@@ -26,7 +27,11 @@ class SupportController
             [$tenant['id'], $user['id']]
         );
 
-        require BASE_PATH . '/views/dashboard/support/index.php';
+        View::render('dashboard/support/index', [
+            'tenant' => $tenant,
+            'user' => $user,
+            'tickets' => $tickets
+        ], 'member');
     }
 
     /**
@@ -37,7 +42,10 @@ class SupportController
         $user = App::user();
         $tenant = App::tenant();
 
-        require BASE_PATH . '/views/dashboard/support/create.php';
+        View::render('dashboard/support/create', [
+            'tenant' => $tenant,
+            'user' => $user
+        ], 'member');
     }
 
     /**
@@ -127,7 +135,13 @@ class SupportController
             [$ticketId]
         );
 
-        require BASE_PATH . '/views/dashboard/support/show.php';
+        View::render('dashboard/support/show', [
+            'tenant' => $tenant,
+            'user' => $user,
+            'ticket' => $ticket,
+            'messages' => $messages,
+            'attachments' => $attachments
+        ], 'member');
     }
 
     /**

@@ -282,12 +282,87 @@
             if (data.success) {
                 document.getElementById('modalTitle').textContent = data.step.title;
                 document.getElementById('modalBody').innerHTML = data.html;
+                // Initialize submission guard after content is injected
+                initSubmissionGuard();
             } else {
                 document.getElementById('modalBody').innerHTML = '<p style="color: var(--accent-red);">Erro: ' + (data.error || 'Falha ao carregar') + '</p>';
             }
         } catch (err) {
             document.getElementById('modalBody').innerHTML = '<p style="color: var(--accent-red);">Erro de conexão com o servidor.</p>';
         }
+    }
+
+    /**
+     * Submission Guard: disables ENVIAR until all questions are answered.
+     * Called after modal HTML is injected via innerHTML.
+     */
+    function initSubmissionGuard() {
+        const modalBody = document.getElementById('modalBody');
+        if (!modalBody) return;
+
+        const form = modalBody.querySelector('form');
+        const submitBtn = modalBody.querySelector('.modal-btn-submit');
+        if (!form || !submitBtn) return;
+
+        // If form is disabled (approved/submitted), don't add guard
+        if (form.style.opacity === '0.7') return;
+
+        function checkCompleteness() {
+            let isComplete = true;
+
+            // 1. Check all .hud-input fields (textarea, input[type=text], input[type=url])
+            const textInputs = form.querySelectorAll('.hud-input');
+            textInputs.forEach(function(input) {
+                if (input.value.trim() === '') {
+                    isComplete = false;
+                }
+            });
+
+            // 2. Check radio/checkbox groups
+            const choiceInputs = form.querySelectorAll('input[type="radio"], input[type="checkbox"]');
+            const groups = {};
+            choiceInputs.forEach(function(input) {
+                const name = input.name;
+                if (!groups[name]) groups[name] = false;
+                if (input.checked) groups[name] = true;
+            });
+            for (const key in groups) {
+                if (groups[key] === false) {
+                    isComplete = false;
+                    break;
+                }
+            }
+
+            // 3. Check file upload questions
+            const fileInputs = form.querySelectorAll('input[type="file"][id^="file-"]');
+            fileInputs.forEach(function(input) {
+                // The "Ver arquivo atual" link is a sibling of .file-upload-zone, not a child.
+                // So we need to search the broader question container (parentElement of the zone).
+                const zone = input.closest('.file-upload-zone');
+                const questionContainer = zone ? zone.parentElement : input.closest('.tech-plate');
+                const hasExisting = questionContainer && !!questionContainer.querySelector('a[target="_blank"]');
+                if ((!input.files || input.files.length === 0) && !hasExisting) {
+                    isComplete = false;
+                }
+            });
+
+            // Update button state
+            if (isComplete) {
+                submitBtn.classList.remove('disabled');
+                submitBtn.removeAttribute('disabled');
+            } else {
+                submitBtn.classList.add('disabled');
+                submitBtn.setAttribute('disabled', 'disabled');
+            }
+        }
+
+        form.addEventListener('input', checkCompleteness);
+        form.addEventListener('change', checkCompleteness);
+        form.addEventListener('keyup', checkCompleteness);
+
+        // Initial check
+        checkCompleteness();
+        setTimeout(checkCompleteness, 200);
     }
 
     function closeModal(e) {

@@ -288,21 +288,24 @@
 
         // Active State Logic
         function updateSidebarActiveState() {
-            const currentPath = window.location.pathname;
+            const currentPath = window.location.pathname.replace(/\/+$/, '');
             const links = document.querySelectorAll('.admin-sidebar a');
             
             links.forEach(link => {
                 try {
                     const url = new URL(link.href);
-                    const linkPath = url.pathname;
+                    const linkPath = url.pathname.replace(/\/+$/, '');
                     
                     // Remove active class first
                     link.classList.remove('active');
                     
-                    // Check logic (exact or sub-path)
-                    // Note: Base URL logic might affect this if not strict. 
-                    // Using includes() for rudimentary match if path is not exact.
-                    if (currentPath === linkPath || (linkPath !== '/' && currentPath.startsWith(linkPath))) {
+                    // Dashboard link ends with /admin — requires EXACT match
+                    // to avoid marking it active on /admin/eventos, /admin/usuarios, etc.
+                    if (linkPath.match(/\/admin$/)) {
+                        if (currentPath === linkPath) {
+                            link.classList.add('active');
+                        }
+                    } else if (linkPath !== '/' && (currentPath === linkPath || currentPath.startsWith(linkPath + '/'))) {
                         link.classList.add('active');
                     }
                 } catch (e) {

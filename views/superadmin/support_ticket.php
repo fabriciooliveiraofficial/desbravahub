@@ -243,7 +243,24 @@ $createdAt = new DateTime($ticket['created_at']);
 
 <!-- Ticket Header -->
 <div class="ticket-header-card">
-    <div class="ticket-subject"><?= htmlspecialchars($ticket['subject']) ?></div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 16px;">
+        <div class="ticket-subject" style="margin-bottom: 0;"><?= htmlspecialchars($ticket['subject']) ?></div>
+        
+        <div style="display: flex; gap: 10px;">
+            <?php if ($ticket['status'] !== 'closed'): ?>
+                <button onclick="updateTicketStatus('closed')" class="sa-btn sa-btn-outline" style="border-color: #94a3b8; color: #94a3b8;">
+                    <span class="material-symbols-rounded" style="font-size: 18px;">close</span>
+                    Fechar Chamado
+                </button>
+            <?php endif; ?>
+            
+            <button onclick="deleteTicket()" class="sa-btn sa-btn-outline" style="border-color: #ef4444; color: #ef4444;">
+                <span class="material-symbols-rounded" style="font-size: 18px;">delete</span>
+                Excluir
+            </button>
+        </div>
+    </div>
+
     <div class="ticket-meta-grid">
         <div class="ticket-meta-item">
             <div class="meta-label">Status</div>
@@ -350,6 +367,40 @@ $createdAt = new DateTime($ticket['created_at']);
     function quickReply(text) {
         textarea.value = text;
         textarea.focus();
+    }
+
+    async function updateTicketStatus(newStatus) {
+        if (!confirm('Deseja realmente fechar este chamado?')) return;
+        
+        try {
+            const formData = new FormData();
+            formData.append('status', newStatus);
+            
+            const resp = await fetch(`/super-admin/suporte/<?= $ticket['id'] ?>/status`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+            if (data.success) location.reload();
+            else alert(data.error || 'Erro ao atualizar');
+        } catch (err) { alert('Erro de conexão'); }
+    }
+
+    async function deleteTicket() {
+        if (!confirm('⚠️ EXCLUSÃO PERMANENTE!\n\nEsta ação excluirá o ticket, mensagens e anexos para SEMPRE, inclusive da visão do usuário.\n\nTem certeza que deseja continuar?')) return;
+        
+        try {
+            const resp = await fetch(`/super-admin/suporte/<?= $ticket['id'] ?>/delete`, {
+                method: 'POST'
+            });
+            const data = await resp.json();
+            if (data.success) {
+                alert(data.message);
+                location.href = '/super-admin/suporte';
+            } else {
+                alert(data.error || 'Erro ao excluir');
+            }
+        } catch (err) { alert('Erro de conexão'); }
     }
 
     form.addEventListener('submit', async (e) => {

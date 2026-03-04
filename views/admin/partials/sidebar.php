@@ -37,6 +37,12 @@
             </div>
         </div>
 
+        <?php
+        // Active Path Logic
+        $currentPath = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+        $adminBase = rtrim(parse_url(base_url($tenant['slug'] . '/admin'), PHP_URL_PATH), '/');
+        ?>
+
         <!-- Toggle Button (Mobile) -->
         <button class="d-md-none mobile-sidebar-close" style="background: none; border: none; color: var(--text-muted); cursor: pointer;"
             id="mobile-sidebar-close">
@@ -48,28 +54,28 @@
     <nav class="sidebar-nav custom-scrollbar">
         <!-- Dashboard (Fixed Link) -->
         <a href="<?= base_url($tenant['slug'] . '/admin') ?>"
-            class="nav-item <?= str_ends_with($_SERVER['REQUEST_URI'], '/admin') || str_contains($_SERVER['REQUEST_URI'], '/admin?t=') ? 'active' : '' ?>">
+            class="nav-item <?= $currentPath === $adminBase ? 'active' : '' ?>">
             <span class="material-icons-round">dashboard</span>
             Dashboard
         </a>
 
         <!-- Club Profile -->
         <a href="<?= base_url($tenant['slug'] . '/admin/perfil-clube') ?>"
-            class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], '/admin/perfil-clube') ? 'active' : '' ?>">
+            class="nav-item <?= $currentPath === $adminBase . '/perfil-clube' ? 'active' : '' ?>">
             <span class="material-icons-round" style="color: #10b981;">storefront</span>
             Perfil do Clube
         </a>
 
         <!-- Events Management -->
         <a href="<?= base_url($tenant['slug'] . '/admin/eventos') ?>"
-            class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], '/admin/eventos') ? 'active' : '' ?>">
+            class="nav-item <?= str_starts_with($currentPath, $adminBase . '/eventos') ? 'active' : '' ?>">
             <span class="material-icons-round" style="color: #6366f1;">event</span>
             Eventos
         </a>
 
         <!-- Mission Control / God Mode -->
         <a href="<?= base_url($tenant['slug'] . '/admin/especialidades/god-mode') ?>"
-            class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], '/admin/especialidades/god-mode') ? 'active' : '' ?>">
+            class="nav-item <?= str_starts_with($currentPath, $adminBase . '/especialidades/god-mode') ? 'active' : '' ?>">
             <span class="material-icons-round">visibility</span>
             Mission Control 
             <span style="font-size: 0.6rem; background: var(--primary-color, #2563eb); color: white; padding: 2px 4px; border-radius: 4px; margin-left: auto; text-transform: uppercase;">Beta</span>
@@ -96,25 +102,25 @@
 
 
                 <a href="<?= base_url($tenant['slug'] . '/admin/programas') ?>"
-                    class="submenu-item <?= str_contains($_SERVER['REQUEST_URI'], '/admin/programas') ? 'active' : '' ?>">
+                    class="submenu-item <?= str_starts_with($currentPath, $adminBase . '/programas') ? 'active' : '' ?>">
                     <span class="submenu-dot" style="border-color: #06b6d4;"></span> <!-- Cyan-500 -->
                     Programas
                 </a>
 
                 <a href="<?= base_url($tenant['slug'] . '/admin/especialidades') ?>"
-                    class="submenu-item <?= str_contains($_SERVER['REQUEST_URI'], '/admin/especialidades') ? 'active' : '' ?>">
+                    class="submenu-item <?= str_starts_with($currentPath, $adminBase . '/especialidades') ? 'active' : '' ?>">
                     <span class="submenu-dot" style="border-color: #f97316;"></span> <!-- Orange-500 -->
                     Especialidades
                 </a>
 
                 <a href="<?= base_url($tenant['slug'] . '/admin/classes') ?>"
-                    class="submenu-item <?= str_contains($_SERVER['REQUEST_URI'], '/admin/classes') ? 'active' : '' ?>">
+                    class="submenu-item <?= str_starts_with($currentPath, $adminBase . '/classes') ? 'active' : '' ?>">
                     <span class="submenu-dot" style="border-color: #eab308;"></span> <!-- Yellow-500 -->
                     Classes
                 </a>
 
                 <a href="<?= base_url($tenant['slug'] . '/admin/categorias') ?>"
-                    class="submenu-item <?= str_contains($_SERVER['REQUEST_URI'], '/admin/categorias') ? 'active' : '' ?>">
+                    class="submenu-item <?= str_starts_with($currentPath, $adminBase . '/categorias') ? 'active' : '' ?>">
                     <span class="submenu-dot" style="border-color: #10b981;"></span> <!-- Emerald-500 -->
                     Categorias
                 </a>
@@ -125,14 +131,14 @@
 
         <!-- Users -->
         <a href="<?= base_url($tenant['slug'] . '/admin/usuarios') ?>"
-            class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/admin/usuarios') ? 'active' : '' ?>">
+            class="nav-item group <?= str_starts_with($currentPath, $adminBase . '/usuarios') ? 'active' : '' ?>">
             <span class="material-icons-round" style="color: #a855f7;">group</span> <!-- Purple-500 -->
             Usuários
         </a>
 
         <!-- Units -->
         <a href="<?= base_url($tenant['slug'] . '/admin/unidades') ?>"
-            class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/admin/unidades') ? 'active' : '' ?>">
+            class="nav-item group <?= str_starts_with($currentPath, $adminBase . '/unidades') ? 'active' : '' ?>">
             <span class="material-icons-round" style="color: #eab308;">cottage</span> <!-- Yellow-500 -->
             Unidades
         </a>
@@ -140,7 +146,7 @@
         <!-- Permissions (Admin Only) -->
         <?php if ($permissionService->can('admin.access')): ?>
             <a href="<?= base_url($tenant['slug'] . '/admin/permissoes') ?>"
-                class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/admin/permissoes') ? 'active' : '' ?>">
+                class="nav-item group <?= str_starts_with($currentPath, $adminBase . '/permissoes') ? 'active' : '' ?>">
                 <span class="material-icons-round" style="color: #d97706;">lock</span> <!-- Amber-600 -->
                 Permissões
             </a>
@@ -149,7 +155,7 @@
         <!-- Email Group -->
         <?php if ($permissionService->canAny(['notifications.broadcast', 'admin.access'])): ?>
             <a href="<?= base_url($tenant['slug'] . '/admin/email/inbox') ?>"
-                class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/admin/email') ? 'active' : '' ?>">
+                class="nav-item group <?= str_starts_with($currentPath, $adminBase . '/email') ? 'active' : '' ?>">
                 <span class="material-icons-round" style="color: #3b82f6;">mail</span> <!-- Blue-500 -->
                 Email
             </a>
@@ -158,22 +164,52 @@
         <!-- Invitations -->
         <?php if ($permissionService->canAny(['users.create', 'admin.access'])): ?>
             <a href="<?= base_url($tenant['slug'] . '/admin/convites') ?>"
-                class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/admin/convites') ? 'active' : '' ?>">
+                class="nav-item group <?= str_starts_with($currentPath, $adminBase . '/convites') ? 'active' : '' ?>">
                 <span class="material-icons-round" style="color: #94a3b8;">confirmation_number</span> <!-- Slate-400 -->
                 Convites
             </a>
         <?php endif; ?>
 
-        <!-- Payments -->
-        <a href="<?= base_url($tenant['slug'] . '/admin/financeiro') ?>"
-            class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/admin/financeiro') ? 'active' : '' ?>">
-            <span class="material-icons-round" style="color: #0ea5e9;">credit_card</span> <!-- Sky-500 -->
-            Financeiro
-        </a>
+        <!-- Payments Group -->
+        <div class="nav-group">
+            <button class="nav-item justify-between" onclick="toggleSubmenu('payments-submenu')"
+                style="justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div class="nav-icon-container" style="color: #0ea5e9;">
+                        <span class="material-icons-round">payments</span>
+                    </div>
+                    <span>Pagamentos</span>
+                </div>
+                <span class="material-icons-round transform transition-transform" id="arrow-payments-submenu"
+                    style="transition: transform 0.2s;">expand_more</span>
+            </button>
+
+            <div id="payments-submenu" class="submenu-container">
+                <div class="submenu-line"></div>
+
+                <a href="<?= base_url($tenant['slug'] . '/admin/financeiro') ?>"
+                    class="submenu-item <?= $currentPath === $adminBase . '/financeiro' ? 'active' : '' ?>">
+                    <span class="submenu-dot" style="border-color: #0ea5e9;"></span>
+                    Dashboard
+                </a>
+
+                <a href="<?= base_url($tenant['slug'] . '/admin/pagamentos/mensalidades') ?>"
+                    class="submenu-item <?= str_starts_with($currentPath, $adminBase . '/pagamentos/mensalidades') ? 'active' : '' ?>">
+                    <span class="submenu-dot" style="border-color: #f59e0b;"></span>
+                    Mensalidades
+                </a>
+
+                <a href="<?= base_url($tenant['slug'] . '/admin/pagamentos/loja') ?>"
+                    class="submenu-item <?= str_starts_with($currentPath, $adminBase . '/pagamentos/loja') ? 'active' : '' ?>">
+                    <span class="submenu-dot" style="border-color: #ec4899;"></span>
+                    Loja do Clube
+                </a>
+            </div>
+        </div>
 
         <!-- Evaluation Center -->
         <a href="<?= base_url($tenant['slug'] . '/admin/aprovacoes') ?>"
-            class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/admin/aprovacoes') ? 'active' : '' ?>">
+            class="nav-item group <?= str_starts_with($currentPath, $adminBase . '/aprovacoes') ? 'active' : '' ?>">
             <span class="material-icons-round" style="color: var(--accent-cyan);">fact_check</span>
             Avaliações
         </a>
@@ -181,7 +217,7 @@
         <!-- Versions -->
         <?php if ($permissionService->can('admin.versions')): ?>
             <a href="<?= base_url($tenant['slug'] . '/admin/versoes') ?>"
-                class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/admin/versoes') ? 'active' : '' ?>">
+                class="nav-item group <?= str_starts_with($currentPath, $adminBase . '/versoes') ? 'active' : '' ?>">
                 <span class="material-icons-round" style="color: #60a5fa;">system_update_alt</span> <!-- Blue-400 -->
                 Versões
             </a>
@@ -190,7 +226,7 @@
         <!-- Feature Flags -->
         <?php if ($permissionService->can('admin.features')): ?>
             <a href="<?= base_url($tenant['slug'] . '/admin/features') ?>"
-                class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/admin/features') ? 'active' : '' ?>">
+                class="nav-item group <?= str_starts_with($currentPath, $adminBase . '/features') ? 'active' : '' ?>">
                 <span class="material-icons-round" style="color: #f43f5e;">flag</span> <!-- Rose-500 -->
                 Feature Flags
             </a>
@@ -198,14 +234,14 @@
 
         <!-- Notifications -->
         <a href="<?= base_url($tenant['slug'] . '/admin/notificacoes') ?>"
-            class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/admin/notificacoes') ? 'active' : '' ?>">
+            class="nav-item group <?= str_starts_with($currentPath, $adminBase . '/notificacoes') ? 'active' : '' ?>">
             <span class="material-icons-round" style="color: #ec4899;">campaign</span> <!-- Pink-500 -->
             Notificações
         </a>
 
         <!-- Support -->
         <a href="<?= base_url($tenant['slug'] . '/suporte') ?>"
-            class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/suporte') ? 'active' : '' ?>">
+            class="nav-item group <?= str_contains($currentPath, '/suporte') ? 'active' : '' ?>">
             <span class="material-icons-round" style="color: #14b8a6;">headset_mic</span> <!-- Teal-500 -->
             Suporte
         </a>
