@@ -137,16 +137,43 @@ class LearningController
             exit;
         }
 
-        // Check if user has access (must be assigned)
-        if (!$program['progress_id']) {
+        // Check if user has access (must be assigned, OR be an admin/director)
+        $isAdminOrDirector = is_admin() || is_director();
+        
+        error_log("LearningController::show - Debug: User ID=" . $user['id'] . ", Role=" . ($user['role_name'] ?? 'none') . ", isAdminOrDir=" . ($isAdminOrDirector ? 'YES' : 'NO') . ", progress_id=" . ($program['progress_id'] ?? 'NULL'));
+
+        if (!$program['progress_id'] && !$isAdminOrDirector) {
             error_log("LearningController::show - Access Denied: User " . $user['id'] . " not assigned to Program " . $programId);
             header('HTTP/1.0 403 Forbidden');
-            echo 'Você não tem acesso a este programa';
+            echo 'Você não tem acesso a este programa. (PID:' . $programId . ', UID:' . $user['id'] . ', TID:' . $tenant['id'] . ')';
             exit;
         }
 
-        // Get version (user may be on older version)
-        $versionId = $program['version_id'];
+        // Get version (user may be on older version, or if previewing, get latest)
+        $versionId = $program['version_id'] ?? null;
+        
+        if (!$versionId && $isAdminOrDirector) {
+            // Find latest published version for preview
+            $latestVersion = db_fetch_one("
+                SELECT id FROM program_versions 
+                WHERE program_id = ? AND status = 'published' 
+                ORDER BY version_number DESC LIMIT 1
+            ", [$program['id']]);
+            
+            if ($latestVersion) {
+                $versionId = $latestVersion['id'];
+            } else {
+                // Flash message or error if no published version exists
+                header('HTTP/1.0 404 Not Found');
+                echo 'Nenhuma versão publicada encontrada para este programa.';
+                exit;
+            }
+            
+            // Set dummy progress data for the view
+            $program['progress_percent'] = 0;
+            $program['user_status'] = 'preview';
+            $program['progress_id'] = 0; // Prevent accidental submissions
+        }
 
         // Get steps for this version
         $steps = db_fetch_all("
@@ -316,6 +343,28 @@ class LearningController
                 $filename = time() . '_' . basename($_FILES['response_file']['name']);
                 move_uploaded_file($_FILES['response_file']['tmp_name'], $uploadDir . $filename);
                 $responseFile = '/uploads/responses/' . $tenant['id'] . '/' . $user['id'] . '/' . $filename;
+            }
+
+            // Handle nested file uploads for structured sub-questions
+            if (isset($_FILES['file_answers']) && is_array($_FILES['file_answers']['name'])) {
+                $answers = $_POST['answers'] ?? [];
+                $uploadBase = BASE_PATH . '/public/uploads/responses/' . $tenant['id'] . '/' . $user['id'] . '/';
+                if (!is_dir($uploadBase)) {
+                    @mkdir($uploadBase, 0755, true);
+                }
+
+                foreach ($_FILES['file_answers']['name'] as $questionId => $subIndices) {
+                    if (!is_array($subIndices)) continue;
+                    foreach ($subIndices as $subIndex => $fileName) {
+                        if ($_FILES['file_answers']['error'][$questionId][$subIndex] === UPLOAD_ERR_OK) {
+                            $tmpName = $_FILES['file_answers']['tmp_name'][$questionId][$subIndex];
+                            $safeName = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $fileName);
+                            move_uploaded_file($tmpName, $uploadBase . $safeName);
+                            $answers[$questionId][$subIndex] = '/uploads/responses/' . $tenant['id'] . '/' . $user['id'] . '/' . $safeName;
+                        }
+                    }
+                }
+                $responseText = json_encode($answers, JSON_UNESCAPED_UNICODE);
             }
 
             // Check if response exists

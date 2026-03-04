@@ -121,16 +121,32 @@ class ClubProfileController
         $tenant = App::tenant();
         
         $profile = db_fetch_one("SELECT slug FROM club_profiles WHERE tenant_id = ?", [$tenant['id']]);
+        
+        // Auto-initialize profile if it doesn't exist
         if (!$profile || empty($profile['slug'])) {
-            $this->jsonError('Configure o slug do perfil primeiro.');
-            return;
+            $slug = $tenant['slug'];
+            $exists = db_fetch_one("SELECT tenant_id FROM club_profiles WHERE tenant_id = ?", [$tenant['id']]);
+            
+            if (!$exists) {
+                db_insert('club_profiles', [
+                    'tenant_id' => $tenant['id'],
+                    'display_name' => $tenant['name'],
+                    'slug' => $slug,
+                    'welcome_message' => 'Bem-vindo ao nosso clube!'
+                ]);
+            } else if (empty($exists['slug'])) {
+                db_update('club_profiles', ['slug' => $slug], 'tenant_id = ?', [$tenant['id']]);
+            }
+            $targetSlug = $slug;
+        } else {
+            $targetSlug = $profile['slug'];
         }
 
         try {
-            $path = $this->generateOfflineCacheQrCode($tenant['id'], $profile['slug'], true);
+            $path = $this->generateOfflineCacheQrCode($tenant['id'], $targetSlug, true);
             $this->json([
                 'success' => true,
-                'path' => $path,
+                'path' => base_url($path),
                 'message' => 'QR Code gerado com sucesso!'
             ]);
         } catch (\Exception $e) {
@@ -145,11 +161,33 @@ class ClubProfileController
     {
         $growth = db_fetch_one("SELECT * FROM club_growth_tools WHERE tenant_id = ?", [$tenantId]);
         
+        $uploadDirRelative = 'public/uploads/qrcodes/';
+        $uploadDir = BASE_PATH . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $uploadDirRelative);
+        
         if ($growth && $growth['qr_code_path'] && !$force) {
-            return $growth['qr_code_path'];
+            // Check if file actually exists
+            $fullPath = BASE_PATH . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . ltrim(str_replace('/', DIRECTORY_SEPARATOR, $growth['qr_code_path']), DIRECTORY_SEPARATOR);
+            if (file_exists($fullPath)) {
+                return $growth['qr_code_path'];
+            }
         }
 
-        $appUrl = rtrim(config('app.base_url'), '/');
+        // Dynamic base URL detection for QR compatibility
+        if (isset($_SERVER['HTTP_HOST'])) {
+            $protocol = is_https() ? 'https' : 'http';
+            $appUrl = "{$protocol}://{$_SERVER['HTTP_HOST']}";
+            
+            // Check if it's running in a subdirectory (XAMPP style)
+            $scriptName = $_SERVER['SCRIPT_NAME'];
+            $publicDir = '/public/';
+            if (str_contains($scriptName, $publicDir)) {
+                $subfolder = substr($scriptName, 0, strpos($scriptName, $publicDir));
+                $appUrl .= $subfolder;
+            }
+        } else {
+            $appUrl = rtrim(config('app.base_url'), '/');
+        }
+
         // Final destination URL for the QR code
         $targetUrl = "{$appUrl}/c/{$slug}?utm_source=qr_offline";
         
@@ -157,7 +195,6 @@ class ClubProfileController
         $height = 500;
         $apiUrl = "https://api.qrserver.com/v1/create-qr-code/?size={$width}x{$height}&data=" . urlencode($targetUrl);
 
-        $uploadDir = BASE_PATH . '/public/uploads/qrcodes/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
@@ -167,10 +204,14 @@ class ClubProfileController
 
         $imageContent = @file_get_contents($apiUrl);
         if ($imageContent === false) {
-            throw new \Exception("Failed to generate QR Code from external service.");
+            $error = error_get_last();
+            error_log("QR Code Sync Fail: " . ($error['message'] ?? 'Unknown error'));
+            throw new \Exception("Não foi possível conectar ao serviço de QR Code. Verifique sua conexão.");
         }
 
-        file_put_contents($filePath, $imageContent);
+        if (file_put_contents($filePath, $imageContent) === false) {
+            throw new \Exception("Erro ao salvar arquivo de QR Code no servidor. Verifique permissões de escrita.");
+        }
 
         $dbPath = '/uploads/qrcodes/' . $fileName;
 

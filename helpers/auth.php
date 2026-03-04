@@ -133,6 +133,48 @@ function is_pathfinder(): bool
 }
 
 /**
+ * Check if a user's profile is complete (Mandatory for Pathfinders)
+ */
+function is_profile_complete(?array $user = null): bool
+{
+    $user = $user ?: auth();
+    if (!$user) return false;
+    
+    // Only Pathfinders are required to complete the full registry book for access
+    if (!is_pathfinder()) return true;
+
+    // Standard mandatory fields in 'users' table
+    if (empty($user['name']) || empty($user['birth_date']) || empty($user['phone'])) {
+        return false;
+    }
+
+    // Extended mandatory fields in 'user_profiles' table
+    try {
+        $profile = db_fetch_one("SELECT * FROM user_profiles WHERE user_id = ?", [$user['id']]);
+        if (!$profile) return false;
+
+        $mandatory = [
+            'address', 
+            'phone_emergency', 
+            'school_grade', 
+            'blood_type', 
+            'rh_factor', 
+            'tetanus_vaccine'
+        ];
+
+        foreach ($mandatory as $field) {
+            if (empty(trim($profile[$field] ?? ''))) {
+                return false;
+            }
+        }
+
+        return true;
+    } catch (\Exception $e) {
+        return false;
+    }
+}
+
+/**
  * Get CSRF token
  */
 function csrf_token(): string

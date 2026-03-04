@@ -207,8 +207,8 @@ class NotificationCenter {
                     </span>
                     ${isUnread ? '<span style="width: 8px; height: 8px; background: #00d9ff; border-radius: 50%;"></span>' : ''}
                 </div>
-                <p style="margin: 0; color: #888; font-size: 13px; line-height: 1.4;">
-                    ${this.escapeHtml(notification.message)}
+                <p style="margin: 0; color: #888; font-size: 13px; line-height: 1.4; pointer-events: auto;">
+                    ${this.linkify(this.escapeHtml(notification.message))}
                 </p>
                 <span style="font-size: 11px; color: #555; margin-top: 6px; display: block;">
                     ${time}
@@ -225,8 +225,14 @@ class NotificationCenter {
 
         // Navigate if has link
         const data = notification.data ? JSON.parse(notification.data) : {};
-        if (data.link) {
-            window.location.href = data.link;
+        const urlToOpen = data.link || data.url;
+        if (urlToOpen) {
+            // Se for link externo (Google Maps, etc), abrir em nova aba
+            if (urlToOpen.startsWith('http://') || urlToOpen.startsWith('https://')) {
+                window.open(urlToOpen, '_blank', 'noopener,noreferrer');
+            } else {
+                window.location.href = urlToOpen;
+            }
         }
     }
 
@@ -268,9 +274,19 @@ class NotificationCenter {
     }
 
     escapeHtml(text) {
+        if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    linkify(text) {
+        if (!text) return '';
+        // Basic URL regex
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlRegex, function (url) {
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #00d9ff; text-decoration: none;" onclick="event.stopPropagation();">${url}</a>`;
+        });
     }
 }
 

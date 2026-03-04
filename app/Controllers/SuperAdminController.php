@@ -68,7 +68,7 @@ class SuperAdminController
 
             // Create session independently
             $token = $this->authService->createSession($user['id']);
-            $this->authService->setAuthCookie($token);
+            $this->authService->setAuthCookie($token, '/super-admin/', 'super_admin');
 
             $this->json(['success' => true, 'redirect' => '/super-admin/dashboard']);
         } catch (\Throwable $e) {
@@ -86,11 +86,16 @@ class SuperAdminController
      */
     public function logout(): void
     {
-        $token = $this->authService->getTokenFromRequest();
+        $token = $this->authService->getTokenFromRequest('super_admin');
 
         if ($token) {
             $this->authService->destroySession($token);
-            $this->authService->clearAuthCookie();
+            // Clear specific Super Admin cookie
+            $this->authService->clearAuthCookie('/super-admin/', 'super_admin');
+            // Clear legacy global Super Admin cookie
+            $this->authService->clearAuthCookie('/', 'super_admin');
+            // Clear any global legacy cookie
+            $this->authService->clearAuthCookie('/');
         }
 
         // Redirect to Super Admin login

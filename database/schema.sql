@@ -572,7 +572,7 @@ CREATE TABLE `user_requirement_progress` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `assignment_id` INT UNSIGNED NOT NULL,
     `requirement_id` INT UNSIGNED NOT NULL,
-    `status` ENUM('pending', 'answered', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+    `status` ENUM('pending', 'draft', 'answered', 'submitted', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
     `answer` TEXT NULL COMMENT 'User response (text, JSON for choices)',
     `file_path` VARCHAR(500) NULL COMMENT 'For file_upload type',
     `answered_at` TIMESTAMP NULL,

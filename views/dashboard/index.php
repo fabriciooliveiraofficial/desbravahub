@@ -20,8 +20,8 @@
         <div class="hud-stat-card primary tech-plate vibrant-cyan stagger-1" style="flex: 2; padding: 28px;">
             <div class="plate-header">
                 <div>
-                    <div class="hud-stat-value" style="font-size: 3.5rem; line-height: 1;"><?= number_format($progress['xp'] ?? 0) ?></div>
-                    <div class="hud-stat-label" style="font-size: 0.9rem; letter-spacing: 0.2em;">EXP ACUMULADO</div>
+                    <div class="hud-stat-value" style="font-size: var(--fs-stat-hero); line-height: 1;"><?= number_format($progress['xp'] ?? 0) ?></div>
+                    <div class="hud-stat-label" style="letter-spacing: 0.2em;">EXP ACUMULADO</div>
                 </div>
                 <i class="material-icons-round hud-stat-icon" style="font-size: 3rem; opacity: 1; filter: drop-shadow(0 0 10px var(--accent-cyan));">bolt</i>
             </div>
@@ -41,11 +41,11 @@
             <div class="plate-data" style="border:0; padding:0; margin-top:8px; grid-template-columns: 1fr 1fr;">
                 <div class="data-point">
                     <span class="data-label">Nível Atual</span>
-                    <span class="data-value" style="font-size: 1.2rem; color: #fff;">NV. <?= is_array($progress['level'] ?? 1) ? 1 : ($progress['level'] ?? 1) ?></span>
+                    <span class="data-value" style="color: #fff;">NV. <?= is_array($progress['level'] ?? 1) ? 1 : ($progress['level'] ?? 1) ?></span>
                 </div>
                 <div class="data-point" style="align-items: flex-end">
                     <span class="data-label">Próximo Nível</span>
-                    <span class="data-value" style="font-size: 1.2rem; color: #fff;"><?= number_format($nextLevelXp) ?> <span style="font-size: 0.7rem; opacity: 0.5;">XP</span></span>
+                    <span class="data-value" style="color: #fff;"><?= number_format($nextLevelXp) ?> <span style="font-size: 0.7rem; opacity: 0.5;">XP</span></span>
                 </div>
             </div>
         </div>
@@ -55,7 +55,7 @@
             <div class="hud-stat-card tech-plate vibrant-orange stagger-2" style="padding: 24px;">
                 <div class="plate-header" style="margin-bottom: 8px;">
                     <div>
-                        <div class="hud-stat-value" style="color: var(--accent-warning); font-size: 2.8rem;"><?= $progress['streak'] ?? 0 ?></div>
+                        <div class="hud-stat-value" style="color: var(--accent-warning);"><?= $progress['streak'] ?? 0 ?></div>
                         <div class="hud-stat-label">DIAS DE STREAK</div>
                     </div>
                     <i class="material-icons-round hud-stat-icon" style="color: var(--accent-warning); filter: drop-shadow(0 0 8px var(--accent-warning)); opacity: 1;">local_fire_department</i>
@@ -74,7 +74,7 @@
             <div class="hud-stat-card tech-plate vibrant-green stagger-3" style="padding: 24px;">
                 <div class="plate-header" style="margin-bottom: 8px;">
                     <div>
-                        <div class="hud-stat-value" style="color: var(--accent-green); font-size: 2.8rem;"><?= $insigniaCount ?></div>
+                        <div class="hud-stat-value" style="color: var(--accent-green);"><?= $insigniaCount ?></div>
                         <div class="hud-stat-label">INSÍGNIAS</div>
                     </div>
                     <i class="material-icons-round hud-stat-icon" style="color: var(--accent-green); filter: drop-shadow(0 0 8px var(--accent-green)); opacity: 1;">military_tech</i>
@@ -92,7 +92,7 @@
     <!-- Active Missions -->
     <section class="hud-section" style="margin-top: 40px;">
         <div class="hud-section-header">
-            <h2 class="hud-section-title" style="font-size: 1.4rem; letter-spacing: 0.1em; color: var(--accent-cyan);">MISSÕES ATIVAS</h2>
+            <h2 class="hud-section-title" style="color: var(--accent-cyan);">MISSÕES ATIVAS</h2>
             <a href="<?= base_url($tenant['slug'] . '/atividades') ?>" style="margin-left: auto; font-size: 0.75rem; color: #fff; background: rgba(255,255,255,0.05); padding: 6px 14px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.1em; text-decoration: none; font-weight: 800; border: 1px solid rgba(255,255,255,0.1);">
                 ARQUIVO COMPLETO <i class="fas fa-arrow-right" style="font-size: 0.6rem; margin-left: 6px;"></i>
             </a>
@@ -124,7 +124,7 @@
                         <div class="plate-header">
                             <div class="plate-content">
                                 <div class="plate-category" style="color: var(--accent-cyan); font-weight: 900;"><?= ($activity['type_label'] ?? '') === 'specialty' ? 'ESPECIALIDADE' : 'MISSÃO OFICIAL' ?></div>
-                                <h3 class="plate-title" style="font-size: 1.3rem; margin-top: 8px;"><?= htmlspecialchars($activity['title']) ?></h3>
+                                <h3 class="plate-title"><?= htmlspecialchars($activity['title']) ?></h3>
                             </div>
                             <i class="material-icons-round plate-icon" style="color: var(--accent-cyan);">rocket_launch</i>
                         </div>

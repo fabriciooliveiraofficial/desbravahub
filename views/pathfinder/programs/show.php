@@ -14,7 +14,7 @@
             <div>
                 <h1 class="hud-title" style="font-size: 1.5rem; line-height: 1.2; margin-bottom: 4px;"><?= htmlspecialchars($program['name']) ?></h1>
                 <div class="hud-subtitle" style="font-size: 0.9rem;">
-                    <?= $program['type'] === 'class' ? 'Classe Regular' : 'Especialidade / Programa' ?>
+                    <?= $program['type'] === 'class' ? 'Classe Regular' : 'Especialidade' ?>
                     <?php if ($program['category_name']): ?>
                         • <?= htmlspecialchars($program['category_name']) ?>
                     <?php endif; ?>

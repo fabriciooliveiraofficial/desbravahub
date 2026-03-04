@@ -146,18 +146,30 @@ class AuthService
 
     /**
      * Get session token from request
+     * 
+     * Priority: Authorization header (per-tab) > tenant cookie > legacy cookie
+     * 
+     * @param string|null $slug Optional tenant slug to look for specific cookie
      */
-    public function getTokenFromRequest(): ?string
+    public function getTokenFromRequest(?string $slug = null): ?string
     {
-        // Check cookie first
-        if (isset($_COOKIE['auth_token'])) {
-            return $_COOKIE['auth_token'];
-        }
-
-        // Check Authorization header
+        // 1. Authorization header FIRST (per-tab session via sessionStorage + HTMX)
         $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
         if (preg_match('/Bearer\s+(.+)/', $header, $matches)) {
             return $matches[1];
+        }
+
+        // 2. Tenant-specific cookie (fallback for full page loads)
+        if ($slug) {
+            $name = 'auth_token_' . $slug;
+            if (isset($_COOKIE[$name])) {
+                return $_COOKIE[$name];
+            }
+        }
+
+        // 3. Legacy global cookie
+        if (isset($_COOKIE['auth_token'])) {
+            return $_COOKIE['auth_token'];
         }
 
         return null;
@@ -165,18 +177,24 @@ class AuthService
 
     /**
      * Set auth cookie
+     * 
+     * @param string $token Session token
+     * @param string $cookiePath Cookie path scope (e.g. '/tenant-slug/' for tenant isolation)
+     * @param string|null $slug Optional tenant slug for unique cookie name
      */
-    public function setAuthCookie(string $token): void
+    public function setAuthCookie(string $token, string $cookiePath = '/', ?string $slug = null): void
     {
         $expires = time() + (self::SESSION_LIFETIME_HOURS * 3600);
         
         // Only use Secure cookies if on HTTPS AND not in dev/local environment
-        // Browsers block Secure cookies on http://localhost exception, but it's safer to be explicit
         $secure = is_https() && !is_dev();
+        
+        // Use unique name per tenant if slug provided
+        $cookieName = $slug ? 'auth_token_' . $slug : 'auth_token';
 
-        setcookie('auth_token', $token, [
+        setcookie($cookieName, $token, [
             'expires' => $expires,
-            'path' => '/',
+            'path' => $cookiePath,
             'secure' => $secure,
             'httponly' => true,
             'samesite' => 'Lax',
@@ -185,12 +203,18 @@ class AuthService
 
     /**
      * Clear auth cookie
+     * 
+     * @param string $cookiePath Cookie path scope
+     * @param string|null $slug Optional tenant slug for unique cookie name
      */
-    public function clearAuthCookie(): void
+    public function clearAuthCookie(string $cookiePath = '/', ?string $slug = null): void
     {
-        setcookie('auth_token', '', [
+        // Use unique name per tenant if slug provided
+        $cookieName = $slug ? 'auth_token_' . $slug : 'auth_token';
+
+        setcookie($cookieName, '', [
             'expires' => time() - 3600,
-            'path' => '/',
+            'path' => $cookiePath,
         ]);
     }
 }

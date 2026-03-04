@@ -20,7 +20,8 @@ class AuthMiddleware
         $authService = new AuthService();
 
         // Get token from request
-        $token = $authService->getTokenFromRequest();
+        $tenant = App::tenant();
+        $token = $authService->getTokenFromRequest($tenant['slug'] ?? null);
 
         if (!$token) {
             $this->unauthorized('Authentication required');
@@ -38,13 +39,56 @@ class AuthMiddleware
         // Verify user belongs to current tenant
         $tenant = App::tenant();
         if ($tenant && $user['tenant_id'] != $tenant['id']) {
-            error_log("AuthMiddleware: Tenant mismatch. User tenant: " . $user['tenant_id'] . ", Requested tenant: " . $tenant['id'] . " (User: " . ($user['email'] ?? 'unknown') . ")");
-            $this->forbidden('Acesso negado a este clube (Tenant mismatch)');
-            return false;
+            error_log("AuthMiddleware - Tenant mismatch (session isolation). User tenant: " . $user['tenant_id'] . ", Requested tenant: " . $tenant['id'] . " (User: " . ($user['email'] ?? 'unknown') . ")");
+            
+            // For AJAX/HTMX requests, return a 401 to trigger re-authentication
+            $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) 
+                    || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+                    || !empty($_SERVER['HTTP_HX_REQUEST']);
+            
+            if ($isAjax) {
+                http_response_code(401);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Sessão inválida para este clube. Faça login novamente.', 'redirect' => base_url($tenant['slug'] . '/login')]);
+                return false;
+            }
+            
+            // For normal page requests, redirect to the tenant's login page
+            header('Location: ' . base_url($tenant['slug'] . '/login'));
+            exit;
         }
 
         // Set user in application context
         App::setUser($user);
+
+        // Prevent browser from caching authenticated pages
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        // Pathfinder Profile Lock:
+        // If user is a pathfinder and has not completed the registry book,
+        // redirect them to the profile page automatically.
+        if (is_pathfinder() && !is_profile_complete($user)) {
+            $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+            $slug = $tenant['slug'];
+            
+            // Define whitelisted paths that can be accessed even with incomplete profile
+            $allowedPaths = [
+                "/{$slug}/perfil",
+                "/{$slug}/perfil/salvar",
+                "/{$slug}/logout",
+                "/{$slug}/api/sos/trigger"
+            ];
+
+            // Clean up URI for comparison (remove trailing slashes)
+            $cleanUri = rtrim($uri, '/');
+
+            if (!in_array($cleanUri, $allowedPaths)) {
+                header("Location: " . base_url("{$slug}/perfil?incomplete=1"));
+                exit;
+            }
+        }
 
         return true;
     }

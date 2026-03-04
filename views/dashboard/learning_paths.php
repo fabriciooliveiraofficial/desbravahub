@@ -3,15 +3,14 @@
  * Learning Paths - Mapa de Trilhas (Duolingo Style)
  * Deep Glass HUD - Animated Node Map
  */
-$overallPercent = $totalNodes > 0 ? round(($completedNodes / $totalNodes) * 100) : 0;
 ?>
 
 <div class="lp-wrapper">
     <!-- Header -->
-    <header class="lp-header">
+    <header class="hud-header">
         <div>
-            <h1 class="lp-title">MAPA DE TRILHAS</h1>
-            <p class="lp-subtitle">Navegue pela sua jornada de aprendizado</p>
+            <h1 class="hud-title">MAPA DE TRILHAS</h1>
+            <p class="hud-subtitle">Navegue pela sua jornada de aprendizado</p>
         </div>
         <div class="lp-header-stats">
             <div class="lp-stat-pill">
@@ -59,14 +58,15 @@ $overallPercent = $totalNodes > 0 ? round(($completedNodes / $totalNodes) * 100)
                     </div>
                     <div class="lp-cat-info">
                         <h2 class="lp-cat-title"><?= htmlspecialchars($catName) ?></h2>
-                        <?php
+                        <?php 
                             $catTotal = count($category['nodes']);
+                            $catSumProgress = array_sum(array_column($category['nodes'], 'progress'));
+                            $catPercent = $catTotal > 0 ? round($catSumProgress / $catTotal) : 0;
                             $catDone = count(array_filter($category['nodes'], fn($n) => $n['status'] === 'completed'));
                         ?>
                         <span class="lp-cat-count"><?= $catDone ?>/<?= $catTotal ?> concluídas</span>
                     </div>
                     <div class="lp-cat-progress-ring">
-                        <?php $catPercent = $catTotal > 0 ? round(($catDone / $catTotal) * 100) : 0; ?>
                         <svg viewBox="0 0 36 36" class="lp-ring-svg">
                             <path class="lp-ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
                             <path class="lp-ring-fill" stroke="<?= htmlspecialchars($category['color']) ?>"
@@ -116,7 +116,7 @@ $overallPercent = $totalNodes > 0 ? round(($completedNodes / $totalNodes) * 100)
                                     <?php endif; ?>
                                 </div>
                                 <div class="lp-node-content">
-                                    <span class="lp-node-type"><?= $node['type'] === 'specialty' ? 'ESPECIALIDADE' : 'PROGRAMA' ?></span>
+                                    <span class="lp-node-type"><?= $node['type'] === 'class' ? 'CLASSE' : 'ESPECIALIDADE' ?></span>
                                     <h3 class="lp-node-title"><?= htmlspecialchars($node['title']) ?></h3>
                                     
                                     <?php if ($node['status'] === 'in_progress'): ?>
@@ -168,21 +168,6 @@ $overallPercent = $totalNodes > 0 ? round(($completedNodes / $totalNodes) * 100)
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 20px;
-}
-
-.lp-title {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: 0.15em;
-    margin: 0;
-}
-
-.lp-subtitle {
-    font-size: 0.75rem;
-    color: var(--lp-text-dim);
-    margin: 4px 0 0;
 }
 
 .lp-header-stats {

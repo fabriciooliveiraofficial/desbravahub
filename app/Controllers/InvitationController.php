@@ -352,8 +352,13 @@ class InvitationController
         ], 'id = ?', [$invitation['id']]);
 
         // Log the user in (Token-based)
+        $cookiePath = '/' . $tenant['slug'] . '/';
         $token = $this->authService->createSession($userId);
-        $this->authService->setAuthCookie($token);
+        $this->authService->setAuthCookie($token, $cookiePath, $tenant['slug']);
+
+        // Flash token for per-tab session guard
+        $_SESSION['flash_auth_token'] = $token;
+        $_SESSION['flash_auth_user_id'] = $userId;
 
         $_SESSION['flash_success'] = 'Conta criada com sucesso! Bem-vindo ao ' . $tenant['name'];
         header('Location: ' . base_url($tenant['slug'] . '/admin'));
@@ -772,10 +777,22 @@ class InvitationController
         // Update Invitation
         db_update('member_invitations', ['accepted_at' => date('Y-m-d H:i:s')], 'id = ?', [$invitation['id']]);
 
+        // Referral System: Track conversion if this email was invited
+        try {
+            \App\Services\ReferralService::handleRegistration($userId, $invitation['email'], $tenant['id']);
+        } catch (\Exception $e) {
+            error_log("Referral tracking error: " . $e->getMessage());
+        }
+
         // Log in (Token-based)
+        $cookiePath = '/' . $tenant['slug'] . '/';
         $token = $this->authService->createSession($userId);
-        $this->authService->setAuthCookie($token);
+        $this->authService->setAuthCookie($token, $cookiePath, $tenant['slug']);
         
+        // Flash token for per-tab session guard
+        $_SESSION['flash_auth_token'] = $token;
+        $_SESSION['flash_auth_user_id'] = $userId;
+
         $_SESSION['flash_success'] = 'Bem-vindo ao Clube!';
         header('Location: ' . base_url($tenant['slug'] . '/dashboard'));
     }

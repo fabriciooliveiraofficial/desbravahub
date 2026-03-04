@@ -131,6 +131,9 @@
     </script>
     <script src="<?= asset_url('js/toast.js') ?>"></script>
     <script src="<?= asset_url('js/uas.js') ?>"></script>
+    
+    <!-- Session Guard (Per-Tab Isolation) -->
+    <script src="<?= asset_url('js/session-guard.js') ?>?v=<?= time() ?>"></script>
 
     <style>
         /* Helper for Iconify visibility */
@@ -212,6 +215,22 @@
         </div>
     </main>
     <script>
+        // Initialize Per-Tab Session Guard
+        if (typeof SessionGuard !== 'undefined') {
+            <?php
+            // Pick up flash token from invitation auto-login
+            $flashToken = $_SESSION['flash_auth_token'] ?? null;
+            $flashUserId = $_SESSION['flash_auth_user_id'] ?? null;
+            if ($flashToken) {
+                unset($_SESSION['flash_auth_token'], $_SESSION['flash_auth_user_id']);
+            }
+            ?>
+            <?php if ($flashToken): ?>
+            SessionGuard.storeSession(<?= json_encode($flashToken) ?>, <?= json_encode($flashUserId) ?>);
+            <?php endif; ?>
+            SessionGuard.init(<?= json_encode($user['id'] ?? null) ?>);
+        }
+
         // --- Mobile Sidebar Toggle & Active State Logic ---
         if (!window.sidebarToggleInitialized) {
             window.sidebarToggleInitialized = true;

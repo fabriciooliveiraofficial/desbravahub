@@ -182,12 +182,20 @@
     async function generateQr() {
         if (!toast) toast = window.toast || new (window.ToastNotification || ToastNotification)();
         
+        const btn = document.querySelector('button[onclick="generateQr()"]');
+        const originalText = btn.innerHTML;
+        
         try {
+            btn.innerHTML = '<span class="material-icons-round rotate">sync</span> Gerando...';
+            btn.disabled = true;
             toast.info('Aguarde', 'Gerando QR Code...');
             
             const response = await fetch('<?= base_url($tenant['slug'] . '/admin/perfil-clube/qrcode') ?>', {
                 method: 'POST',
-                headers: { 'Accept': 'application/json' }
+                headers: { 
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
             });
 
             const data = await response.json();
@@ -195,14 +203,26 @@
             if (data.success) {
                 toast.success('Sucesso', data.message);
                 const container = document.getElementById('qr-code-container');
-                container.innerHTML = `<img src="${window.location.origin}${data.path}" alt="QR Code do Clube" style="max-width: 100%; height: auto; border-radius: 4px;">`;
+                // Use the returned path directly (it's now a full URL from backend)
+                container.innerHTML = `<img src="${data.path}" alt="QR Code do Clube" style="max-width: 100%; height: auto; border-radius: 4px;">`;
+                
+                // Update button text after first generation
+                if (originalText.includes('Gerar')) {
+                    btn.innerHTML = '<span class="material-icons-round">autorenew</span> Regerar QR Code';
+                }
             } else {
                 toast.error('Erro', data.error || 'Erro ao gerar QR Code');
             }
         } catch (err) {
             console.error(err);
-            if (toast) toast.error('Erro', 'Erro de conexão.');
-            else alert('Erro de conexão');
+            if (toast) toast.error('Erro', 'Erro de conexão ou resposta inválida do servidor.');
+        } finally {
+            if (!document.getElementById('qr-code-container').querySelector('img')) {
+                btn.innerHTML = originalText;
+            } else {
+                btn.innerHTML = '<span class="material-icons-round">autorenew</span> Regerar QR Code';
+            }
+            btn.disabled = false;
         }
     }
 </script>

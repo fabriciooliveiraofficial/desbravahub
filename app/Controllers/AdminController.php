@@ -143,6 +143,55 @@ class AdminController
     }
 
     /**
+     * View complete user profile (Registration & Medical)
+     */
+    public function viewUserProfile(array $params): void
+    {
+        $this->requirePermission('users.manage');
+
+        $userId = (int) $params['id'];
+        $tenant = App::tenant();
+
+        try {
+            // Get user with role specifically for this tenant
+            $user = db_fetch_one(
+                "SELECT u.*, r.name as role_name 
+                 FROM users u 
+                 JOIN roles r ON u.role_id = r.id 
+                 WHERE u.id = ? AND u.tenant_id = ? AND u.deleted_at IS NULL",
+                [$userId, $tenant['id']]
+            );
+
+            if (!$user) {
+                $this->jsonError('Usuário não encontrado');
+                return;
+            }
+
+            $profile = db_fetch_one(
+                "SELECT * FROM user_profiles WHERE user_id = ? AND tenant_id = ?",
+                [$userId, $tenant['id']]
+            );
+
+            $this->json([
+                'success' => true,
+                'user' => [
+                    'id' => $user['id'],
+                    'name' => $user['name'],
+                    'email' => $user['email'],
+                    'phone' => $user['phone'],
+                    'birth_date' => $user['birth_date'],
+                    'created_at' => $user['created_at'],
+                    'role_name' => ucfirst($user['role_name'])
+                ],
+                'profile' => $profile
+            ]);
+
+        } catch (\Exception $e) {
+            $this->jsonError('Erro ao buscar perfil: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Update user role
      */
     public function updateUserRole(array $params): void
@@ -835,7 +884,11 @@ public function deleteUser(array $params): void
     private function jsonError(string $message, int $code = 400): void
     {
         http_response_code($code);
-        $this->json(['error' => $message]);
+        $this->json([
+            'success' => false,
+            'error' => $message,
+            'message' => $message // Backward compatibility
+        ]);
     }
 
     /**

@@ -17,7 +17,7 @@ class SuperAdminMiddleware
     public function handle(array $params = [], array $mwParams = []): bool
     {
         $authService = new \App\Services\AuthService();
-        $token = $authService->getTokenFromRequest();
+        $token = $authService->getTokenFromRequest('super_admin');
         $user = null;
 
         if ($token) {

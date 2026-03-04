@@ -108,8 +108,13 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
                                 <?= number_format($program['xp_reward']) ?>
                             </span>
                             <div class="card-actions">
+                                <button class="btn-icon-action" title="Editar Informações"
+                                    onclick="openEditProgramModal(this.dataset.program)"
+                                    data-program="<?= htmlspecialchars(json_encode($program), ENT_QUOTES, 'UTF-8') ?>">
+                                    <span class="material-icons-round" style="font-size:18px">settings</span>
+                                </button>
                                 <a href="<?= base_url($programs_tenantSlug . '/admin/programas/' . $program['id'] . '/editar') ?>" 
-                                   class="btn-icon-action" title="Editar">
+                                   class="btn-icon-action" title="Editar Requisitos">
                                     <span class="material-icons-round" style="font-size:18px">edit</span>
                                 </a>
 
@@ -177,6 +182,9 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
 
     <!-- Create Program Modal -->
     <?php require BASE_PATH . '/views/admin/programs/partials/create_modal.php'; ?>
+
+    <!-- Edit Program Details Modal -->
+    <?php require BASE_PATH . '/views/admin/programs/partials/edit_details_modal.php'; ?>
 
 
     <script>

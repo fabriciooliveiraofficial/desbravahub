@@ -151,6 +151,7 @@ $router->get('/{tenant}/admin/atividades', [AdminController::class, 'activities'
 $router->post('/{tenant}/admin/activities', [AdminController::class, 'createActivity'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/activities/{id}', [AdminController::class, 'updateActivity'], [TenantMiddleware::class, AuthMiddleware::class]);
     $router->get('/{tenant}/admin/usuarios', [AdminController::class, 'users'], [TenantMiddleware::class, AuthMiddleware::class]);
+    $router->get('/{tenant}/admin/usuarios/{id}/ficha', [AdminController::class, 'viewUserProfile'], [TenantMiddleware::class, AuthMiddleware::class]);
     $router->post('/{tenant}/admin/usuarios/{id}/role', [AdminController::class, 'updateUserRole'], [TenantMiddleware::class, AuthMiddleware::class]);
     $router->post('/{tenant}/admin/usuarios/{id}/status', [AdminController::class, 'toggleUserStatus'], [TenantMiddleware::class, AuthMiddleware::class]);
     $router->post('/{tenant}/admin/usuarios/{id}/delete', [AdminController::class, 'deleteUser'], [TenantMiddleware::class, AuthMiddleware::class]);
@@ -241,7 +242,12 @@ $router->get('/{tenant}/atividades/{id}', [DashboardController::class, 'activity
 $router->get('/{tenant}/conquistas', [DashboardController::class, 'achievements'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/ranking', [DashboardController::class, 'leaderboard'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/ranking-unidades', [DashboardController::class, 'unitLeaderboard'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/ranking-recrutamento', [DashboardController::class, 'recruitmentLeaderboard'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/perfil', [DashboardController::class, 'profile'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/perfil/salvar', [DashboardController::class, 'saveProfile'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/convite/enviar', [DashboardController::class, 'sendReferralInvite'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/convite/{token}', [DashboardController::class, 'handleInviteClick'], [TenantMiddleware::class]);
+
 $router->get('/{tenant}/provas', [DashboardController::class, 'proofs'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/notificacoes', [DashboardController::class, 'notifications'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/notificacoes/limpar', [DashboardController::class, 'clearNotifications'], [TenantMiddleware::class, AuthMiddleware::class]);

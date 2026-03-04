@@ -115,9 +115,11 @@
                                             $evalData = json_decode($jsonStr, true);
                                             
                                             if ($evalData) {
+                                                $items = $evalData['items'] ?? (is_array($evalData) && !isset($evalData['overall']) ? $evalData : []);
+                                                
                                                 // Show main evidence feedback if rejected
-                                                if (isset($evalData['items']['main_evidence']['status']) && $evalData['items']['main_evidence']['status'] === 'rejected') {
-                                                    echo '<span style="color: #ef4444;">' . htmlspecialchars($evalData['items']['main_evidence']['feedback']) . '</span>';
+                                                if (isset($items['main_evidence']['status']) && $items['main_evidence']['status'] === 'rejected') {
+                                                    echo '<span style="color: #ef4444;">' . htmlspecialchars($items['main_evidence']['feedback']) . '</span>';
                                                 } 
                                                 // Show overall feedback is present
                                                 elseif (!empty($evalData['overall'])) {
@@ -126,9 +128,11 @@
                                                 // Show generic message if multiple items rejected
                                                 else {
                                                     $rejectedCount = 0;
-                                                    foreach ($evalData['items'] as $item) {
-                                                        if (isset($item['status']) && $item['status'] === 'rejected') {
-                                                            $rejectedCount++;
+                                                    if (is_array($items)) {
+                                                        foreach ($items as $item) {
+                                                            if (is_array($item) && isset($item['status']) && $item['status'] === 'rejected') {
+                                                                $rejectedCount++;
+                                                            }
                                                         }
                                                     }
                                                     if ($rejectedCount > 0) {

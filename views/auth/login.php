@@ -187,6 +187,13 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    // Store token per-tab for session isolation
+                    if (data.token && data.user) {
+                        try {
+                            sessionStorage.setItem('dh_auth_token', data.token);
+                            sessionStorage.setItem('dh_user_id', String(data.user.id));
+                        } catch (e) { /* sessionStorage not available */ }
+                    }
                     window.location.href = data.redirect;
                 } else {
                     errorDiv.textContent = data.error || 'Erro ao fazer login';

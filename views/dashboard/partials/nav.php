@@ -9,16 +9,24 @@ $isTrilhas = strpos($currentPath, '/trilhas') !== false;
 $isClasses = strpos($currentPath, '/aprendizado') !== false;
 $isAgenda = strpos($currentPath, '/eventos') !== false;
 $isDesafios = strpos($currentPath, '/provas') !== false;
+$isRanking = strpos($currentPath, '/ranking') !== false;
 $isPerfil = strpos($currentPath, '/perfil') !== false;
+
+// Profile Completion Check
+$profileLocked = is_pathfinder() && !is_profile_complete();
 ?>
 
 <nav class="dock-premium" id="dockNav">
     <div class="dock-inner">
         <!-- QG / Home -->
         <a href="<?= base_url($tenant['slug'] . '/dashboard') ?>" 
-           class="dock-item <?= $isHome ? 'active' : '' ?>" data-tooltip="Quartel General">
+           class="dock-item <?= $isHome ? 'active' : '' ?> <?= ($profileLocked && !$isHome) ? 'locked-item' : '' ?>" 
+           data-tooltip="<?= ($profileLocked && !$isHome) ? 'Complete seu perfil para liberar' : 'Quartel General' ?>">
             <div class="dock-icon-wrap">
                 <span class="material-icons-round">rocket_launch</span>
+                <?php if ($profileLocked && !$isHome): ?>
+                    <span class="material-icons-round lock-overlay">lock</span>
+                <?php endif; ?>
                 <div class="icon-glow"></div>
             </div>
             <span class="dock-label">QG</span>
@@ -27,11 +35,14 @@ $isPerfil = strpos($currentPath, '/perfil') !== false;
 
         <!-- Trilhas (Mapa de Nodos) -->
         <a href="<?= base_url($tenant['slug'] . '/trilhas') ?>" 
-           class="dock-item <?= $isTrilhas ? 'active' : '' ?>" 
-           data-tooltip="Mapa de Trilhas"
+           class="dock-item <?= $isTrilhas ? 'active' : '' ?> <?= ($profileLocked && !$isTrilhas) ? 'locked-item' : '' ?>" 
+           data-tooltip="<?= ($profileLocked && !$isTrilhas) ? 'Complete seu perfil para liberar' : 'Mapa de Trilhas' ?>"
            hx-boost="false">
             <div class="dock-icon-wrap">
                 <span class="material-icons-round">route</span>
+                <?php if ($profileLocked && !$isTrilhas): ?>
+                    <span class="material-icons-round lock-overlay">lock</span>
+                <?php endif; ?>
                 <div class="icon-glow"></div>
             </div>
             <span class="dock-label">Trilhas</span>
@@ -40,9 +51,13 @@ $isPerfil = strpos($currentPath, '/perfil') !== false;
 
         <!-- Agenda -->
         <a href="<?= base_url($tenant['slug'] . '/eventos') ?>" 
-           class="dock-item <?= $isAgenda ? 'active' : '' ?>" data-tooltip="Agenda do Clube">
+           class="dock-item <?= $isAgenda ? 'active' : '' ?> <?= ($profileLocked && !$isAgenda) ? 'locked-item' : '' ?>" 
+           data-tooltip="<?= ($profileLocked && !$isAgenda) ? 'Complete seu perfil para liberar' : 'Agenda do Clube' ?>">
             <div class="dock-icon-wrap">
                 <span class="material-icons-round">calendar_month</span>
+                <?php if ($profileLocked && !$isAgenda): ?>
+                    <span class="material-icons-round lock-overlay">lock</span>
+                <?php endif; ?>
                 <div class="icon-glow"></div>
             </div>
             <span class="dock-label">Agenda</span>
@@ -51,13 +66,32 @@ $isPerfil = strpos($currentPath, '/perfil') !== false;
 
         <!-- Desafios -->
         <a href="<?= base_url($tenant['slug'] . '/provas') ?>" 
-           class="dock-item <?= $isDesafios ? 'active' : '' ?>" data-tooltip="Desafios & Missões">
+           class="dock-item <?= $isDesafios ? 'active' : '' ?> <?= ($profileLocked && !$isDesafios) ? 'locked-item' : '' ?>" 
+           data-tooltip="<?= ($profileLocked && !$isDesafios) ? 'Complete seu perfil para liberar' : 'Desafios & Missões' ?>">
             <div class="dock-icon-wrap">
                 <span class="material-icons-round">emoji_events</span>
+                <?php if ($profileLocked && !$isDesafios): ?>
+                    <span class="material-icons-round lock-overlay">lock</span>
+                <?php endif; ?>
                 <div class="icon-glow"></div>
             </div>
             <span class="dock-label">Desafios</span>
             <?php if ($isDesafios): ?><span class="active-dot"></span><?php endif; ?>
+        </a>
+
+        <!-- Ranking -->
+        <a href="<?= base_url($tenant['slug'] . '/ranking') ?>" 
+           class="dock-item <?= $isRanking ? 'active' : '' ?> <?= ($profileLocked && !$isRanking) ? 'locked-item' : '' ?>" 
+           data-tooltip="<?= ($profileLocked && !$isRanking) ? 'Complete seu perfil para liberar' : 'Ranking Geral' ?>">
+            <div class="dock-icon-wrap">
+                <span class="material-icons-round">leaderboard</span>
+                <?php if ($profileLocked && !$isRanking): ?>
+                    <span class="material-icons-round lock-overlay">lock</span>
+                <?php endif; ?>
+                <div class="icon-glow"></div>
+            </div>
+            <span class="dock-label">Ranking</span>
+            <?php if ($isRanking): ?><span class="active-dot"></span><?php endif; ?>
         </a>
 
         <!-- Perfil -->
@@ -125,6 +159,27 @@ $isPerfil = strpos($currentPath, '/perfil') !== false;
 @keyframes dockSlideIn {
     from { transform: translateY(100%) scale(0.9); opacity: 0; }
     to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Locked Item Styles */
+.dock-item.locked-item {
+    opacity: 0.4;
+    filter: grayscale(1);
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}
+
+.lock-overlay {
+    position: absolute;
+    font-size: 14px !important;
+    color: var(--danger) !important;
+    background: rgba(0,0,0,0.8);
+    border-radius: 50%;
+    padding: 2px;
+    top: -5px;
+    right: -5px;
+    z-index: 10;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
 }
 
 /* Dock Item */
@@ -277,10 +332,11 @@ $isPerfil = strpos($currentPath, '/perfil') !== false;
 
 /* Color variations for each icon on hover (optional flair) */
 .dock-item:nth-child(1):hover .dock-icon-wrap { background: linear-gradient(135deg, #06b6d4, #22d3ee); } /* QG - Cyan */
-.dock-item:nth-child(2):hover .dock-icon-wrap { background: linear-gradient(135deg, #8b5cf6, #a78bfa); } /* Missões - Purple/Vibrant */
+.dock-item:nth-child(2):hover .dock-icon-wrap { background: linear-gradient(135deg, #8b5cf6, #a78bfa); } /* Trilhas - Purple */
 .dock-item:nth-child(3):hover .dock-icon-wrap { background: linear-gradient(135deg, #f472b6, #ec4899); } /* Agenda - Pink */
 .dock-item:nth-child(4):hover .dock-icon-wrap { background: linear-gradient(135deg, #f97316, #fb923c); } /* Desafios - Orange */
-.dock-item:nth-child(5):hover .dock-icon-wrap { background: linear-gradient(135deg, #22c55e, #4ade80); } /* Perfil - Green */
+.dock-item:nth-child(5):hover .dock-icon-wrap { background: linear-gradient(135deg, #eab308, #fbbf24); } /* Ranking - Gold */
+.dock-item:nth-child(6):hover .dock-icon-wrap { background: linear-gradient(135deg, #22c55e, #4ade80); } /* Perfil - Green */
 
 /* Keep active gradients consistent */
 .dock-item.active .dock-icon-wrap,

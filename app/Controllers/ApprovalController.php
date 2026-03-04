@@ -165,12 +165,39 @@ class ApprovalController
                                 }
                                 $readableAnswer = implode(", ", $mappedArr);
                             }
+                        } elseif ($q['type'] === 'structured' && is_array($answer)) {
+                            $subQuestions = json_decode($q['options'] ?? '[]', true) ?? [];
+                            $mappedArr = [];
+                            foreach ($subQuestions as $sIdx => $subQ) {
+                                $subAns = $answer[$sIdx] ?? '';
+                                $subType = $subQ['type'] ?? 'text';
+                                
+                                if ($subType === 'file' && !empty($subAns)) {
+                                    $subAnsDisplay = "📎 Arquivo: " . basename($subAns) . " ($subAns)";
+                                } elseif ($subType === 'url' && !empty($subAns)) {
+                                    $subAnsDisplay = "🔗 Link: " . $subAns;
+                                } else {
+                                    $subAnsDisplay = $subAns;
+                                }
+
+                                $mappedArr[] = "▶ ITEM " . ($subQ['label'] ?? '') . " - " . ($subQ['text'] ?? '') . "\nResposta:\n" . $subAnsDisplay;
+                                
+                                // Store raw sub-answers for intelligent rendering in the review card
+                                $qa['structured_sub_answers'][] = [
+                                    'label' => $subQ['label'] ?? '',
+                                    'text' => $subQ['text'] ?? '',
+                                    'answer' => $subAns,
+                                    'type' => $subType
+                                ];
+                            }
+                            $readableAnswer = implode("\n\n----------------------------------------\n\n", $mappedArr);
                         }
                         
                         $step['structured_content'][] = [
                             'question' => $label,
                             'answer' => $readableAnswer,
-                            'type' => $q['type']
+                            'type' => $q['type'],
+                            'sub_answers' => $qa['structured_sub_answers'] ?? null
                         ];
                     }
                 }

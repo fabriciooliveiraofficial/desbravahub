@@ -394,24 +394,38 @@ async function sosSend() {
             body: JSON.stringify({ lat, lng })
         });
 
-        const data = await response.json();
+        // Try to parse JSON, handling non-JSON responses gracefully
+        let data;
+        try {
+            data = await response.json();
+        } catch (parseError) {
+            // Server returned non-JSON (e.g., PHP error HTML)
+            data = { success: false, error: 'Erro no servidor (resposta inválida). Tente ligar para um líder.' };
+        }
 
         document.getElementById('sos-sending').style.display = 'none';
         document.getElementById('sos-result').style.display = 'flex';
 
+        const resultIcon = document.querySelector('.sos-result-icon');
+        const resultText = document.getElementById('sos-result-text');
+
         if (data.success) {
-            document.getElementById('sos-result-text').textContent = data.message;
+            resultIcon.textContent = '✅';
+            resultText.textContent = data.message || 'SOS enviado com sucesso!';
+            resultText.style.color = '#22c55e';
         } else {
-            document.querySelector('.sos-result-icon').textContent = '⚠️';
-            document.getElementById('sos-result-text').textContent = data.error || 'Erro ao enviar SOS';
-            document.getElementById('sos-result-text').style.color = '#f87171';
+            resultIcon.textContent = '⚠️';
+            resultText.textContent = data.error || 'Erro ao enviar SOS. Tente ligar para um líder.';
+            resultText.style.color = '#f87171';
         }
     } catch (err) {
+        console.error('[SOS] Network error:', err);
         document.getElementById('sos-sending').style.display = 'none';
         document.getElementById('sos-result').style.display = 'flex';
         document.querySelector('.sos-result-icon').textContent = '⚠️';
-        document.getElementById('sos-result-text').textContent = 'Erro de conexão. Tente ligar para um líder.';
+        document.getElementById('sos-result-text').textContent = 'Erro de conexão com o servidor. Tente ligar para um líder.';
         document.getElementById('sos-result-text').style.color = '#f87171';
     }
 }
+
 </script>

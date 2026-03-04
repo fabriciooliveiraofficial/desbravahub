@@ -1203,9 +1203,9 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Pontos</label>
+                                    <label>Pontos (Fair Play Engine ⚖️)</label>
                                     <input type="number" class="form-control step-points-input"
-                                        value="<?= $step['points'] ?>" min="0">
+                                        value="<?= $step['points'] ?>" readonly style="background: var(--bg-body); cursor: not-allowed; opacity: 0.8;" title="O sistema calcula automaticamente o XP para evitar inflação no ranking.">
                                 </div>
                                 <div class="form-group">
                                     <label>Obrigatório</label>
@@ -1222,7 +1222,8 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
                                     <?php foreach ($step['questions'] ?? [] as $qIndex => $question): ?>
                                         <div class="question-card" data-question-index="<?= $qIndex ?>">
                                             <div class="question-header">
-                                                <span class="question-type-badge"><?= match ($question['type']) {
+                                                <?php
+                                                $labelText = match ($question['type']) {
                                                     'text' => '📝 Texto',
                                                     'single_choice' => '🔘 Única Escolha',
                                                     'multiple_choice' => '☑️ Múltipla Escolha',
@@ -1230,9 +1231,15 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
                                                     'file_upload' => '📎 Upload',
                                                     'url' => '🔗 URL',
                                                     'manual' => '✋ Aprovação Manual',
+                                                    'structured' => '📑 Estruturada',
                                                     default => '❓ ' . $question['type']
-                                                } ?></span>
-                                                <button class="step-btn delete" onclick="removeQuestion(this)">🗑️</button>
+                                                };
+                                                ?>
+                                                <span class="question-type-badge"><?= $labelText ?></span>
+                                                <div style="display: flex; gap: 8px;">
+                                                    <button class="step-btn edit" onclick="editQuestion(this)" style="background: rgba(var(--accent-primary-rgb), 0.1); color: var(--accent-primary);">✏️</button>
+                                                    <button class="step-btn delete" onclick="removeQuestion(this)">🗑️</button>
+                                                </div>
                                             </div>
                                             <div class="form-group">
                                                 <input type="text" class="form-control question-text-input"
@@ -1240,6 +1247,20 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
                                                     placeholder="Texto da pergunta...">
                                                 <input type="hidden" class="question-type-input"
                                                     value="<?= $question['type'] ?>">
+                                                <input type="hidden" class="question-points-input" value="<?= $question['points'] ?? 10 ?>">
+                                                <input type="hidden" class="question-required-input" value="<?= ($question['is_required'] ?? true) ? '1' : '0' ?>">
+                                                
+                                                <?php if (!empty($question['options'])): ?>
+                                                    <input type="hidden" class="question-options-input" value='<?= is_string($question['options']) ? $question['options'] : json_encode($question['options']) ?>'>
+                                                <?php endif; ?>
+
+                                                <?php if (isset($question['correct_answer'])): ?>
+                                                    <input type="hidden" class="question-correct-input" value="<?= $question['correct_answer'] ?>">
+                                                <?php endif; ?>
+
+                                                <?php if (!empty($question['correct_answers'])): ?>
+                                                    <input type="hidden" class="question-correct-answers-input" value='<?= is_string($question['correct_answers']) ? $question['correct_answers'] : json_encode($question['correct_answers']) ?>'>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
                                     <?php endforeach; ?>
@@ -1259,7 +1280,7 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
     <div class="question-modal-overlay" id="questionModal" onclick="closeQuestionModal(event)">
         <div class="question-modal" onclick="event.stopPropagation()">
             <div class="question-modal-header">
-                <h2>➕ Nova Pergunta</h2>
+                <h2 id="questionModalTitle">➕ Nova Pergunta</h2>
                 <button class="modal-close-btn" onclick="closeQuestionModal()">&times;</button>
             </div>
             <div class="question-modal-body">
@@ -1296,6 +1317,10 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
                     <div class="question-type-option" data-type="manual" onclick="selectQuestionType('manual')">
                         <span class="type-icon">✋</span>
                         <span class="type-label">Manual</span>
+                    </div>
+                    <div class="question-type-option" data-type="structured" onclick="selectQuestionType('structured')">
+                        <span class="type-icon">📑</span>
+                        <span class="type-label">Estruturada</span>
                     </div>
                 </div>
 
@@ -1334,10 +1359,20 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
                         </div>
                     </div>
 
+                    <!-- Structured Question Options -->
+                    <div id="structuredEditor" style="display: none; margin-top: 16px;">
+                        <label>Sub-perguntas (Itens A, B, C...)</label>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">
+                            Cada sub-pergunta terá seu próprio campo de resposta dissertativa para o desbravador.
+                        </p>
+                        <div class="options-list" id="structuredList"></div>
+                        <button type="button" class="add-option-btn" onclick="addStructuredOption()">➕ Adicionar Sub-pergunta</button>
+                    </div>
+
                     <div class="form-row" style="margin-top: 16px;">
                         <div class="form-group">
-                            <label>Pontos</label>
-                            <input type="number" class="form-control" id="newQuestionPoints" value="10" min="0">
+                            <label>Pontos Individuais (Opcional)</label>
+                            <input type="number" class="form-control" id="newQuestionPoints" value="0" min="0" placeholder="O XP principal é calculado por requisito.">
                         </div>
                         <div class="form-group">
                             <label>Obrigatória</label>
@@ -1351,8 +1386,7 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
             </div>
             <div class="question-modal-footer">
                 <button type="button" class="btn-cancel" onclick="closeQuestionModal()">Cancelar</button>
-                <button type="button" class="btn-add-question" onclick="submitNewQuestion()">✅ Adicionar
-                    Pergunta</button>
+                <button type="button" class="btn-add-question" id="submitQuestionBtn" onclick="submitNewQuestion()">✅ Adicionar Pergunta</button>
             </div>
         </div>
     </div>
@@ -1378,11 +1412,13 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
     <script>
         // Initialize button state
         document.addEventListener('DOMContentLoaded', () => {
+            updateAddStepButtonState();
             setTimeout(updateAddStepButtonState, 500); // Give small delay for list to render
         });
 
         window.tenantSlug = '<?= $tenant['slug'] ?>';
         window.programId = <?= $program['id'] ?>;
+        window.programXp = <?= (int)($program['xp_reward'] ?? 100) ?>;
 
         function toggleStep(header) {
             header.closest('.step-card').classList.toggle('expanded');
@@ -1399,14 +1435,65 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
                 return;
             }
 
-            const lastStep = steps[steps.length - 1];
-            const questions = lastStep.querySelectorAll('.question-card');
-            
-            if (questions.length === 0) {
+            let hasEmptyStep = false;
+
+            steps.forEach(step => {
+                const questions = step.querySelectorAll('.question-card');
+                if (questions.length === 0) {
+                    hasEmptyStep = true;
+                    // Visual feedback for empty step
+                    step.style.border = '1px solid var(--accent-red, #ef4444)';
+                    step.style.boxShadow = '0 0 8px rgba(239, 68, 68, 0.2)';
+                    const title = step.querySelector('.step-title');
+                    if (title && !title.innerHTML.includes('⚠️')) {
+                        title.innerHTML += ' <span style="color: #ef4444; font-size: 0.8rem;" class="empty-warning" title="Adicione pelo menos 1 pergunta">⚠️ Vazio</span>';
+                    }
+                } else {
+                    step.style.border = '';
+                    step.style.boxShadow = '';
+                    const warning = step.querySelector('.empty-warning');
+                    if (warning) warning.remove();
+                }
+            });
+
+            if (hasEmptyStep) {
                 btn.classList.add('disabled');
             } else {
                 btn.classList.remove('disabled');
             }
+
+            // Sync with Fair Play Engine
+            calculateFairPlayXP();
+        }
+
+        function calculateFairPlayXP() {
+            const steps = document.querySelectorAll('.step-card');
+            const count = steps.length;
+            if (count === 0) return;
+
+            const totalXp = window.programXp || 100;
+            const xpPerStep = Math.floor(totalXp / count);
+            const remainder = totalXp % count;
+
+            steps.forEach((card, index) => {
+                let points = xpPerStep;
+                if (index === count - 1) {
+                    points += remainder;
+                }
+
+                // Update input (hidden or readonly)
+                const input = card.querySelector('.step-points-input');
+                if (input) {
+                    input.value = points;
+                }
+
+                // Update UI label
+                const meta = card.querySelector('.step-meta');
+                if (meta) {
+                    const questionCount = card.querySelectorAll('.question-card').length;
+                    meta.textContent = `${questionCount} perguntas • ${points} pts`;
+                }
+            });
         }
 
         function addStep() {
@@ -1441,8 +1528,8 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Pontos</label>
-                                <input type="number" class="form-control step-points-input" value="10" min="0">
+                                <label>Pontos (Fair Play Engine ⚖️)</label>
+                                <input type="number" class="form-control step-points-input" value="10" readonly style="background: var(--bg-body); cursor: not-allowed; opacity: 0.8;" title="O sistema calcula automaticamente o XP para evitar inflação no ranking.">
                             </div>
                             <div class="form-group">
                                 <label>Obrigatório</label>
@@ -1485,6 +1572,7 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
         let currentQuestionBtn = null;
         let selectedQuestionType = null;
         let trueFalseAnswer = null;
+        let editingQuestionCard = null;
 
         const typeLabels = {
             'single_choice': '🔘 Única Escolha',
@@ -1493,25 +1581,108 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
             'text': '📝 Texto',
             'file_upload': '📎 Upload',
             'url': '🔗 URL',
-            'manual': '✋ Aprovação Manual'
+            'manual': '✋ Aprovação Manual',
+            'structured': '📑 Estruturada'
         };
 
         function addQuestion(btn) {
             currentQuestionBtn = btn;
             selectedQuestionType = null;
             trueFalseAnswer = null;
+            editingQuestionCard = null;
 
             // Reset modal state
+            document.getElementById('questionModalTitle').textContent = '➕ Nova Pergunta';
+            document.getElementById('submitQuestionBtn').textContent = '✅ Adicionar Pergunta';
             document.querySelectorAll('.question-type-option').forEach(el => el.classList.remove('selected'));
             document.getElementById('questionFormSection').classList.remove('active');
             document.getElementById('optionsEditor').style.display = 'none';
             document.getElementById('trueFalseEditor').style.display = 'none';
+            document.getElementById('structuredEditor').style.display = 'none';
             document.getElementById('optionsList').innerHTML = '';
+            document.getElementById('structuredList').innerHTML = '';
             document.getElementById('newQuestionText').value = '';
             document.getElementById('newQuestionPoints').value = '10';
             document.getElementById('newQuestionRequired').value = '1';
             document.getElementById('trueFalseTrue').classList.remove('correct');
             document.getElementById('trueFalseFalse').classList.remove('correct');
+
+            // Show modal
+            document.getElementById('questionModal').classList.add('active');
+        }
+
+        function editQuestion(btn) {
+            const card = btn.closest('.question-card');
+            editingQuestionCard = card;
+            currentQuestionBtn = card.parentElement.querySelector('.add-question-btn'); // Fallback logic if needed, but we don't need currentQuestionBtn for edit
+
+            const type = card.querySelector('.question-type-input').value;
+            const text = card.querySelector('.question-text-input').value;
+            const points = card.querySelector('.question-points-input').value;
+            const required = card.querySelector('.question-required-input').value;
+
+            // Update Modal UI
+            document.getElementById('questionModalTitle').textContent = '✏️ Editar Pergunta';
+            document.getElementById('submitQuestionBtn').textContent = '💾 Salvar Alterações';
+
+            // Set current values
+            document.getElementById('newQuestionText').value = text;
+            document.getElementById('newQuestionPoints').value = points;
+            document.getElementById('newQuestionRequired').value = required;
+
+            // Select type
+            selectQuestionType(type);
+
+            // Handle type-specific data
+            if (type === 'single_choice' || type === 'multiple_choice') {
+                const optionsInput = card.querySelector('.question-options-input');
+                const correctInput = card.querySelector('.question-correct-input');
+                const correctAnswersInput = card.querySelector('.question-correct-answers-input');
+
+                if (optionsInput) {
+                    const options = JSON.parse(optionsInput.value);
+                    const optionsList = document.getElementById('optionsList');
+                    optionsList.innerHTML = '';
+                    
+                    let correctIdxs = [];
+                    if (type === 'single_choice' && correctInput) {
+                        correctIdxs = [parseInt(correctInput.value)];
+                    } else if (type === 'multiple_choice' && correctAnswersInput) {
+                        correctIdxs = JSON.parse(correctAnswersInput.value);
+                    }
+
+                    options.forEach((opt, idx) => {
+                        addOption();
+                        const row = optionsList.lastElementChild;
+                        row.querySelector('.option-text-input').value = opt;
+                        if (correctIdxs.includes(idx)) {
+                            toggleOptionCorrect(row.querySelector('.option-correct-marker'));
+                        }
+                    });
+                }
+            } else if (type === 'true_false') {
+                const correctInput = card.querySelector('.question-correct-input');
+                if (correctInput) {
+                    setTrueFalseAnswer(correctInput.value === '0');
+                }
+            } else if (type === 'structured') {
+                const optionsInput = card.querySelector('.question-options-input');
+                if (optionsInput) {
+                    const subQuestions = JSON.parse(optionsInput.value);
+                    const structuredList = document.getElementById('structuredList');
+                    structuredList.innerHTML = '';
+                    
+                    subQuestions.forEach(sq => {
+                        addStructuredOption();
+                        const row = structuredList.lastElementChild;
+                        row.querySelector('.structured-text-input').value = sq.text;
+                        const typeSelect = row.querySelector('.structured-type-select');
+                        if (typeSelect && sq.type) {
+                            typeSelect.value = sq.type;
+                        }
+                    });
+                }
+            }
 
             // Show modal
             document.getElementById('questionModal').classList.add('active');
@@ -1537,10 +1708,12 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
             // Show/hide options editor based on type
             const optionsEditor = document.getElementById('optionsEditor');
             const trueFalseEditor = document.getElementById('trueFalseEditor');
+            const structuredEditor = document.getElementById('structuredEditor');
 
             if (type === 'single_choice' || type === 'multiple_choice') {
                 optionsEditor.style.display = 'block';
                 trueFalseEditor.style.display = 'none';
+                structuredEditor.style.display = 'none';
 
                 // Add default options if empty
                 const optionsList = document.getElementById('optionsList');
@@ -1551,10 +1724,54 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
             } else if (type === 'true_false') {
                 optionsEditor.style.display = 'none';
                 trueFalseEditor.style.display = 'block';
+                structuredEditor.style.display = 'none';
+            } else if (type === 'structured') {
+                optionsEditor.style.display = 'none';
+                trueFalseEditor.style.display = 'none';
+                structuredEditor.style.display = 'block';
+
+                // Add default sub-question if empty
+                const structuredList = document.getElementById('structuredList');
+                if (structuredList.children.length === 0) {
+                    addStructuredOption();
+                }
             } else {
                 optionsEditor.style.display = 'none';
                 trueFalseEditor.style.display = 'none';
+                structuredEditor.style.display = 'none';
             }
+        }
+
+        function addStructuredOption() {
+            const list = document.getElementById('structuredList');
+            const index = list.children.length;
+            const label = String.fromCharCode(65 + index); // A, B, C...
+
+            const html = `
+                <div class="option-row structured-row" data-index="${index}" style="gap: 12px; align-items: center;">
+                    <span style="font-weight: 800; color: var(--accent-primary); width: 24px; text-align: center;">${label})</span>
+                    <input type="text" class="structured-text-input form-control" placeholder="Pequena descrição da sub-pergunta..." value="" style="flex: 1.5; border: none; background: transparent; padding: 0;">
+                    
+                    <select class="form-control structured-type-select" style="flex: 1; height: 32px; font-size: 0.8rem; padding: 0 8px; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                        <option value="text">📝 Resposta: Texto</option>
+                        <option value="file">📎 Resposta: Arquivo</option>
+                        <option value="url">🔗 Resposta: Link/Social</option>
+                    </select>
+
+                    <button type="button" class="option-delete-btn" onclick="removeStructuredOption(this)">🗑️</button>
+                </div>
+            `;
+            list.insertAdjacentHTML('beforeend', html);
+        }
+
+        function removeStructuredOption(btn) {
+            btn.closest('.structured-row').remove();
+            // Reindex and relabel
+            document.querySelectorAll('.structured-row').forEach((row, i) => {
+                row.dataset.index = i;
+                const label = String.fromCharCode(65 + i);
+                row.querySelector('span').textContent = `${label})`;
+            });
         }
 
         function addOption() {
@@ -1670,9 +1887,29 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
                     return;
                 }
                 correctAnswer = trueFalseAnswer ? 0 : 1;
+            } else if (selectedQuestionType === 'structured') {
+                const structuredRows = document.querySelectorAll('.structured-row');
+                structuredRows.forEach((row, index) => {
+                    const inputEl = row.querySelector('.structured-text-input');
+                    const typeSelect = row.querySelector('.structured-type-select');
+                    if (!inputEl) return;
+                    const text = inputEl.value.trim();
+                    if (text) {
+                        const label = String.fromCharCode(65 + index);
+                        options.push({ 
+                            label: label, 
+                            text: text,
+                            type: typeSelect ? typeSelect.value : 'text'
+                        });
+                    }
+                });
+
+                if (options.length < 1) {
+                    showToast('Adicione pelo menos 1 sub-pergunta', 'error');
+                    return;
+                }
             }
 
-            // Build question card HTML
             let optionsHtml = '';
             if (options.length > 0) {
                 optionsHtml = `<input type="hidden" class="question-options-input" value='${JSON.stringify(options)}'>`;
@@ -1684,26 +1921,60 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
                 optionsHtml += `<input type="hidden" class="question-correct-answers-input" value='${JSON.stringify(correctAnswers)}'>`;
             }
 
-            const html = `
-                <div class="question-card">
-                    <div class="question-header">
-                        <span class="question-type-badge">${typeLabels[selectedQuestionType]}</span>
-                        <button class="step-btn delete" onclick="removeQuestion(this)">🗑️</button>
-                    </div>
-                    <div class="form-group">
-                        <input type="text" class="form-control question-text-input" value="${escapeHtml(questionText)}" placeholder="Texto da pergunta...">
-                        <input type="hidden" class="question-type-input" value="${selectedQuestionType}">
-                        <input type="hidden" class="question-points-input" value="${points}">
-                        <input type="hidden" class="question-required-input" value="${isRequired ? '1' : '0'}">
-                        ${optionsHtml}
-                    </div>
-                    ${options.length > 0 ? `<div class="options-preview" style="font-size: 0.85rem; color: var(--text-secondary);">📋 ${options.length} opções</div>` : ''}
-                </div>
-            `;
+            if (editingQuestionCard) {
+                // Update existing card
+                editingQuestionCard.querySelector('.question-type-badge').textContent = typeLabels[selectedQuestionType];
+                
+                const formGroup = editingQuestionCard.querySelector('.form-group');
+                formGroup.innerHTML = `
+                    <input type="text" class="form-control question-text-input" value="${escapeHtml(questionText)}" placeholder="Texto da pergunta...">
+                    <input type="hidden" class="question-type-input" value="${selectedQuestionType}">
+                    <input type="hidden" class="question-points-input" value="${points}">
+                    <input type="hidden" class="question-required-input" value="${isRequired ? '1' : '0'}">
+                    ${optionsHtml}
+                `;
 
-            currentQuestionBtn.previousElementSibling.insertAdjacentHTML('beforeend', html);
+                const preview = editingQuestionCard.querySelector('.options-preview');
+                if (options.length > 0) {
+                    const previewText = `📋 ${options.length} ${selectedQuestionType === 'structured' ? 'sub-perguntas' : 'opções'}`;
+                    if (preview) {
+                        preview.textContent = previewText;
+                    } else {
+                        editingQuestionCard.insertAdjacentHTML('beforeend', `<div class="options-preview" style="font-size: 0.85rem; color: var(--text-secondary);">${previewText}</div>`);
+                    }
+                } else if (preview) {
+                    preview.remove();
+                }
+
+                showToast('Pergunta atualizada!', 'success');
+            } else {
+                // Create new card
+                const html = `
+                    <div class="question-card">
+                        <div class="question-header">
+                            <span class="question-type-badge">${typeLabels[selectedQuestionType]}</span>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="step-btn edit" onclick="editQuestion(this)" style="background: rgba(var(--accent-primary-rgb), 0.1); color: var(--accent-primary);">✏️</button>
+                                <button class="step-btn delete" onclick="removeQuestion(this)">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" class="form-control question-text-input" value="${escapeHtml(questionText)}" placeholder="Texto da pergunta...">
+                            <input type="hidden" class="question-type-input" value="${selectedQuestionType}">
+                            <input type="hidden" class="question-points-input" value="${points}">
+                            <input type="hidden" class="question-required-input" value="${isRequired ? '1' : '0'}">
+                            ${optionsHtml}
+                        </div>
+                        ${options.length > 0 ? `<div class="options-preview" style="font-size: 0.85rem; color: var(--text-secondary);">📋 ${options.length} ${selectedQuestionType === 'structured' ? 'sub-perguntas' : 'opções'}</div>` : ''}
+                    </div>
+                `;
+
+                currentQuestionBtn.previousElementSibling.insertAdjacentHTML('beforeend', html);
+                showToast('Pergunta adicionada!', 'success');
+            }
+
+            updateAddStepButtonState();
             closeQuestionModal();
-            showToast('Pergunta adicionada!', 'success');
         }
 
         function escapeHtml(text) {
@@ -1720,6 +1991,13 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
         function updateStepNumbers() {
             document.querySelectorAll('.step-card').forEach((card, i) => {
                 card.querySelector('.step-number').textContent = i + 1;
+                card.dataset.stepIndex = i; // Update index correctly
+                
+                // Update remove button onclick handler to use the new index
+                const deleteBtn = card.querySelector('.step-actions .step-btn.delete');
+                if (deleteBtn) {
+                    deleteBtn.setAttribute('onclick', `event.stopPropagation(); removeStep(${i})`);
+                }
             });
         }
 

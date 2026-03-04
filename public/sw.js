@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'desbravahub-v22';
+const CACHE_VERSION = 'desbravahub-v23';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const DYNAMIC_CACHE = CACHE_VERSION + '-dynamic';
 const OFFLINE_URL = '/offline.html';
@@ -19,14 +19,14 @@ const PRECACHE_ASSETS = [
 // INSTALL - Pre-cache core shell
 // ==========================================
 self.addEventListener('install', (event) => {
-    console.log('[SW v22] Installing...');
+    console.log('[SW v23] Installing...');
     event.waitUntil(
         caches.open(STATIC_CACHE)
             .then(cache => {
-                console.log('[SW v22] Pre-caching core assets');
+                console.log('[SW v23] Pre-caching core assets');
                 return cache.addAll(PRECACHE_ASSETS);
             })
-            .catch(err => console.warn('[SW v22] Pre-cache failed (non-critical):', err))
+            .catch(err => console.warn('[SW v23] Pre-cache failed (non-critical):', err))
     );
     self.skipWaiting();
 });
@@ -35,14 +35,14 @@ self.addEventListener('install', (event) => {
 // ACTIVATE - Clean old caches
 // ==========================================
 self.addEventListener('activate', (event) => {
-    console.log('[SW v22] Activated');
+    console.log('[SW v23] Activated');
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames
                     .filter(name => name !== STATIC_CACHE && name !== DYNAMIC_CACHE)
                     .map(name => {
-                        console.log('[SW v22] Deleting old cache:', name);
+                        console.log('[SW v23] Deleting old cache:', name);
                         return caches.delete(name);
                     })
             );
@@ -52,7 +52,7 @@ self.addEventListener('activate', (event) => {
 });
 
 // ==========================================
-// FETCH - Stale-While-Revalidate + Offline
+// FETCH - Performance + Security Isolation
 // ==========================================
 self.addEventListener('fetch', (event) => {
     const request = event.request;
@@ -70,8 +70,9 @@ self.addEventListener('fetch', (event) => {
         // API ROUTES → Network First, Cache Fallback
         event.respondWith(networkFirst(request));
     } else if (isNavigationRequest(request)) {
-        // HTML PAGES → Stale-While-Revalidate
-        event.respondWith(staleWhileRevalidate(request));
+        // HTML PAGES → Network First (Crucial for Data Isolation)
+        // We never serve stale HTML to prevent account data leakage
+        event.respondWith(networkFirst(request));
     }
 });
 
@@ -122,7 +123,8 @@ async function cacheFirst(request) {
 }
 
 /**
- * Network First - For API calls (fresh data preferred)
+ * Network First - For API calls and Navigation
+ * Serves network results and updates cache for offline fallback
  */
 async function networkFirst(request) {
     try {
@@ -135,44 +137,16 @@ async function networkFirst(request) {
     } catch (err) {
         const cached = await caches.match(request);
         if (cached) return cached;
+
+        // If it's a navigation request and we are offline with no cache
+        if (request.mode === 'navigate') {
+            return caches.match(OFFLINE_URL);
+        }
+
         return new Response(JSON.stringify({ offline: true, error: 'Sem conexão ou tempo esgotado' }), {
             headers: { 'Content-Type': 'application/json' }
         });
     }
-}
-
-/**
- * Stale-While-Revalidate - For HTML pages
- * Serves cached version instantly, updates cache in background
- */
-async function staleWhileRevalidate(request) {
-    const cache = await caches.open(DYNAMIC_CACHE);
-    const cached = await cache.match(request);
-
-    // Background fetch with timeout
-    const fetchPromise = fetchWithTimeout(request).then(networkResponse => {
-        if (networkResponse.ok) {
-            cache.put(request, networkResponse.clone());
-        }
-        return networkResponse;
-    }).catch(err => {
-        console.warn('[SW v22] Network fetch failed or timed out:', err);
-        return null;
-    });
-
-    // Return cached immediately if available, or wait for network
-    if (cached) {
-        // Update in background
-        fetchPromise;
-        return cached;
-    }
-
-    // No cache → must wait for network (with timeout)
-    const networkResponse = await fetchPromise;
-    if (networkResponse) return networkResponse;
-
-    // Completely offline, no cache → show offline page
-    return caches.match(OFFLINE_URL) || new Response('Offline', { status: 503 });
 }
 
 // ==========================================

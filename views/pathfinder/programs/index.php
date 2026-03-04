@@ -15,7 +15,7 @@
     <?php if (empty($programs)): ?>
         <div class="empty-state-hud">
             <span class="material-icons-round empty-icon-hud">school</span>
-            <h3 class="hud-section-title">Nenhum programa disponível</h3>
+            <h3 class="hud-section-title">Nenhuma trilha disponível</h3>
             <p class="hud-subtitle">Aguarde instruções do seu instrutor.</p>
         </div>
     <?php else: ?>

@@ -203,6 +203,13 @@
             Notificações
         </a>
 
+        <!-- Support -->
+        <a href="<?= base_url($tenant['slug'] . '/suporte') ?>"
+            class="nav-item group <?= str_contains($_SERVER['REQUEST_URI'], '/suporte') ? 'active' : '' ?>">
+            <span class="material-icons-round" style="color: #14b8a6;">headset_mic</span> <!-- Teal-500 -->
+            Suporte
+        </a>
+
     </nav>
     <!-- App Switcher -->
     <div class="sidebar-footer" style="margin-top: auto; padding: 16px; border-top: 1px solid var(--border-color);">

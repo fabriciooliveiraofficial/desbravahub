@@ -203,7 +203,7 @@ header('Content-Type: text/html; charset=utf-8');
             response_text TEXT,
             response_file VARCHAR(500),
             response_url VARCHAR(500),
-            status ENUM('not_started', 'in_progress', 'submitted', 'approved', 'rejected') DEFAULT 'not_started',
+            status ENUM('not_started', 'in_progress', 'draft', 'submitted', 'approved', 'rejected') DEFAULT 'not_started',
             feedback TEXT,
             reviewed_by INT,
             reviewed_at TIMESTAMP NULL,

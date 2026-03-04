@@ -571,28 +571,74 @@ if ($isProgram) {
                                 <?= htmlspecialchars((string)($qa['question'] ?? '')) ?>
                             </div>
                             <div class="answer-text">
-                                <?php 
-                                $ans = $qa['answer'];
-                                $youtubeMatch = preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/', (string)$ans, $yMatch);
-                                $instagramMatch = preg_match('/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/', (string)$ans, $iMatch);
-                                $tiktokMatch = preg_match('/tiktok\.com\/.*\/video\/([0-9]+)/', (string)$ans, $tMatch);
-                                ?>
-                                <?php if ($youtubeMatch): ?>
-                                    <div class="yt-embed-compact">
-                                        <iframe src="https://www.youtube.com/embed/<?= $yMatch[1] ?>" allowfullscreen></iframe>
-                                    </div>
-                                <?php elseif ($instagramMatch): ?>
-                                    <div class="social-embed-compact">
-                                        <blockquote class="instagram-media" data-instgrm-permalink="<?= htmlspecialchars((string)$ans) ?>" data-instgrm-version="14" style="width:100%; border:0; border-radius:12px; margin:0; padding:0;"></blockquote>
-                                        <script async src="//www.instagram.com/embed.js"></script>
-                                    </div>
-                                <?php elseif ($tiktokMatch): ?>
-                                    <div class="social-embed-compact">
-                                        <blockquote class="tiktok-embed" cite="<?= htmlspecialchars((string)$ans) ?>" data-video-id="<?= $tMatch[1] ?>" style="width:100%; margin:0; padding:0;"> <section> </section> </blockquote> 
-                                        <script async src="https://www.tiktok.com/embed.js"></script>
+                                <?php if (!empty($qa['sub_answers'])): ?>
+                                    <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 10px;">
+                                        <?php foreach ($qa['sub_answers'] as $sub): ?>
+                                            <div style="background: rgba(0,0,0,0.02); padding: 16px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.05);">
+                                                <div style="font-size: 0.75rem; color: var(--accent-primary); font-weight: 800; margin-bottom: 8px; text-transform: uppercase;">
+                                                    Item <?= htmlspecialchars($sub['label']) ?>: <?= htmlspecialchars($sub['text']) ?>
+                                                </div>
+                                                <div style="font-size: 1rem; color: var(--text-dark);">
+                                                    <?php 
+                                                    $subAns = $sub['answer'];
+                                                    $subType = $sub['type'] ?? 'text';
+                                                    
+                                                    if ($subType === 'file' && !empty($subAns)): ?>
+                                                        <a href="<?= $subAns ?>" target="_blank" class="eval-btn" style="display: inline-flex; width: auto; color: var(--accent-primary); border-color: var(--accent-primary); background: rgba(6, 182, 212, 0.05);">
+                                                            <iconify-icon icon="solar:file-download-bold-duotone"></iconify-icon>
+                                                            Abrir Arquivo Anexado
+                                                        </a>
+                                                    <?php elseif ($subType === 'url' && !empty($subAns)): 
+                                                        $youtubeMatch = preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/', (string)$subAns, $yMatch);
+                                                        $instagramMatch = preg_match('/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/', (string)$subAns, $iMatch);
+                                                        $tiktokMatch = preg_match('/tiktok\.com\/.*\/video\/([0-9]+)/', (string)$subAns, $tMatch);
+                                                        ?>
+                                                        <?php if ($youtubeMatch): ?>
+                                                            <div class="yt-embed-compact" style="margin-top: 8px;">
+                                                                <iframe src="https://www.youtube.com/embed/<?= $yMatch[1] ?>" allowfullscreen></iframe>
+                                                            </div>
+                                                        <?php elseif ($instagramMatch): ?>
+                                                            <div class="social-embed-compact" style="margin-top: 8px;">
+                                                                <blockquote class="instagram-media" data-instgrm-permalink="<?= htmlspecialchars((string)$subAns) ?>" data-instgrm-version="14" style="width:100%; border:0; border-radius:12px; margin:0; padding:0;"></blockquote>
+                                                            </div>
+                                                        <?php elseif ($tiktokMatch): ?>
+                                                            <div class="social-embed-compact" style="margin-top: 8px;">
+                                                                <blockquote class="tiktok-embed" cite="<?= htmlspecialchars((string)$subAns) ?>" data-video-id="<?= $tMatch[1] ?>" style="width:100%; margin:0; padding:0;"> <section> </section> </blockquote> 
+                                                            </div>
+                                                        <?php else: ?>
+                                                            <a href="<?= $subAns ?>" target="_blank" style="color: var(--accent-primary);"><?= htmlspecialchars($subAns) ?></a>
+                                                        <?php endif; ?>
+                                                    <?php else: ?>
+                                                        <?= nl2br(htmlspecialchars((string)$subAns)) ?>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
                                     </div>
                                 <?php else: ?>
-                                    <?= htmlspecialchars((string)($ans ?? '')) ?>
+                                    <?php 
+                                    $ans = $qa['answer'];
+                                    $youtubeMatch = preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/', (string)$ans, $yMatch);
+                                    $instagramMatch = preg_match('/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/', (string)$ans, $iMatch);
+                                    $tiktokMatch = preg_match('/tiktok\.com\/.*\/video\/([0-9]+)/', (string)$ans, $tMatch);
+                                    ?>
+                                    <?php if ($youtubeMatch): ?>
+                                        <div class="yt-embed-compact">
+                                            <iframe src="https://www.youtube.com/embed/<?= $yMatch[1] ?>" allowfullscreen></iframe>
+                                        </div>
+                                    <?php elseif ($instagramMatch): ?>
+                                        <div class="social-embed-compact">
+                                            <blockquote class="instagram-media" data-instgrm-permalink="<?= htmlspecialchars((string)$ans) ?>" data-instgrm-version="14" style="width:100%; border:0; border-radius:12px; margin:0; padding:0;"></blockquote>
+                                            <script async src="//www.instagram.com/embed.js"></script>
+                                        </div>
+                                    <?php elseif ($tiktokMatch): ?>
+                                        <div class="social-embed-compact">
+                                            <blockquote class="tiktok-embed" cite="<?= htmlspecialchars((string)$ans) ?>" data-video-id="<?= $tMatch[1] ?>" style="width:100%; margin:0; padding:0;"> <section> </section> </blockquote> 
+                                            <script async src="https://www.tiktok.com/embed.js"></script>
+                                        </div>
+                                    <?php else: ?>
+                                        <?= htmlspecialchars((string)($ans ?? '')) ?>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
 

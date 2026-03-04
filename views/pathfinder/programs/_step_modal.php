@@ -297,6 +297,49 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
                         <?php elseif ($q['type'] === 'manual'): ?>
                             <textarea name="answers[<?= $q['id'] ?>]" class="hud-input" style="min-height: 80px; resize: none;"
                                 placeholder="Relatório de atividade prática..."><?= htmlspecialchars((string)$currentAnswer) ?></textarea>
+                        <?php elseif ($q['type'] === 'structured'): ?>
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <?php
+                                $subQuestions = json_decode($q['options'] ?? '[]', true) ?? [];
+                                $structuredAnswers = is_array($currentAnswer) ? $currentAnswer : [];
+                                foreach ($subQuestions as $sIdx => $subQ):
+                                    $subAns = $structuredAnswers[$sIdx] ?? '';
+                                ?>
+                                    <div class="structured-sub-item" style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                                        <div style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 700; margin-bottom: 8px;">
+                                            <?= htmlspecialchars($subQ['label'] ?? '') ?>) <?= htmlspecialchars($subQ['text'] ?? '') ?>
+                                        </div>
+                                        
+                                        <?php 
+                                        $subType = $subQ['type'] ?? 'text';
+                                        if ($subType === 'file'): ?>
+                                            <div class="file-upload-zone" style="background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; text-align: center; cursor: pointer;">
+                                                <input type="file" name="file_answers[<?= $q['id'] ?>][<?= $sIdx ?>]" onchange="this.parentElement.querySelector('.file-status').innerText = this.files[0].name" style="display: none;" id="file-sq-<?= $q['id'] ?>-<?= $sIdx ?>">
+                                                <label for="file-sq-<?= $q['id'] ?>-<?= $sIdx ?>" style="cursor: pointer; display: block;">
+                                                    <i class="material-icons-round" style="font-size: 1.3rem; color: var(--accent-cyan); opacity: 0.5;">attach_file</i>
+                                                    <div class="file-status" style="font-size: 0.75rem; color: var(--hud-text-dim);">
+                                                        <?= $subAns ? basename($subAns) : 'Anexar Comprovação' ?>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                            <?php if ($subAns && str_starts_with($subAns, '/uploads/')): ?>
+                                                <a href="<?= $subAns ?>" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 0.7rem; color: var(--accent-cyan); text-decoration: none; opacity: 0.8;">
+                                                    <i class="material-icons-round" style="font-size: 0.9rem; vertical-align: middle;">visibility</i> Ver arquivo atual
+                                                </a>
+                                            <?php endif; ?>
+                                        <?php elseif ($subType === 'url'): ?>
+                                            <div style="position: relative;">
+                                                <i class="material-icons-round" style="position: absolute; left: 12px; top: 10px; color: var(--hud-text-dim); font-size: 1rem;">link</i>
+                                                <input type="url" name="answers[<?= $q['id'] ?>][<?= $sIdx ?>]" class="hud-input" placeholder="https://youtube.com/..." style="padding-left: 38px; min-height: 40px;"
+                                                    value="<?= htmlspecialchars((string)$subAns) ?>">
+                                            </div>
+                                        <?php else: // text ?>
+                                            <textarea name="answers[<?= $q['id'] ?>][<?= $sIdx ?>]" class="hud-input" style="min-height: 80px; resize: none;"
+                                                placeholder="Sua resposta para o item <?= htmlspecialchars($subQ['label'] ?? '') ?>..."><?= htmlspecialchars((string)$subAns) ?></textarea>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
                         <?php endif; ?>
 
                         <?php if (isset($itemEvals[$idx])): 

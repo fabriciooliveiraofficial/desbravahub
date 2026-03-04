@@ -61,15 +61,17 @@ class AuthController
 
         // Create session
         $token = $this->authService->createSession($user['id']);
-        $this->authService->setAuthCookie($token);
+        $cookiePath = '/' . $tenant['slug'] . '/';
+        $this->authService->setAuthCookie($token, $cookiePath, $tenant['slug']);
 
         // Determine redirect based on role
         $isAdmin = in_array($user['role_name'], ['admin', 'director', 'instructor']);
         $redirectPath = $isAdmin ? '/admin/dashboard' : '/dashboard';
 
-        // Return success
+        // Return success (include token for per-tab sessionStorage)
         $this->jsonSuccess([
             'message' => 'Login successful',
+            'token' => $token,
             'user' => [
                 'id' => $user['id'],
                 'name' => $user['name'],
@@ -85,14 +87,25 @@ class AuthController
      */
     public function logout(array $params): void
     {
-        $token = $this->authService->getTokenFromRequest();
+        $tenant = App::tenant();
+        $token = $this->authService->getTokenFromRequest($tenant['slug'] ?? null);
+        $cookiePath = $tenant ? '/' . $tenant['slug'] . '/' : '/';
 
         if ($token) {
             $this->authService->destroySession($token);
-            $this->authService->clearAuthCookie();
+            // Clear tenant-specific cookie
+            if ($tenant) {
+                $this->authService->clearAuthCookie($cookiePath, $tenant['slug']);
+                // Also clear legacy global cookie for this tenant to prevent stale sessions
+                $this->authService->clearAuthCookie('/', $tenant['slug']);
+            }
+            // Clear any global legacy cookie
+            $this->authService->clearAuthCookie('/');
         }
 
-        $tenant = App::tenant();
+        // Only clear cache; cookie/storage are handled explicitly to preserve other tabs
+        header('Clear-Site-Data: "cache"');
+        
         $redirectUrl = $tenant ? base_url($tenant['slug'] . '/login') : base_url();
 
         // Handle both JSON and redirect responses
@@ -163,11 +176,14 @@ class AuthController
         ]);
 
         // Auto-login
+        $cookiePath = '/' . $tenant['slug'] . '/';
         $token = $this->authService->createSession($userId);
-        $this->authService->setAuthCookie($token);
+        $this->authService->setAuthCookie($token, $cookiePath, $tenant['slug']);
 
         $this->jsonSuccess([
             'message' => 'Registration successful',
+            'token' => $token,
+            'user' => ['id' => $userId],
             'redirect' => base_url($tenant['slug'] . '/dashboard'),
         ]);
     }
