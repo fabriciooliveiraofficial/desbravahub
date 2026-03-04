@@ -85,19 +85,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         enableBtn.innerText = 'Ativando...';
         
         try {
+            // Ensure push notifications are initialized before subscribing
+            if (!pushNotifications.initialized) {
+                const publicKey = '<?= env('VAPID_PUBLIC_KEY', '') ?>';
+                if (!publicKey) {
+                    throw new Error('VAPID key not configured');
+                }
+                await pushNotifications.init(publicKey);
+            }
+
             const apiEndpoint = '<?= base_url("{$tenant['slug']}/api/push/subscribe") ?>';
             await pushNotifications.subscribe(apiEndpoint);
             
             banner.style.display = 'none';
             if (window.toast) {
-                 toast.show('Sucesso!', 'Você receberá notificações agora.', 'success');
+                 toast.success('Notificações Ativadas', 'Você receberá alertas em tempo real.');
             }
         } catch (err) {
             console.error(err);
             enableBtn.disabled = false;
             enableBtn.innerText = 'Ativar Agora';
             if (window.toast) {
-                toast.show('Erro', 'Não foi possível ativar as notificações.', 'error');
+                toast.error('Erro', err.message || 'Não foi possível ativar as notificações.');
             }
         }
     });
