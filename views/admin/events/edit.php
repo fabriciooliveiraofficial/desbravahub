@@ -128,45 +128,48 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    (function() {
         toast = window.toast = window.toast || new (window.ToastNotification || ToastNotification)();
 
-        document.getElementById('edit-event-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const btn = document.getElementById('save-btn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<span class="material-icons-round rotate">sync</span> Salvando...';
-            btn.disabled = true;
+        const form = document.getElementById('edit-event-form');
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const btn = document.getElementById('save-btn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span class="material-icons-round rotate">sync</span> Salvando...';
+                btn.disabled = true;
 
-            const formData = new FormData(e.target);
+                const formData = new FormData(e.target);
 
-            try {
-                const response = await fetch('<?= base_url($tenant['slug'] . '/admin/eventos/' . $event['id'] . '/editar') ?>', {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'Accept': 'application/json' }
-                });
+                try {
+                    const response = await fetch('<?= base_url($tenant['slug'] . '/admin/eventos/' . $event['id'] . '/editar') ?>', {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'Accept': 'application/json' }
+                    });
 
-                const data = await response.json();
+                    const data = await response.json();
 
-                if (data.success) {
-                    toast.success('Sucesso', data.message);
-                    setTimeout(() => window.location.href = data.redirect, 1000);
-                } else {
-                    toast.error('Erro', data.error || 'Erro ao atualizar evento');
+                    if (data.success) {
+                        toast.success('Sucesso', data.message);
+                        setTimeout(() => window.location.href = data.redirect, 1000);
+                    } else {
+                        toast.error('Erro', data.error || 'Erro ao atualizar evento');
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }
+                } catch (err) {
+                    console.error(err);
+                    if (toast) toast.error('Erro', 'Erro de conexão.');
+                    else alert('Erro de conexão');
                     btn.innerHTML = originalText;
                     btn.disabled = false;
                 }
-            } catch (err) {
-                console.error(err);
-                if (toast) toast.error('Erro', 'Erro de conexão.');
-                else alert('Erro de conexão');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        });
-    });
+            });
+        }
+    })();
 
     async function confirmDelete(id) {
         if (!confirm('Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita e todas as inscrições serão perdidas.')) return;
