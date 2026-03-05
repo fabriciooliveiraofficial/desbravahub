@@ -114,6 +114,8 @@ class AdminEventController
                 );
             }
 
+            clear_club_landing_cache($tenant['id']);
+
             $this->json([
                 'success' => true,
                 'message' => 'Evento criado com sucesso!',
@@ -182,6 +184,8 @@ class AdminEventController
         try {
             db_update('events', $data, 'id = ? AND tenant_id = ?', [$id, $tenant['id']]);
 
+            clear_club_landing_cache($tenant['id']);
+
             $this->json([
                 'success' => true,
                 'message' => 'Evento atualizado com sucesso!',
@@ -203,6 +207,7 @@ class AdminEventController
 
         try {
             db_query("DELETE FROM events WHERE id = ? AND tenant_id = ?", [$id, $tenant['id']]);
+            clear_club_landing_cache($tenant['id']);
             $this->json(['success' => true, 'message' => 'Evento removido com sucesso.']);
         } catch (\Exception $e) {
             $this->jsonError('Erro ao remover evento: ' . $e->getMessage());

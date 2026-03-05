@@ -28,6 +28,7 @@ require_once BASE_PATH . '/helpers/url.php';
 require_once BASE_PATH . '/helpers/database.php';
 require_once BASE_PATH . '/helpers/auth.php';
 require_once BASE_PATH . '/helpers/lang.php';
+require_once BASE_PATH . '/helpers/cache.php';
 
 // Start session
 if (session_status() === PHP_SESSION_NONE) {
