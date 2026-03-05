@@ -353,6 +353,7 @@ CREATE TABLE `events` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `tenant_id` INT UNSIGNED NOT NULL,
     `title` VARCHAR(255) NOT NULL,
+    `slug` VARCHAR(255) NULL,
     `description` TEXT NULL,
     `location` VARCHAR(500) NULL,
     `start_datetime` DATETIME NOT NULL,
@@ -360,6 +361,9 @@ CREATE TABLE `events` (
     `max_participants` INT UNSIGNED NULL,
     `registration_deadline` DATETIME NULL,
     `xp_reward` INT UNSIGNED NOT NULL DEFAULT 0,
+    `is_paid` TINYINT(1) NOT NULL DEFAULT 0,
+    `price` DECIMAL(10,2) NULL,
+    `payment_link` VARCHAR(500) NULL,
     `status` ENUM('upcoming', 'ongoing', 'completed', 'cancelled') NOT NULL DEFAULT 'upcoming',
     `created_by` INT UNSIGNED NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -368,6 +372,7 @@ CREATE TABLE `events` (
     KEY `idx_events_tenant` (`tenant_id`),
     KEY `idx_events_tenant_status` (`tenant_id`, `status`),
     KEY `idx_events_start` (`start_datetime`),
+    KEY `idx_events_slug` (`tenant_id`, `slug`),
     CONSTRAINT `fk_events_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_events_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

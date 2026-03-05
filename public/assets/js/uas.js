@@ -134,9 +134,9 @@
 
         _injectStyles() {
             if (document.getElementById('uas-styles')) return;
-            const style = document.createElement('style');
-            style.id = 'uas-styles';
-            style.textContent = `
+            const uasStyles = document.createElement('style');
+            uasStyles.id = 'uas-styles';
+            uasStyles.textContent = `
                 .uas-overlay {
                     position: fixed;
                     inset: 0;

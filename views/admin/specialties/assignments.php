@@ -3,6 +3,7 @@
  * Admin: View All Assignments (Enhanced UI)
  */
 $pageTitle = 'Atribuições de Especialidades';
+$canForceDelete = (new \App\Services\PermissionService())->can('specialties.delete_active');
 ?>
 <!-- GSAP & Motion -->
 
@@ -367,10 +368,12 @@ $pageTitle = 'Atribuições de Especialidades';
                                         class="btn-icon" title="Ver Detalhes">
                                         👁️
                                     </a>
+                                    <?php if ($a['status'] === 'pending' || $canForceDelete): ?>
                                     <button onclick="confirmDelete('<?= $a['assignment_id'] ?>')" 
-                                            class="btn-icon delete" title="Remover Atribuição">
+                                            class="btn-icon delete" title="Remover Atribuição<?= $a['status'] !== 'pending' ? ' (Forçar Super Exclusão)' : '' ?>">
                                         🗑️
                                     </button>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>

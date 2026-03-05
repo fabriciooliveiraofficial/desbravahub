@@ -654,19 +654,25 @@ class SpecialtyService
         return $assignments;
     }
 
-    /**
-     * Delete an assignment (Specialty or Program)
-     * Only works if the mission has NOT been started.
-     */
-    public static function deleteAssignment(string $compositeId, int $tenantId): bool
+    public static function deleteAssignment(string $compositeId, int $tenantId, bool $force = false): bool
     {
         if (str_starts_with($compositeId, 'spec_')) {
             $id = (int) substr($compositeId, 5);
             // Check status first
             $assignment = db_fetch_one("SELECT status FROM specialty_assignments WHERE id = ? AND tenant_id = ?", [$id, $tenantId]);
-            if (!$assignment || $assignment['status'] !== 'pending') {
+            if (!$assignment) {
                 return false;
             }
+            if (!$force && $assignment['status'] !== 'pending') {
+                return false;
+            }
+            
+            if ($force) {
+                // Cascade delete requirements progress and proofs
+                db_query("DELETE FROM assignment_requirements WHERE assignment_id = ?", [$id]);
+                db_query("DELETE FROM user_requirement_progress WHERE assignment_id = ? AND tenant_id = ?", [$id, $tenantId]);
+            }
+            
             return db_delete('specialty_assignments', 'id = ? AND tenant_id = ?', [$id, $tenantId]);
         } 
         
@@ -674,9 +680,20 @@ class SpecialtyService
             $id = (int) substr($compositeId, 5);
             // Check status first
             $progress = db_fetch_one("SELECT status FROM user_program_progress WHERE id = ? AND tenant_id = ?", [$id, $tenantId]);
-            if (!$progress || $progress['status'] !== 'not_started') {
+            if (!$progress) {
                 return false;
             }
+            if (!$force && $progress['status'] !== 'not_started') {
+                return false;
+            }
+            
+            if ($force) {
+                // Cascade delete program step responses
+                db_query("DELETE FROM user_step_responses WHERE progress_id = ? AND tenant_id = ?", [$id, $tenantId]);
+                // Delete mapped requirement progress
+                db_query("DELETE FROM user_requirement_progress WHERE assignment_id = ? AND tenant_id = ?", [$id, $tenantId]);
+            }
+            
             return db_delete('user_program_progress', 'id = ? AND tenant_id = ?', [$id, $tenantId]);
         }
 

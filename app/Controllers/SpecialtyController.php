@@ -308,13 +308,21 @@ class SpecialtyController
             return;
         }
 
-        $success = SpecialtyService::deleteAssignment($assignmentId, $tenant['id']);
+        // Check if user has permission to delete active/started assignments
+        $permissionService = new \App\Services\PermissionService();
+        $canForceDelete = $permissionService->can('specialties.delete_active');
+
+        $success = SpecialtyService::deleteAssignment($assignmentId, $tenant['id'], $canForceDelete);
 
         if ($success) {
             echo json_encode(['success' => true, 'message' => 'Missão removida com sucesso!']);
         } else {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Não é possível remover: missão em andamento']);
+            if (!$canForceDelete) {
+                echo json_encode(['success' => false, 'message' => 'Não é possível remover: missão em andamento (falta permissão especial).']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Erro interno ao remover missão.']);
+            }
         }
     }
 

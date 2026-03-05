@@ -247,7 +247,7 @@ if (typeof window.ToastNotification !== 'undefined') {
                 box-shadow: 0 0 20px rgba(239, 68, 68, 0.1) !important;
             }
             `;
-            document.head.appendChild(style);
+            document.head.appendChild(toastStyles);
         }
 
         /**

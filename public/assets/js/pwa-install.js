@@ -176,10 +176,10 @@ if (typeof PWAInstaller === 'undefined') {
                 color: #3b82f6;
             }
         `;
-            const style = document.createElement('style');
-            style.id = 'pwa-styles';
-            style.textContent = css;
-            document.head.appendChild(style);
+            const pwaStyles = document.createElement('style');
+            pwaStyles.id = 'pwa-styles';
+            pwaStyles.textContent = css;
+            document.head.appendChild(pwaStyles);
         }
 
         createModal() {

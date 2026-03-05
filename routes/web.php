@@ -73,6 +73,63 @@ $router->get('/migrate-superadmin', function() {
 $router->get('/health', [HealthController::class, 'index']);
 $router->get('/health/ping', [HealthController::class, 'ping']);
 $router->get('/health/detailed', [HealthController::class, 'detailed']);
+
+// Temporary diagnostic route for event saving (NO tenant middleware)
+$router->get('/debug-events', function() {
+    header('Content-Type: text/html; charset=utf-8');
+    require_once BASE_PATH . '/helpers/database.php';
+    
+    echo "<h2>Event Saving Diagnostics</h2>";
+    
+    try {
+        $db = db();
+        echo "<p style='color:green'>✓ Conectado ao banco de dados.</p>";
+        
+        // 1. Check table columns
+        echo "<h3>1. Colunas da tabela 'events'</h3>";
+        $columns = $db->query("SHOW COLUMNS FROM `events`")->fetchAll(\PDO::FETCH_ASSOC);
+        $fields = array_column($columns, 'Field');
+        
+        $required = ['id','tenant_id','title','slug','description','location','start_datetime','end_datetime','max_participants','registration_deadline','xp_reward','is_paid','price','payment_link','status','created_by'];
+        echo "<ul>";
+        foreach ($required as $f) {
+            $ok = in_array($f, $fields);
+            echo "<li style='color:" . ($ok ? 'green' : 'red') . "'>" . ($ok ? '✓' : '✗') . " $f</li>";
+        }
+        echo "</ul>";
+        
+        // 2. Check if db_last_insert_id function exists
+        echo "<h3>2. Verificando funções</h3>";
+        echo "<p>db_insert existe: " . (function_exists('db_insert') ? '<b style="color:green">SIM</b>' : '<b style="color:red">NÃO</b>') . "</p>";
+        echo "<p>db_last_insert_id existe: " . (function_exists('db_last_insert_id') ? '<b style="color:green">SIM</b>' : '<b style="color:red">NÃO (BUG!)</b>') . "</p>";
+        
+        // 3. Attempt insert
+        echo "<h3>3. Teste de inserção</h3>";
+        $tenant = db_fetch_one("SELECT id FROM tenants LIMIT 1");
+        if (!$tenant) { echo "<p style='color:red'>Nenhum tenant!</p>"; return; }
+        
+        $testData = [
+            'tenant_id' => $tenant['id'], 'title' => 'DIAG_TEST_'.time(),
+            'slug' => 'diag-'.time(), 'description' => 'test', 'location' => 'test',
+            'start_datetime' => date('Y-m-d H:i:s'), 'end_datetime' => null,
+            'max_participants' => 0, 'registration_deadline' => null,
+            'xp_reward' => 10, 'status' => 'upcoming', 'is_paid' => 0,
+            'price' => null, 'payment_link' => '', 'created_by' => null
+        ];
+        
+        try {
+            $id = db_insert('events', $testData);
+            echo "<p style='color:green'>✓ SUCESSO! Evento ID: $id</p>";
+            $db->exec("DELETE FROM events WHERE id = $id");
+            echo "<p style='color:blue'>Removido.</p>";
+        } catch (\Exception $e) {
+            echo "<div style='background:#fee;padding:10px;border:1px solid red'><b>ERRO:</b> " . $e->getMessage() . "</div>";
+        }
+        
+    } catch (\Exception $e) {
+        echo "<p style='color:red'>FATAL: " . $e->getMessage() . "</p>";
+    }
+});
 $router->get('/api', [ApiController::class, 'info']);
 $router->get('/api/docs', [ApiController::class, 'docs']);
 $router->get('/api/clubs', [ApiController::class, 'clubs']);
@@ -174,9 +231,9 @@ $router->post('/{tenant}/admin/perfil-clube/qrcode', [ClubProfileController::cla
 $router->get('/{tenant}/admin/eventos', [AdminEventController::class, 'index'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/eventos/novo', [AdminEventController::class, 'create'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/eventos/novo', [AdminEventController::class, 'store'], [TenantMiddleware::class, AuthMiddleware::class]);
-$router->get('/{tenant}/admin/eventos/([0-9]+)/editar', [AdminEventController::class, 'edit'], [TenantMiddleware::class, AuthMiddleware::class]);
-$router->post('/{tenant}/admin/eventos/([0-9]+)/editar', [AdminEventController::class, 'update'], [TenantMiddleware::class, AuthMiddleware::class]);
-$router->post('/{tenant}/admin/eventos/([0-9]+)/excluir', [AdminEventController::class, 'delete'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/admin/eventos/{id}/editar', [AdminEventController::class, 'edit'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/eventos/{id}/editar', [AdminEventController::class, 'update'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/eventos/{id}/excluir', [AdminEventController::class, 'delete'], [TenantMiddleware::class, AuthMiddleware::class]);
 
 $router->get('/{tenant}/admin/mission-control/search-master', [SpecialtyController::class, 'searchMaster'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/mission-control/specialty', [SpecialtyController::class, 'storeSpecialtyComplete'], [TenantMiddleware::class, AuthMiddleware::class]);

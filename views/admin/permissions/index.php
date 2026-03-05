@@ -350,7 +350,12 @@
     <?php endif; ?>
 
     // Spin Animation
-    const style = document.createElement('style');
-    style.innerHTML = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
-    document.head.appendChild(style);
+    (function() {
+        if (!document.getElementById('spin-animation-style')) {
+            const style = document.createElement('style');
+            style.id = 'spin-animation-style';
+            style.innerHTML = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+            document.head.appendChild(style);
+        }
+    })();
 </script>

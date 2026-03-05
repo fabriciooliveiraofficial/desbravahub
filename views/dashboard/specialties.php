@@ -99,7 +99,9 @@
                                 </div>
                                 <?php 
                                 $icon = $a['specialty']['badge_icon'] ?? '📘';
-                                if (str_contains($icon, 'fa-')): ?>
+                                if (str_contains($icon, ':')): ?>
+                                    <iconify-icon icon="<?= htmlspecialchars($icon) ?>" class="plate-icon"></iconify-icon>
+                                <?php elseif (str_contains($icon, 'fa-')): ?>
                                     <i class="<?= $icon ?> plate-icon"></i>
                                 <?php else: ?>
                                     <span class="plate-icon"><?= $icon ?></span>
@@ -141,7 +143,9 @@
                                 </div>
                                 <?php 
                                 $icon = $a['specialty']['badge_icon'] ?? '📘';
-                                if (str_contains($icon, 'fa-')): ?>
+                                if (str_contains($icon, ':')): ?>
+                                    <iconify-icon icon="<?= htmlspecialchars($icon) ?>" class="plate-icon"></iconify-icon>
+                                <?php elseif (str_contains($icon, 'fa-')): ?>
                                     <i class="<?= $icon ?> plate-icon"></i>
                                 <?php else: ?>
                                     <span class="plate-icon"><?= $icon ?></span>

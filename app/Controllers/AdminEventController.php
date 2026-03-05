@@ -77,14 +77,14 @@ class AdminEventController
             'slug' => trim($_POST['slug'] ?? ''),
             'description' => trim($_POST['description'] ?? ''),
             'location' => trim($_POST['location'] ?? ''),
-            'start_datetime' => $_POST['start_datetime'] ?? null,
-            'end_datetime' => !empty($_POST['end_datetime']) ? $_POST['end_datetime'] : null,
-            'max_participants' => !empty($_POST['max_participants']) ? (int) $_POST['max_participants'] : null,
-            'registration_deadline' => !empty($_POST['registration_deadline']) ? $_POST['registration_deadline'] : null,
+            'start_datetime' => !empty($_POST['start_datetime']) ? str_replace('T', ' ', $_POST['start_datetime']) : null,
+            'end_datetime' => !empty($_POST['end_datetime']) ? str_replace('T', ' ', $_POST['end_datetime']) : null,
+            'max_participants' => isset($_POST['max_participants']) && $_POST['max_participants'] !== '' ? (int) $_POST['max_participants'] : null,
+            'registration_deadline' => !empty($_POST['registration_deadline']) ? str_replace('T', ' ', $_POST['registration_deadline']) : null,
             'xp_reward' => (int) ($_POST['xp_reward'] ?? 0),
             'status' => $_POST['status'] ?? 'upcoming',
             'is_paid' => isset($_POST['is_paid']) ? 1 : 0,
-            'price' => !empty($_POST['price']) ? (float) $_POST['price'] : null,
+            'price' => isset($_POST['price']) && $_POST['price'] !== '' ? (float) $_POST['price'] : null,
             'payment_link' => trim($_POST['payment_link'] ?? ''),
             'created_by' => $user['id']
         ];
@@ -99,8 +99,7 @@ class AdminEventController
         }
 
         try {
-            db_insert('events', $data);
-            $eventId = db_last_insert_id();
+            $eventId = db_insert('events', $data);
 
             // Broadcast Notification if Published (upcoming/ongoing)
             if (in_array($data['status'], ['upcoming', 'ongoing']) && isset($_POST['notify_users'])) {
@@ -164,14 +163,14 @@ class AdminEventController
             'slug' => trim($_POST['slug'] ?? ''),
             'description' => trim($_POST['description'] ?? ''),
             'location' => trim($_POST['location'] ?? ''),
-            'start_datetime' => $_POST['start_datetime'] ?? null,
-            'end_datetime' => !empty($_POST['end_datetime']) ? $_POST['end_datetime'] : null,
-            'max_participants' => !empty($_POST['max_participants']) ? (int) $_POST['max_participants'] : null,
-            'registration_deadline' => !empty($_POST['registration_deadline']) ? $_POST['registration_deadline'] : null,
+            'start_datetime' => !empty($_POST['start_datetime']) ? str_replace('T', ' ', $_POST['start_datetime']) : null,
+            'end_datetime' => !empty($_POST['end_datetime']) ? str_replace('T', ' ', $_POST['end_datetime']) : null,
+            'max_participants' => isset($_POST['max_participants']) && $_POST['max_participants'] !== '' ? (int) $_POST['max_participants'] : null,
+            'registration_deadline' => !empty($_POST['registration_deadline']) ? str_replace('T', ' ', $_POST['registration_deadline']) : null,
             'xp_reward' => (int) ($_POST['xp_reward'] ?? 0),
             'status' => $_POST['status'] ?? 'upcoming',
             'is_paid' => isset($_POST['is_paid']) ? 1 : 0,
-            'price' => !empty($_POST['price']) ? (float) $_POST['price'] : null,
+            'price' => isset($_POST['price']) && $_POST['price'] !== '' ? (float) $_POST['price'] : null,
             'payment_link' => trim($_POST['payment_link'] ?? '')
         ];
 
