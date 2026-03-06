@@ -38,10 +38,38 @@
     
     <style>
         :root {
-            /* Neobank Inspired Palette */
+            /* Layout Constants */
+            --header-h: 70px;
+            --t-color: color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            --t-bg: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            --t-border: border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Neobank Inspired Palette - Theme Aware */
+        [data-theme='light'] {
             --primary: #8b5cf6; /* Nu Purple */
             --primary-dark: #7c3aed;
             --secondary: #10b981; /* Success Green */
+            --dark-bg: #f8fafc;
+            --surface: #ffffff;
+            --surface-hover: #f1f5f9;
+            --border: rgba(0, 0, 0, 0.08);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --accent: #8b5cf6;
+            --accent-hover: #7c3aed;
+            --accent-glow: rgba(139, 92, 246, 0.1);
+            --bg-main: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-elevated: #f1f5f9;
+            --nav-bg: rgba(248, 250, 252, 0.8);
+        }
+
+        [data-theme='dark'] {
+            --primary: #8b5cf6;
+            --primary-dark: #7c3aed;
+            --secondary: #10b981;
             --dark-bg: #0f111a;
             --surface: #1e212f;
             --surface-hover: #2a2d3d;
@@ -49,6 +77,13 @@
             --text-primary: #f8fafc;
             --text-secondary: #94a3b8;
             --text-muted: #64748b;
+            --accent: #8b5cf6;
+            --accent-hover: #7c3aed;
+            --accent-glow: rgba(139, 92, 246, 0.15);
+            --bg-main: #0f111a;
+            --bg-surface: #1e212f;
+            --bg-elevated: #2a2d3d;
+            --nav-bg: rgba(15, 17, 26, 0.8);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -59,6 +94,7 @@
             color: var(--text-primary);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
+            transition: var(--t-bg), var(--t-color);
         }
 
         a { color: inherit; text-decoration: none; }
@@ -74,13 +110,14 @@
             position: fixed;
             top: 0; left: 0; right: 0;
             height: 70px;
-            background: rgba(15, 17, 26, 0.8);
+            background: var(--nav-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
             z-index: 1000;
             display: flex;
             align-items: center;
+            transition: var(--t-bg), var(--t-border);
         }
 
         .nav-content {
@@ -232,7 +269,62 @@
         @media (max-width: 768px) {
             .container { padding: 0 16px; }
         }
+
+        /* Theme Switcher 3D Effect */
+        .theme-toggle-wrapper {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2000;
+            perspective: 1000px;
+        }
+
+        .theme-toggle {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1), inset 0 -3px 6px rgba(0,0,0,0.1);
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s, border-color 0.3s;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1) rotateY(15deg);
+            box-shadow: 0 15px 25px rgba(0,0,0,0.15), inset 0 -3px 6px rgba(0,0,0,0.1);
+            border-color: var(--primary);
+        }
+
+        .theme-toggle.flipping {
+            animation: flip3D 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes flip3D {
+            0% { transform: scale(1) rotateY(0deg); }
+            50% { transform: scale(1.2) rotateY(180deg); }
+            100% { transform: scale(1) rotateY(360deg); }
+        }
+
+        .theme-toggle iconify-icon {
+            font-size: 1.8rem;
+            transform: translateZ(20px);
+        }
     </style>
+
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <script>
+        // Critical: Set theme immediately to avoid flash
+        (function() {
+            const saved = localStorage.getItem('hub_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
 </head>
 <body>
 
@@ -262,6 +354,12 @@
     <main>
         <?= $content ?>
     </main>
+
+    <div class="theme-toggle-wrapper">
+        <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
+            <iconify-icon icon="solar:moon-bold-duotone" id="themeIcon"></iconify-icon>
+        </div>
+    </div>
 
     <footer>
         <div class="container">
@@ -296,6 +394,36 @@
             error(t, m) { this.show(t, m, 'error'); }
         }
         window.toast = new ToastNotification();
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const btn = document.getElementById('themeToggle');
+            const current = html.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            
+            btn.classList.add('flipping');
+            
+            setTimeout(() => {
+                html.setAttribute('data-theme', next);
+                localStorage.setItem('hub_theme', next);
+                updateThemeIcon(next);
+            }, 300);
+
+            setTimeout(() => btn.classList.remove('flipping'), 600);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                icon.setAttribute('icon', theme === 'dark' ? 'solar:moon-bold-duotone' : 'solar:sun-bold-duotone');
+            }
+        }
+
+        // Sync icon on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+            updateThemeIcon(theme);
+        });
     </script>
 </body>
 </html>

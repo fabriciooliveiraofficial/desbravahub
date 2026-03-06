@@ -594,11 +594,12 @@ if ($isProgram) {
                                                     <?php elseif ($subType === 'url' && !empty($subAns)): 
                                                             $rendered_media_urls[] = trim($subAns);
                                                     ?>
-                                                        <div style="display: flex; gap: 12px; align-items: flex-start; width: 100%;">
-                                                            <div style="flex: 1;"><?= embed_media($subAns) ?></div>
-                                                            <button class="action-btn" onclick="updateCuration(<?= $currentStep['response_id'] ?>, '<?= addslashes($subAns) ?>')" 
-                                                                    style="background: var(--accent-amber); color: white; border: none; padding: 6px 12px; border-radius: 10px; font-size: 0.65rem; font-weight: 800; white-space: nowrap; cursor: pointer; transform: translateY(4px);">
-                                                                DESTACAR ESTE LINK
+                                                        <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%;">
+                                                            <div style="width: 100%; max-width: 600px;"><?= embed_media($subAns) ?></div>
+                                                            <button class="action-btn btn-amber highlight-action-btn" onclick="highlightMedia(this, <?= $currentStep['response_id'] ?>, '<?= addslashes($subAns) ?>')" 
+                                                                    style="font-size: 0.7rem; min-width: 200px;">
+                                                                <iconify-icon icon="solar:stars-line-duotone"></iconify-icon>
+                                                                <span class="btn-text">DESTACAR ESTE LINK</span>
                                                             </button>
                                                         </div>
                                                     <?php else: ?>
@@ -609,8 +610,8 @@ if ($isProgram) {
                                         <?php endforeach; ?>
                                     </div>
                                 <?php else: ?>
-                                    <div style="display: flex; gap: 12px; align-items: flex-start; width: 100%;">
-                                        <div style="flex: 1;">
+                                    <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%;">
+                                        <div style="width: 100%; max-width: 600px;">
                                             <?php 
                                             if (filter_var($qa['answer'], FILTER_VALIDATE_URL)) {
                                                 $rendered_media_urls[] = trim($qa['answer']);
@@ -619,9 +620,10 @@ if ($isProgram) {
                                             ?>
                                         </div>
                                         <?php if (filter_var($qa['answer'], FILTER_VALIDATE_URL)): ?>
-                                            <button class="action-btn" onclick="updateCuration(<?= $currentStep['response_id'] ?>, '<?= addslashes($qa['answer']) ?>')" 
-                                                    style="background: var(--accent-amber); color: white; border: none; padding: 6px 12px; border-radius: 10px; font-size: 0.65rem; font-weight: 800; white-space: nowrap; cursor: pointer; transform: translateY(4px);">
-                                                DESTACAR ESTE LINK
+                                            <button class="action-btn btn-amber highlight-action-btn" onclick="highlightMedia(this, <?= $currentStep['response_id'] ?>, '<?= addslashes($qa['answer']) ?>')" 
+                                                    style="font-size: 0.7rem; min-width: 200px;">
+                                                <iconify-icon icon="solar:stars-line-duotone"></iconify-icon>
+                                                <span class="btn-text">DESTACAR ESTE LINK</span>
                                             </button>
                                         <?php endif; ?>
                                     </div>
@@ -649,8 +651,8 @@ if ($isProgram) {
                         <div class="qa-block" style="border-left: 4px solid var(--accent-primary);">
                             <div class="question-text">Resposta Consolidada</div>
                             <div class="answer-text">
-                                <div style="display: flex; gap: 12px; align-items: flex-start; width: 100%;">
-                                    <div style="flex: 1;">
+                                <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%;">
+                                    <div style="width: 100%; max-width: 600px;">
                                         <?php 
                                         if (filter_var($currentStep['response_text'], FILTER_VALIDATE_URL)) {
                                             $rendered_media_urls[] = trim($currentStep['response_text']);
@@ -659,9 +661,10 @@ if ($isProgram) {
                                         ?>
                                     </div>
                                     <?php if (filter_var($currentStep['response_text'], FILTER_VALIDATE_URL)): ?>
-                                        <button class="action-btn" onclick="updateCuration(<?= $currentStep['response_id'] ?>, '<?= addslashes($currentStep['response_text']) ?>')" 
-                                                style="background: var(--accent-amber); color: white; border: none; padding: 6px 12px; border-radius: 10px; font-size: 0.65rem; font-weight: 800; white-space: nowrap; cursor: pointer; transform: translateY(4px);">
-                                            DESTACAR ESTE LINK
+                                        <button class="action-btn btn-amber highlight-action-btn" onclick="highlightMedia(this, <?= $currentStep['response_id'] ?>, '<?= addslashes($currentStep['response_text']) ?>')" 
+                                                style="font-size: 0.7rem; min-width: 200px;">
+                                            <iconify-icon icon="solar:stars-line-duotone"></iconify-icon>
+                                            <span class="btn-text">DESTACAR ESTE LINK</span>
                                         </button>
                                     <?php endif; ?>
                                 </div>
@@ -764,22 +767,28 @@ if ($isProgram) {
             <?php endif; ?>
 
             <!-- Hub Toggle -->
-            <div style="padding: 16px 24px; background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 16px; margin-top: 32px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 280px;">
-                    <input type="checkbox" id="public_lms_<?= $currentStep['response_id'] ?? '' ?>" 
-                           <?= !empty($currentStep['show_public']) ? 'checked' : '' ?>
-                           style="width: 24px; height: 24px; accent-color: var(--accent-amber); cursor: pointer;">
-                    <label for="public_lms_<?= $currentStep['response_id'] ?? '' ?>" style="font-weight: 800; cursor: pointer; color: var(--text-dark); font-size: 1rem; user-select: none;">
-                        <iconify-icon icon="solar:stars-line-duotone" style="color: var(--accent-amber); vertical-align: middle; margin-right: 8px; font-size: 1.4rem;"></iconify-icon>
-                        Highlight Mission on Club Public Hub (Event Hub)
-                    </label>
+            <div style="padding: 24px; background: rgba(245, 158, 11, 0.04); border: 1px solid rgba(245, 158, 11, 0.15); border-radius: 20px; margin-top: 32px; display: flex; flex-direction: column; gap: 16px;">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 280px;">
+                        <input type="checkbox" id="public_lms_<?= $currentStep['response_id'] ?? '' ?>" 
+                               <?= !empty($currentStep['show_public']) ? 'checked' : '' ?>
+                               style="width: 24px; height: 24px; accent-color: #d97706; cursor: pointer;">
+                        <label for="public_lms_<?= $currentStep['response_id'] ?? '' ?>" style="font-weight: 800; cursor: pointer; color: var(--text-dark); font-size: 1rem; user-select: none;">
+                            <iconify-icon icon="solar:stars-line-duotone" style="color: #d97706; vertical-align: middle; margin-right: 8px; font-size: 1.4rem;"></iconify-icon>
+                            Highlight Mission on Club Public Hub (Event Hub)
+                        </label>
+                    </div>
+
+                    <button class="action-btn btn-amber" onclick="updateCuration(<?= $currentStep['response_id'] ?>)">
+                        <iconify-icon icon="solar:diskette-bold-duotone" style="font-size: 1.2rem;"></iconify-icon>
+                        SALVAR CONFIGURAÇÃO
+                    </button>
                 </div>
 
-                <button class="action-btn" onclick="updateCuration(<?= $currentStep['response_id'] ?>)" 
-                        style="background: var(--accent-amber); color: white; border: none; padding: 8px 20px; border-radius: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s ease;">
-                    <iconify-icon icon="solar:diskette-bold-duotone" style="font-size: 1.2rem;"></iconify-icon>
-                    SALVAR DESTAQUE
-                </button>
+                <div style="border-top: 1px solid rgba(245, 158, 11, 0.1); padding-top: 12px; display: flex; align-items: center; gap: 8px; color: #92400e; font-size: 0.85rem; font-weight: 600;">
+                    <iconify-icon icon="solar:info-circle-bold-duotone" style="font-size: 1.1rem; flex-shrink: 0;"></iconify-icon>
+                    <span>O destaque de mídia só se tornará visível no Hub Público do clube após a <strong>APROVAÇÃO FINAL</strong> desta etapa.</span>
+                </div>
             </div>
 
             <!-- Consolidated Card Actions -->
@@ -963,6 +972,31 @@ if ($isProgram) {
                 console.error('Submission Error:', e);
                 Swal.fire('Falha na Comunicação', e.message, 'error');
             }
+        }
+    }
+
+    async function highlightMedia(buttonElement, responseId, preferredUrl) {
+        // Find the wrapper and specifically reset all highlighted buttons inside this review card
+        const allHighlightBtns = document.querySelectorAll('.highlight-action-btn');
+        
+        try {
+            await updateCuration(responseId, preferredUrl);
+            
+            // On success, reset all buttons back to amber/stars
+            allHighlightBtns.forEach(btn => {
+                btn.classList.remove('btn-highlighted');
+                btn.innerHTML = `<iconify-icon icon="solar:stars-line-duotone"></iconify-icon><span class="btn-text">DESTACAR ESTE LINK</span>`;
+                btn.style.pointerEvents = 'auto';
+                btn.style.opacity = '1';
+            });
+            
+            // Set THIS button to highlighted state
+            buttonElement.classList.add('btn-highlighted');
+            buttonElement.innerHTML = `<iconify-icon icon="solar:verified-check-bold-duotone"></iconify-icon><span class="btn-text">MÍDIA DESTACADA</span>`;
+            
+        } catch (e) {
+            console.error('Highlight error:', e);
+            // Swal error is already handled inside updateCuration
         }
     }
 

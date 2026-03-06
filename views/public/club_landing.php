@@ -14,116 +14,21 @@ try {
 } catch (Exception $e) {
     $stats = ['members' => 0, 'activities' => 0];
 }
-
-$defaultVibe = $profile['layout_vibe'] ?? 'light';
 ?>
-<!-- Fonts & Icons -->
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
-<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
 
 <style>
-/* CSS Variables for Dynamic Theme */
-:root {
-    /* Layout Constants */
-    --max-w-feed: 600px;
-    --max-w-grid: 900px;
-    --header-h: 80px;
-
-    /* Theme Transitions */
-    --t-color: color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    --t-bg: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    --t-border: border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Light Theme: Desert Scouting */
-[data-theme='light'] {
-    --bg-main: #FDFCF8;
-    --bg-surface: #FFFFFF;
-    --bg-elevated: #F3F1EC;
-    --text-primary: #2D3748;
-    --text-secondary: #718096;
-    --border: #E2E8F0;
-    --accent: #D97706; /* Amber/Scout */
-    --accent-hover: #b45309;
-    --accent-glow: rgba(217, 119, 6, 0.15);
-    --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-    --shadow-md: 0 10px 20px -5px rgba(217, 119, 6, 0.1);
-}
-
-/* Dark Theme: Deep Night HUD */
-[data-theme='dark'] {
-    --bg-main: #0B0F19;
-    --bg-surface: #111827;
-    --bg-elevated: #1E293B;
-    --text-primary: #F8FAFC;
-    --text-secondary: #94A3B8;
-    --border: #1E293B;
-    --accent: #38BDF8; /* Cyan Neon */
-    --accent-hover: #0284c7;
-    --accent-glow: rgba(56, 189, 248, 0.15);
-    --shadow-sm: 0 4px 6px rgba(0,0,0,0.3);
-    --shadow-md: 0 10px 20px -5px rgba(0,0,0,0.5);
-}
+/* CSS Variables provided by layout */
 
 * {
     box-sizing: border-box;
 }
 
 body {
-    margin: 0;
-    padding: 0;
-    background-color: var(--bg-main);
-    color: var(--text-primary);
-    font-family: 'Plus Jakarta Sans', sans-serif;
     transition: var(--t-bg), var(--t-color);
     overflow-x: hidden;
 }
 
-/* Theme Switcher 3D Effect */
-.theme-toggle-wrapper {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    z-index: 1000;
-    perspective: 1000px;
-}
 
-.theme-toggle {
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    color: var(--text-primary);
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1), inset 0 -3px 6px rgba(0,0,0,0.1);
-    transform-style: preserve-3d;
-    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s;
-}
-
-.theme-toggle:hover {
-    transform: scale(1.1) rotateY(15deg);
-    box-shadow: 0 15px 25px rgba(0,0,0,0.15), inset 0 -3px 6px rgba(0,0,0,0.1);
-    border-color: var(--accent);
-}
-
-.theme-toggle.flipping {
-    animation: flip3D 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes flip3D {
-    0% { transform: scale(1) rotateY(0deg); }
-    50% { transform: scale(1.2) rotateY(180deg); }
-    100% { transform: scale(1) rotateY(360deg); }
-}
-
-.theme-toggle iconify-icon {
-    font-size: 1.8rem;
-    transform: translateZ(20px);
-}
 
 /* Parallax Hero */
 .hero {
@@ -467,11 +372,7 @@ body {
     }
 }
 @media (max-width: 640px) {
-    .theme-toggle {
-        top: auto;
-        bottom: 24px;
-        right: 24px;
-    }
+
     .hero { padding: 80px 16px 32px; }
     .insta-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -482,13 +383,7 @@ body {
 }
 </style>
 
-<div class="theme-toggle-wrapper">
-    <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
-        <iconify-icon icon="solar:compass-bold-duotone" id="themeIcon"></iconify-icon>
-    </div>
-</div>
 
-<main>
     <section class="hero">
         <div class="hero-bg-layer" id="parallaxBg"></div>
         <div class="hero-content">
@@ -685,7 +580,7 @@ body {
             <?php endif; ?>
         </div>
     </div>
-</main>
+
 
 <!-- Media Modal -->
 <div id="mediaModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(8px);">
@@ -699,37 +594,7 @@ body {
 </div>
 
 <script>
-    // Theme Management
-    const themeToggleEl = document.getElementById('themeToggle');
-    const themeIcon = document.getElementById('themeIcon');
-    let currentTheme = localStorage.getItem('theme_preference') || '<?= htmlspecialchars($defaultVibe) ?>' || 'light';
-    
-    function applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        
-        if (theme === 'dark') {
-            themeIcon.setAttribute('icon', 'solar:fire-bold-duotone'); // Fogueira
-            themeIcon.style.color = '#38BDF8'; // Neon Blue fire
-        } else {
-            themeIcon.setAttribute('icon', 'solar:compass-bold-duotone'); // Bússola
-            themeIcon.style.color = '#D97706'; // Amber compass
-        }
-    }
 
-    function toggleTheme() {
-        themeToggleEl.classList.remove('flipping');
-        void themeToggleEl.offsetWidth; // Trigger reflow
-        themeToggleEl.classList.add('flipping');
-        
-        setTimeout(() => {
-            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
-            localStorage.setItem('theme_preference', currentTheme);
-            applyTheme(currentTheme);
-        }, 300); // Change icon halfway through flip
-    }
-    
-    // Init
-    applyTheme(currentTheme);
 
     // Parallax Hero
     const parallaxBg = document.getElementById('parallaxBg');

@@ -50,24 +50,24 @@ $bellUnreadCount = $unreadCount ?? 0;
 /* Unified styling for both member HUD and Admin header */
 .hud-top-bar .notification-bell-link,
 .admin-header .notification-bell-link {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-hover, rgba(255, 255, 255, 0.05));
     width: 36px;
     height: 36px;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-muted, rgba(255, 255, 255, 0.7));
     transition: all 0.2s;
     text-decoration: none;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
 }
 
 .hud-top-bar .notification-bell-link:hover,
 .admin-header .notification-bell-link:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--accent-cyan, #00d9ff);
-    border-color: rgba(0, 217, 255, 0.3);
+    background: var(--item-hover, rgba(255, 255, 255, 0.1));
+    color: var(--primary, var(--accent-cyan, #00d9ff));
+    border-color: var(--primary, rgba(0, 217, 255, 0.3));
 }
 
 .admin-header .notification-bell-link {

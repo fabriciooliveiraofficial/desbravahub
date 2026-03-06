@@ -494,28 +494,76 @@ public function deleteUser(array $params): void
     {
         $tenantId = App::tenantId();
 
-        return [
-            'users' => db_fetch_column(
+        $stats = [
+            'users' => 0,
+            'active_users' => 0,
+            'activities' => 0,
+            'pending_proofs' => 0,
+            'completed_activities' => 0,
+        ];
+
+        try {
+            // 1. Users Stats
+            $stats['users'] = (int) db_fetch_column(
                 "SELECT COUNT(*) FROM users WHERE tenant_id = ? AND deleted_at IS NULL",
                 [$tenantId]
-            ),
-            'active_users' => db_fetch_column(
+            );
+            $stats['active_users'] = (int) db_fetch_column(
                 "SELECT COUNT(*) FROM users WHERE tenant_id = ? AND status = 'active' AND deleted_at IS NULL",
                 [$tenantId]
-            ),
-            'activities' => db_fetch_column(
-                "SELECT COUNT(*) FROM activities WHERE tenant_id = ?",
-                [$tenantId]
-            ),
-            'pending_proofs' => db_fetch_column(
-                "SELECT COUNT(*) FROM activity_proofs WHERE tenant_id = ? AND status = 'pending'",
-                [$tenantId]
-            ),
-            'completed_activities' => db_fetch_column(
-                "SELECT COUNT(*) FROM user_activities WHERE tenant_id = ? AND status = 'completed'",
-                [$tenantId]
-            ),
-        ];
+            );
+
+            // 2. Specialties (Sum v1 + v2)
+            $v1Activities = (int) db_fetch_column("SELECT COUNT(*) FROM activities WHERE tenant_id = ?", [$tenantId]);
+            
+            $v2CustomSpecs = 0;
+            try {
+                $v2CustomSpecs = (int) db_fetch_column("SELECT COUNT(*) FROM specialties WHERE tenant_id = ? AND status = 'active'", [$tenantId]);
+            } catch (\Exception $e) {}
+
+            $v2LearningPrograms = 0;
+            try {
+                $v2LearningPrograms = (int) db_fetch_column("SELECT COUNT(*) FROM learning_programs WHERE tenant_id = ?", [$tenantId]);
+            } catch (\Exception $e) {}
+
+            $stats['activities'] = $v1Activities + $v2CustomSpecs + $v2LearningPrograms;
+
+            // 3. Pending Proofs (Sum v1 + v2)
+            $v1Pending = (int) db_fetch_column("SELECT COUNT(*) FROM activity_proofs WHERE tenant_id = ? AND status = 'pending'", [$tenantId]);
+            
+            $v2Pending = 0;
+            try {
+                $v2Pending = (int) db_fetch_column("
+                    SELECT COUNT(*) 
+                    FROM user_step_responses usr
+                    JOIN user_program_progress upp ON usr.progress_id = upp.id
+                    WHERE upp.tenant_id = ? AND usr.status = 'submitted'
+                ", [$tenantId]);
+            } catch (\Exception $e) {}
+
+            $stats['pending_proofs'] = $v1Pending + $v2Pending;
+
+            // 4. Completed Activities (Sum v1 + v2)
+            $v1Completed = (int) db_fetch_column("SELECT COUNT(*) FROM user_activities WHERE tenant_id = ? AND status = 'completed'", [$tenantId]);
+            
+            $v2CompletedAssignments = 0;
+            try {
+                $v2CompletedAssignments = (int) db_fetch_column("SELECT COUNT(*) FROM specialty_assignments WHERE tenant_id = ? AND status = 'completed'", [$tenantId]);
+            } catch (\Exception $e) {}
+
+            $v2CompletedPrograms = 0;
+            try {
+                $v2CompletedPrograms = (int) db_fetch_column("SELECT COUNT(*) FROM user_program_progress WHERE tenant_id = ? AND status = 'completed'", [$tenantId]);
+            } catch (\Exception $e) {}
+
+            $stats['completed_activities'] = $v1Completed + $v2CompletedAssignments + $v2CompletedPrograms;
+
+        } catch (\Exception $e) {
+            // Fallback for safety during development/migration
+            error_log("Error in getDashboardStats: " . $e->getMessage());
+        }
+
+        return $stats;
     }
 
     /**
