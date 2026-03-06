@@ -18,6 +18,9 @@
 
     <!-- Right Side: Actions -->
     <div class="header-actions">
+        <!-- Notification Bell -->
+        <?php require BASE_PATH . '/views/partials/notification_bell.php'; ?>
+
         <!-- Theme Toggle -->
         <button class="theme-toggle" id="theme-toggle" title="Alternar Tema">
             <span class="material-icons-outlined" id="theme-icon-dark" style="display: block;">dark_mode</span>

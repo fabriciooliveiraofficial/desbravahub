@@ -418,6 +418,9 @@ class SpecialtyController
 
         $assignments = SpecialtyService::getGodModeData($tenant['id']);
         
+        $permissionService = new \App\Services\PermissionService();
+        $canForceDelete = $permissionService->can('specialties.delete_active');
+
         // Fetch categories for "Nova Categoria" and "Criar Programa" modals
         $categories = db_fetch_all(
             "SELECT * FROM learning_categories WHERE tenant_id = ? AND status = 'active' ORDER BY sort_order, name",
@@ -428,7 +431,8 @@ class SpecialtyController
             'tenant' => $tenant,
             'user' => $user,
             'assignments' => $assignments,
-            'categories' => $categories
+            'categories' => $categories,
+            'canForceDelete' => $canForceDelete
         ]);
     }
 
@@ -441,6 +445,8 @@ class SpecialtyController
 
         $tenant = App::tenant();
         $assignments = SpecialtyService::getGodModeData($tenant['id']);
+        $permissionService = new \App\Services\PermissionService();
+        $canForceDelete = $permissionService->can('specialties.delete_active');
 
         // Return just the rows
         require BASE_PATH . '/views/admin/specialties/partials/matrix-rows.php';

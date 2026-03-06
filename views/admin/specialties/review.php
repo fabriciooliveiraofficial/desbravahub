@@ -499,13 +499,31 @@ $progressPercent = $totalReqs > 0 ? round(($completedReqs / $totalReqs) * 100) :
                             <h4>📎 Prova Enviada</h4>
                             <div class="proof-content">
                                 <?php if ($reqProgress['proof_type'] === 'url'): ?>
-                                    🔗 <a href="<?= htmlspecialchars($reqProgress['proof_content']) ?>" target="_blank">
-                                        <?= htmlspecialchars($reqProgress['proof_content']) ?>
-                                    </a>
+                                    <?= embed_media($reqProgress['proof_content']) ?>
                                 <?php else: ?>
-                                    📁 <a href="<?= htmlspecialchars($reqProgress['proof_content']) ?>" target="_blank">
-                                        Ver arquivo
-                                    </a>
+                                    <?php 
+                                    $proofPath = $reqProgress['proof_content'];
+                                    // Handle legacy storage paths
+                                    if (strpos($proofPath, 'storage/proofs/') === 0) {
+                                        $proofPath = '/' . $proofPath;
+                                    }
+                                    $fullUrl = base_url($proofPath);
+                                    $ext = strtolower(pathinfo($proofPath, PATHINFO_EXTENSION));
+                                    $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                                    ?>
+                                    
+                                    <?php if ($isImage): ?>
+                                        <div style="margin-top: 10px; width: 100%;">
+                                            <img src="<?= $fullUrl ?>" style="max-width: 100%; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;" onclick="window.open('<?= $fullUrl ?>', '_blank')">
+                                            <div style="margin-top: 8px;">
+                                                <a href="<?= $fullUrl ?>" target="_blank" style="font-size: 0.8rem;">Visualizar em tela cheia</a>
+                                            </div>
+                                        </div>
+                                    <?php else: ?>
+                                        📁 <a href="<?= $fullUrl ?>" target="_blank">
+                                            Ver arquivo (<?= strtoupper($ext) ?>)
+                                        </a>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
 

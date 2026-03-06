@@ -20,15 +20,9 @@
         <!-- Action Buttons -->
         <div class="header-actions">
             <!-- Notification Bell -->
-            <a href="<?= base_url($tenant['slug'] . '/notificacoes') ?>" class="hud-action-btn" id="notificationBtn">
-                <span class="material-icons-round">notifications</span>
-                <?php if (($unreadCount ?? 0) > 0): ?>
-                    <span class="hud-notification-badge"><?= ($unreadCount ?? 0) > 9 ? '9+' : ($unreadCount ?? 0) ?></span>
-                <?php endif; ?>
-            </a>
-
-            <!-- User Avatar -->
-            <a href="<?= base_url($tenant['slug'] . '/perfil') ?>" class="hud-action-btn avatar-btn">
+            <?php require BASE_PATH . '/views/partials/notification_bell.php'; ?>
+            
+            <a href="<?= base_url($tenant['slug'] . '/perfil') ?>" class="hud-action-btn stagger-2" title="Meu Perfil">
                 <div class="hud-avatar-ring">
                     <div class="hud-avatar-inner">
                         <?= strtoupper(substr($user['name'], 0, 1)) ?>

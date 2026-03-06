@@ -617,11 +617,11 @@
         <div style="font-size: 3rem; color: #f59e0b; margin-bottom: 15px;">
             <i class="fa-solid fa-circle-exclamation"></i>
         </div>
-        <h3 style="margin: 0 0 10px; color: #1f2937; font-size: 1.25rem;">Remover Missão?</h3>
-        <p style="color: #6b7280; margin-bottom: 25px; line-height: 1.5;">Esta ação removerá o progresso do desbravador nesta especialidade. Tem certeza?</p>
+        <h3 style="margin: 0 0 10px; color: #1f2937; font-size: 1.25rem;">Desatribuir Missão?</h3>
+        <p style="color: #6b7280; margin-bottom: 25px; line-height: 1.5;">Esta ação removerá a atribuição e o progresso do desbravador nesta especialidade / programa. Tem certeza?</p>
         <div style="display: flex; gap: 10px; justify-content: center;">
             <button onclick="closeGodModal(false)" style="padding: 10px 20px; border: 1px solid #d1d5db; background: white; color: #374151; border-radius: 6px; cursor: pointer; font-weight: 500;">Cancelar</button>
-            <button onclick="closeGodModal(true)" style="padding: 10px 20px; border: none; background: #ef4444; color: white; border-radius: 6px; cursor: pointer; font-weight: 500;">Sim, Remover</button>
+            <button onclick="closeGodModal(true)" style="padding: 10px 20px; border: none; background: #ef4444; color: white; border-radius: 6px; cursor: pointer; font-weight: 500;">Sim, Desatribuir</button>
         </div>
     </div>
 </div>

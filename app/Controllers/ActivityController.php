@@ -164,8 +164,9 @@ class ActivityController
         $proofId = (int) $params['id'];
         $action = $_POST['action'] ?? '';
         $comment = $_POST['comment'] ?? null;
+        $showPublic = isset($_POST['show_public']) && $_POST['show_public'] == '1';
 
-        $result = $this->proofService->reviewProof($proofId, $action, $comment);
+        $result = $this->proofService->reviewProof($proofId, $action, $comment, $showPublic);
 
         if ($result['success']) {
             $this->json(['message' => 'Proof reviewed successfully']);

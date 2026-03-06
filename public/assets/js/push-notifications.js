@@ -177,7 +177,46 @@ class PushNotifications {
         }
         return outputArray;
     }
+
+    /**
+     * Set up listener for messages from Service Worker
+     */
+    setupSwListener() {
+        if (!('serviceWorker' in navigator)) return;
+
+        navigator.serviceWorker.addEventListener('message', event => {
+            if (event.data && event.data.type === 'PUSH_NOTIFICATION') {
+                this.log('Message from SW:', event.data);
+                this.handleIncomingPush(event.data);
+            }
+        });
+    }
+
+    /**
+     * Handle incoming push data (trigger toast/sound)
+     */
+    handleIncomingPush(payload) {
+        const { data, priority } = payload;
+        if (!window.toast) {
+            this.log('Toast system not available');
+            return;
+        }
+
+        window.toast.show({
+            title: data.title,
+            message: data.body,
+            type: data.type || 'info',
+            priority: priority || data.priority || 'normal',
+            position: priority === 'critical' || data.priority === 'critical' ? 'center' : 'default',
+            icon: data.icon,
+            onClick: data.url ? () => { window.location.href = data.url; } : null
+        });
+
+        // Notify other components (like badge poller)
+        document.dispatchEvent(new CustomEvent('push-notification-received', { detail: payload }));
+    }
 }
 
 // Global instance
 const pushNotifications = new PushNotifications();
+pushNotifications.setupSwListener();

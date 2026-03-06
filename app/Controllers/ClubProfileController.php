@@ -38,7 +38,11 @@ class ClubProfileController
                 'social_whatsapp_group' => '',
                 'welcome_message' => 'Bem-vindo ao nosso clube!',
                 'leaders_json' => '[]',
-                'seo_meta_description' => ''
+                'seo_meta_description' => '',
+                'club_motto' => '',
+                'club_vow' => '',
+                'club_law' => '',
+                'layout_vibe' => 'hybrid'
             ];
         }
 
@@ -75,7 +79,11 @@ class ClubProfileController
             'social_instagram' => $_POST['social_instagram'] ?? '',
             'social_whatsapp_group' => $_POST['social_whatsapp_group'] ?? '',
             'welcome_message' => $_POST['welcome_message'] ?? '',
-            'seo_meta_description' => $_POST['seo_meta_description'] ?? ''
+            'seo_meta_description' => $_POST['seo_meta_description'] ?? '',
+            'club_motto' => $_POST['club_motto'] ?? '',
+            'club_vow' => $_POST['club_vow'] ?? '',
+            'club_law' => $_POST['club_law'] ?? '',
+            'layout_vibe' => $_POST['layout_vibe'] ?? 'hybrid'
         ];
 
         // Ensure slug is unique but ignoring own tenant

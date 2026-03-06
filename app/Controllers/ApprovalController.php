@@ -119,7 +119,7 @@ class ApprovalController
         $steps = db_fetch_all("
             SELECT ps.*, usr.id as response_id, usr.status as response_status, 
                    usr.response_text, usr.response_file, usr.response_url, 
-                   usr.submitted_at, usr.feedback
+                   usr.submitted_at, usr.feedback, usr.show_public
             FROM program_steps ps
             LEFT JOIN user_step_responses usr ON ps.id = usr.step_id AND usr.progress_id = ?
             WHERE ps.version_id = ?
@@ -137,11 +137,13 @@ class ApprovalController
             if (is_array($decoded)) {
                 foreach ($questions as $q) {
                     $qId = $q['id'];
-                    $answer = $decoded[$qId] ?? ($decoded[$questions[0]['id'] ?? -1] ?? null);
+                    // Fix: Removed fallback to questions[0] which caused swapped answers
+                    $answer = $decoded[$qId] ?? null;
                     
                     if ($answer !== null) {
                         $label = $q['question_text'] ?: "Resposta";
                         $readableAnswer = $answer;
+                        $currentSubAnswers = null; // Explicitly reset to prevent loop leakage
                         
                         // Map options if choice type
                         if (in_array($q['type'], ['single_choice', 'multiple_choice', 'select', 'true_false'])) {
@@ -168,6 +170,7 @@ class ApprovalController
                         } elseif ($q['type'] === 'structured' && is_array($answer)) {
                             $subQuestions = json_decode($q['options'] ?? '[]', true) ?? [];
                             $mappedArr = [];
+                            $currentSubAnswers = [];
                             foreach ($subQuestions as $sIdx => $subQ) {
                                 $subAns = $answer[$sIdx] ?? '';
                                 $subType = $subQ['type'] ?? 'text';
@@ -183,7 +186,7 @@ class ApprovalController
                                 $mappedArr[] = "▶ ITEM " . ($subQ['label'] ?? '') . " - " . ($subQ['text'] ?? '') . "\nResposta:\n" . $subAnsDisplay;
                                 
                                 // Store raw sub-answers for intelligent rendering in the review card
-                                $qa['structured_sub_answers'][] = [
+                                $currentSubAnswers[] = [
                                     'label' => $subQ['label'] ?? '',
                                     'text' => $subQ['text'] ?? '',
                                     'answer' => $subAns,
@@ -197,7 +200,7 @@ class ApprovalController
                             'question' => $label,
                             'answer' => $readableAnswer,
                             'type' => $q['type'],
-                            'sub_answers' => $qa['structured_sub_answers'] ?? null
+                            'sub_answers' => $currentSubAnswers ?? null
                         ];
                     }
                 }
@@ -218,7 +221,8 @@ class ApprovalController
                     $step['structured_content'][] = [
                         'question' => $q['question_text'] ?: "Resposta",
                         'answer' => $readableAnswer,
-                        'type' => $q['type']
+                        'type' => $q['type'],
+                        'sub_answers' => null
                     ];
                     break; 
                 }
@@ -243,8 +247,34 @@ class ApprovalController
         $user = App::user();
         $responseId = (int) ($params['id'] ?? 0);
 
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
         $itemEvaluations = $input['item_evaluations'] ?? null;
+        $showPublic = !empty($input['show_public']) ? 1 : 0;
+
+        // Auto-extract URL from structured response if response_url is empty
+        $currentResponse = db_fetch_one("SELECT response_text, response_url FROM user_step_responses WHERE id = ?", [$responseId]);
+        $extractedUrl = $currentResponse['response_url'] ?? null;
+        
+        if (empty($extractedUrl) && !empty($currentResponse['response_text'])) {
+            $decoded = json_decode($currentResponse['response_text'], true);
+            if (is_array($decoded)) {
+                // Look for standard social links or video URLs in structured data
+                foreach ($decoded as $val) {
+                    if (is_string($val) && filter_var($val, FILTER_VALIDATE_URL)) {
+                        $extractedUrl = $val;
+                        break;
+                    }
+                    if (is_array($val)) {
+                        foreach ($val as $subVal) {
+                            if (is_string($subVal) && filter_var($subVal, FILTER_VALIDATE_URL)) {
+                                $extractedUrl = $subVal;
+                                break 2;
+                            }
+                        }
+                    }
+                }
+            }
+        }
         
         // If we have granular evaluations, we store them as JSON in the feedback field (prefixing with [GRANULAR])
         // or we could use another field, but for Phase 92 we'll keep it simple and efficient.
@@ -254,11 +284,16 @@ class ApprovalController
             db_begin();
 
             // Update response status
+            $thumbnailUrl = ($showPublic && $extractedUrl) ? fetch_media_thumbnail($extractedUrl) : null;
+            
             db_update('user_step_responses', [
                 'status' => 'approved',
                 'feedback' => $feedbackBlob,
                 'reviewed_by' => $user['id'],
-                'reviewed_at' => date('Y-m-d H:i:s')
+                'reviewed_at' => date('Y-m-d H:i:s'),
+                'response_url' => $extractedUrl,
+                'show_public' => $showPublic,
+                'thumbnail_url' => $thumbnailUrl ?: db_fetch_column("SELECT thumbnail_url FROM user_step_responses WHERE id = ?", [$responseId])
             ], 'id = ?', [$responseId]);
 
             // Log approval
@@ -316,7 +351,7 @@ class ApprovalController
         $user = App::user();
         $responseId = (int) ($params['id'] ?? 0);
 
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
         $feedback = $input['feedback'] ?? '';
         $itemEvaluations = $input['item_evaluations'] ?? null;
 
@@ -334,7 +369,9 @@ class ApprovalController
                 'status' => 'rejected',
                 'feedback' => $feedbackBlob,
                 'reviewed_by' => $user['id'],
-                'reviewed_at' => date('Y-m-d H:i:s')
+                'reviewed_at' => date('Y-m-d H:i:s'),
+                'show_public' => 0,
+                'response_url' => null
             ], 'id = ?', [$responseId]);
 
             // Log rejection
@@ -414,17 +451,37 @@ class ApprovalController
         $user = App::user();
         $progressId = (int) ($params['id'] ?? 0);
 
+        $input = json_decode(file_get_contents('php://input'), true);
+        $showPublic = !empty($input['show_public']) ? 1 : 0;
+
         try {
             db_begin();
 
             // Get all pending responses for this progress record
-            $pending = db_fetch_all("SELECT id FROM user_step_responses WHERE progress_id = ? AND status = 'submitted'", [$progressId]);
+            $pending = db_fetch_all("SELECT id, response_text, response_url FROM user_step_responses WHERE progress_id = ? AND status = 'submitted'", [$progressId]);
 
             foreach ($pending as $item) {
+                $itemUrl = $item['response_url'];
+                if (empty($itemUrl) && !empty($item['response_text'])) {
+                     $decoded = json_decode($item['response_text'], true);
+                     if (is_array($decoded)) {
+                         foreach ($decoded as $val) {
+                            if (is_string($val) && filter_var($val, FILTER_VALIDATE_URL)) { $itemUrl = $val; break; }
+                            if (is_array($val)) {
+                                foreach ($val as $subVal) {
+                                    if (is_string($subVal) && filter_var($subVal, FILTER_VALIDATE_URL)) { $itemUrl = $subVal; break 2; }
+                                }
+                            }
+                         }
+                     }
+                }
+
                 db_update('user_step_responses', [
                     'status' => 'approved',
                     'reviewed_by' => $user['id'],
-                    'reviewed_at' => date('Y-m-d H:i:s')
+                    'reviewed_at' => date('Y-m-d H:i:s'),
+                    'response_url' => $itemUrl,
+                    'show_public' => $showPublic
                 ], 'id = ?', [(int) $item['id']]);
 
                 db_insert('approval_logs', [
@@ -493,6 +550,67 @@ class ApprovalController
                     LearningNotificationService::programCompleted($progress['tenant_id'], $progress['user_id'], $program, $tenantSlug);
                 }
             }
+        }
+    }
+
+    /**
+     * Update curation status (Highlight on Hub) independently
+     */
+    public function updateCuration(array $params): void
+    {
+        $this->requireAdmin();
+        $responseId = (int) ($params['id'] ?? 0);
+        
+        $input = json_decode(file_get_contents('php://input'), true);
+        $showPublic = !empty($input['show_public']) ? 1 : 0;
+        $preferredUrl = $input['preferred_url'] ?? null;
+
+        try {
+            if ($showPublic) {
+                // If a preferred URL is provided, use it. Otherwise extract automatically if empty.
+                if ($preferredUrl) {
+                    db_update('user_step_responses', [
+                        'response_url' => $preferredUrl,
+                        'thumbnail_url' => fetch_media_thumbnail($preferredUrl)
+                    ], 'id = ?', [$responseId]);
+                } else {
+                    $response = db_fetch_one("SELECT response_text, response_url FROM user_step_responses WHERE id = ?", [$responseId]);
+                    if ($response && empty($response['response_url']) && !empty($response['response_text'])) {
+                        $itemUrl = null;
+                        $decoded = json_decode($response['response_text'], true);
+                        if (is_array($decoded)) {
+                            foreach ($decoded as $val) {
+                                if (is_string($val) && filter_var($val, FILTER_VALIDATE_URL)) { $itemUrl = $val; break; }
+                                if (is_array($val)) {
+                                    foreach ($val as $subVal) {
+                                        if (is_string($subVal) && filter_var($subVal, FILTER_VALIDATE_URL)) { $itemUrl = $subVal; break 2; }
+                                    }
+                                }
+                            }
+                        }
+                        if ($itemUrl) {
+                            db_update('user_step_responses', [
+                                'response_url' => $itemUrl,
+                                'thumbnail_url' => fetch_media_thumbnail($itemUrl)
+                            ], 'id = ?', [$responseId]);
+                        }
+                    }
+                }
+
+                // If we have a URL now, ensure we have a thumbnail
+                $final = db_fetch_one("SELECT response_url, thumbnail_url FROM user_step_responses WHERE id = ?", [$responseId]);
+                if (!empty($final['response_url']) && empty($final['thumbnail_url'])) {
+                    db_update('user_step_responses', ['thumbnail_url' => fetch_media_thumbnail($final['response_url'])], 'id = ?', [$responseId]);
+                }
+            }
+
+            db_update('user_step_responses', [
+                'show_public' => $showPublic
+            ], 'id = ?', [$responseId]);
+
+            $this->json(['success' => true, 'message' => 'Configurações de destaque atualizadas!']);
+        } catch (\Exception $e) {
+            $this->json(['error' => 'Erro: ' . $e->getMessage()], 500);
         }
     }
 

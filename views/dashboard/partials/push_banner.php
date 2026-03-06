@@ -29,16 +29,21 @@
     bottom: 120px;
     left: 16px;
     right: 16px;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(15, 23, 42, 0.9); /* Dark Slate */
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
     padding: 20px;
     z-index: 10000;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
     animation: slideUpBanner 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* Adjust text for dark background */
+.push-banner-container h4 { color: #fff !important; }
+.push-banner-container p { color: rgba(255,255,255,0.6) !important; }
+.push-banner-container #close-push-banner { background: rgba(255,255,255,0.05) !important; color: #fff !important; }
 
 @media (min-width: 1024px) {
     .push-banner-container {

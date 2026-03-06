@@ -42,10 +42,14 @@ class AdminController
         // Gather stats
         $stats = $this->getDashboardStats();
 
+        // Get recent notifications for the board widget
+        $recentNotifications = $this->notificationService->getAll($user['id'], 5);
+
         View::render('admin/dashboard', [
             'tenant' => $tenant,
             'user' => $user,
             'stats' => $stats,
+            'notifications' => $recentNotifications,
             'pageTitle' => 'Painel'
         ]);
     }
@@ -298,7 +302,8 @@ public function deleteUser(array $params): void
                 p.content,
                 p.submitted_at,
                 u.name as user_name, 
-                a.title as item_title
+                a.title as item_title,
+                p.show_public
              FROM activity_proofs p
              JOIN user_activities ua ON p.user_activity_id = ua.id
              JOIN users u ON ua.user_id = u.id
@@ -324,7 +329,8 @@ public function deleteUser(array $params): void
             usr.submitted_at,
             u.name as user_name,
             CONCAT(p.name, ' - ', ps.title) as item_title,
-            usr.step_id
+            usr.step_id,
+            usr.show_public
         FROM user_step_responses usr
         JOIN program_steps ps ON usr.step_id = ps.id
         JOIN program_versions pv ON ps.version_id = pv.id
@@ -1011,12 +1017,97 @@ public function deleteUser(array $params): void
 
         // Handle Activity Proof (Standard logic)
         $proofService = new \App\Services\ProofService();
-        $result = $proofService->reviewProof($id, $action, $comment);
+        $showPublic = ($_POST['show_public'] ?? '0') === '1';
+        $result = $proofService->reviewProof($id, $action, $comment, $showPublic);
 
         if ($result['success']) {
-            $this->json(['message' => 'Proof reviewed successfully']);
+            $this->json(['message' => 'Proof reviewed successfully', 'success' => true]);
         } else {
             $this->json(['error' => $result['error']], 400);
         }
+    }
+
+    /**
+     * Update curation for an activity proof
+     */
+    public function updateActivityCuration(array $params): void
+    {
+        $this->requirePermission('proofs.review');
+
+        $id = (int) ($params['id'] ?? 0);
+        $input = json_decode(file_get_contents('php://input'), true);
+        $showPublic = ($input['show_public'] ?? false) ? 1 : 0;
+
+        try {
+            db_update('activity_proofs', [
+                'show_public' => $showPublic,
+                'reviewed_at' => date('Y-m-d H:i:s'),
+                'reviewed_by' => App::userId()
+            ], 'id = ?', [$id]);
+
+            $this->json([
+                'success' => true,
+                'message' => 'Destaque atualizado com sucesso!'
+            ]);
+        } catch (\Exception $e) {
+            $this->jsonError('Erro ao atualizar: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get reviewed proofs history (standard and program)
+     */
+    public function proofsHistory(): void
+    {
+        $this->requirePermission('proofs.review');
+        $tenantId = App::tenantId();
+
+        // 1. Activity Proofs History
+        $activityHistory = db_fetch_all(
+            "SELECT 
+                'activity' as kind,
+                p.id, 
+                p.status,
+                p.reviewed_at,
+                u.name as user_name, 
+                a.title as item_title,
+                p.show_public
+             FROM activity_proofs p
+             JOIN user_activities ua ON p.user_activity_id = ua.id
+             JOIN users u ON ua.user_id = u.id
+             JOIN activities a ON ua.activity_id = a.id
+             WHERE p.tenant_id = ? AND p.status != 'pending'
+             ORDER BY p.reviewed_at DESC
+             LIMIT 50",
+            [$tenantId]
+        );
+
+        // 2. Program Step History
+        $programHistory = db_fetch_all(
+            "SELECT 
+                'program' as kind,
+                usr.id,
+                usr.status,
+                usr.reviewed_at,
+                u.name as user_name,
+                ps.title as item_title,
+                usr.show_public
+             FROM user_step_responses usr
+             JOIN program_steps ps ON usr.step_id = ps.id
+             JOIN user_program_progress upp ON usr.progress_id = upp.id
+             JOIN users u ON upp.user_id = u.id
+             WHERE upp.tenant_id = ? AND usr.status != 'submitted'
+             ORDER BY usr.reviewed_at DESC
+             LIMIT 50",
+            [$tenantId]
+        );
+
+        $history = array_merge($activityHistory, $programHistory);
+        usort($history, fn($a, $b) => strtotime($b['reviewed_at']) - strtotime($a['reviewed_at']));
+
+        $this->json([
+            'success' => true,
+            'history' => array_slice($history, 0, 50)
+        ]);
     }
 }

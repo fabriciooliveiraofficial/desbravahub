@@ -11,7 +11,8 @@
  */
 ?>
 <!DOCTYPE html>
-<html lang="<?= $tenant['settings']['language'] ?? 'pt_BR' ?>" class="loading">
+<html lang="<?= $tenant['settings']['language'] ?? 'pt_BR' ?>">
+<!-- Removed initial loading class to prevent unstyled flash if JS fails -->
 
 
 <head>
@@ -47,6 +48,7 @@
     
     <!-- Toast System -->
     <script src="<?= asset_url('js/toast.js') ?>"></script>
+    <script src="<?= asset_url('js/notifications-ui.js') ?>"></script>
     <script src="<?= asset_url('js/uas.js') ?>"></script>
     
     <!-- Session Guard (Per-Tab Isolation) -->
@@ -112,56 +114,17 @@
             }
         });
 
-        // Re-initialize Toast on page load/swap
-        const toast = new ToastNotification();
-
-        // =============================================
-        // NOTIFICATION BADGE POLLING (Live counter)
-        // =============================================
+        // Notification Badge Polling & Real-time Sync
         (function() {
-            const BADGE_POLL_INTERVAL = 30000; // 30 seconds
-            const API_URL = '<?= base_url("{$tenant['slug']}/api/notifications") ?>';
-            const bellBtn = document.getElementById('notificationBtn');
-
-            function updateBadge(count) {
-                if (!bellBtn) return;
-
-                // Remove existing badge
-                let badge = bellBtn.querySelector('.hud-notification-badge');
-
-                if (count > 0) {
-                    if (!badge) {
-                        badge = document.createElement('span');
-                        badge.className = 'hud-notification-badge';
-                        bellBtn.appendChild(badge);
-                    }
-                    badge.textContent = count > 9 ? '9+' : count;
-                    badge.style.display = 'flex';
-                } else if (badge) {
-                    badge.style.display = 'none';
-                }
+            if (typeof initNotificationUI !== 'undefined') {
+                initNotificationUI('<?= $tenant['slug'] ?>');
             }
-
-            async function pollBadge() {
-                try {
-                    const res = await fetch(API_URL, {
-                        credentials: 'include',
-                        headers: { 'Accept': 'application/json' }
-                    });
-                    if (!res.ok) return;
-                    const data = await res.json();
-                    updateBadge(data.unread_count || 0);
-                } catch (e) { /* silent */ }
-            }
-
-            // Initial fetch + interval
-            pollBadge();
-            setInterval(pollBadge, BADGE_POLL_INTERVAL);
         })();
         
         // Handle HTMX events
         document.body.addEventListener('htmx:afterSwap', function(event) {
             window.scrollTo(0, 0);
+            // Re-run any needed UI initializers here if they target swapped content
         });
 
         // =============================================

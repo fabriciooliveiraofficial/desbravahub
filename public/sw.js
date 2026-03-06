@@ -281,7 +281,19 @@ self.addEventListener('push', (event) => {
     };
 
     event.waitUntil(
-        self.registration.showNotification(data.title, options)
+        Promise.all([
+            self.registration.showNotification(data.title, options),
+            // Broadcast to all open windows for immediate toast/sound
+            self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+                clients.forEach(client => {
+                    client.postMessage({
+                        type: 'PUSH_NOTIFICATION',
+                        data: data,
+                        priority: options.priority || 'normal'
+                    });
+                });
+            })
+        ])
     );
 });
 

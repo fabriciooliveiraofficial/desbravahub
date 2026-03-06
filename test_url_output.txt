@@ -1,0 +1,15 @@
+--- DEBUG INFO ---
+APP_BASE_URL (env): http://localhost:8080
+config('app.base_url'): http://localhost:8080
+HTTP_HOST: NOT SET
+HTTPS: NOT SET
+SCRIPT_NAME: test_url.php
+BASE_PATH: D:\1. Clientes\50. DesbravaHub
+Path: /uploads/responses/2/1/67c859d0efbc2_Captura de tela 2026-03-04 090253.png -> base_url: http://localhost:8080/uploads/responses/2/1/67c859d0efbc2_Captura%20de%20tela%202026-03-04%20090253.png
+Path: uploads/responses/2/1/67c859d0efbc2_Captura de tela 2026-03-04 090253.png -> base_url: http://localhost:8080/uploads/responses/2/1/67c859d0efbc2_Captura%20de%20tela%202026-03-04%20090253.png
+Path: /storage/proofs/2026/03/test.jpg -> base_url: http://localhost:8080/storage/proofs/2026/03/test.jpg
+Path: storage/proofs/2026/03/test.jpg -> base_url: http://localhost:8080/storage/proofs/2026/03/test.jpg
+Path: admin/aprovacoes/6/review?step_id=20 -> base_url: http://localhost:8080/admin/aprovacoes/6/review?step_id=20
+--- FILE SYSTEM CHECK ---
+Real file: D:\1. Clientes\50. DesbravaHub/public/uploads/responses/2/1/67c859d0efbc2_Captura de tela 2026-03-04 090253.png
+Exists: NO

@@ -516,7 +516,7 @@ if ($isProgram) {
         <div class="step-list">
             <?php if ($isProgram && isset($steps)): ?>
                 <?php foreach ($steps as $s): 
-                    $isActive = ($s['id'] == ($params['step_id'] ?? $steps[0]['id']));
+                    $isActive = ($s['id'] == $requestedId);
                     $statusClass = $s['response_status'] ?? 'pending';
                 ?>
                     <a class="step-item <?= $isActive ? 'active' : '' ?>" href="<?= base_url($tenant['slug'] . "/admin/aprovacoes/{$progress['id']}/review?step_id={$s['id']}") ?>" hx-boost="true">
@@ -563,7 +563,10 @@ if ($isProgram) {
 
             <!-- Intelligent Content Renderer -->
             <div class="qa-container">
-                <?php if (!empty($currentStep['structured_content'])): ?>
+                <?php 
+                    $rendered_media_urls = [];
+                    if (!empty($currentStep['structured_content'])): 
+                ?>
                     <?php foreach ($currentStep['structured_content'] as $idx => $qa): ?>
                         <div class="qa-block">
                             <div class="question-text">
@@ -589,25 +592,15 @@ if ($isProgram) {
                                                             Abrir Arquivo Anexado
                                                         </a>
                                                     <?php elseif ($subType === 'url' && !empty($subAns)): 
-                                                        $youtubeMatch = preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/', (string)$subAns, $yMatch);
-                                                        $instagramMatch = preg_match('/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/', (string)$subAns, $iMatch);
-                                                        $tiktokMatch = preg_match('/tiktok\.com\/.*\/video\/([0-9]+)/', (string)$subAns, $tMatch);
-                                                        ?>
-                                                        <?php if ($youtubeMatch): ?>
-                                                            <div class="yt-embed-compact" style="margin-top: 8px;">
-                                                                <iframe src="https://www.youtube.com/embed/<?= $yMatch[1] ?>" allowfullscreen></iframe>
-                                                            </div>
-                                                        <?php elseif ($instagramMatch): ?>
-                                                            <div class="social-embed-compact" style="margin-top: 8px;">
-                                                                <blockquote class="instagram-media" data-instgrm-permalink="<?= htmlspecialchars((string)$subAns) ?>" data-instgrm-version="14" style="width:100%; border:0; border-radius:12px; margin:0; padding:0;"></blockquote>
-                                                            </div>
-                                                        <?php elseif ($tiktokMatch): ?>
-                                                            <div class="social-embed-compact" style="margin-top: 8px;">
-                                                                <blockquote class="tiktok-embed" cite="<?= htmlspecialchars((string)$subAns) ?>" data-video-id="<?= $tMatch[1] ?>" style="width:100%; margin:0; padding:0;"> <section> </section> </blockquote> 
-                                                            </div>
-                                                        <?php else: ?>
-                                                            <a href="<?= $subAns ?>" target="_blank" style="color: var(--accent-primary);"><?= htmlspecialchars($subAns) ?></a>
-                                                        <?php endif; ?>
+                                                            $rendered_media_urls[] = trim($subAns);
+                                                    ?>
+                                                        <div style="display: flex; gap: 12px; align-items: flex-start; width: 100%;">
+                                                            <div style="flex: 1;"><?= embed_media($subAns) ?></div>
+                                                            <button class="action-btn" onclick="updateCuration(<?= $currentStep['response_id'] ?>, '<?= addslashes($subAns) ?>')" 
+                                                                    style="background: var(--accent-amber); color: white; border: none; padding: 6px 12px; border-radius: 10px; font-size: 0.65rem; font-weight: 800; white-space: nowrap; cursor: pointer; transform: translateY(4px);">
+                                                                DESTACAR ESTE LINK
+                                                            </button>
+                                                        </div>
                                                     <?php else: ?>
                                                         <?= nl2br(htmlspecialchars((string)$subAns)) ?>
                                                     <?php endif; ?>
@@ -616,29 +609,22 @@ if ($isProgram) {
                                         <?php endforeach; ?>
                                     </div>
                                 <?php else: ?>
-                                    <?php 
-                                    $ans = $qa['answer'];
-                                    $youtubeMatch = preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/', (string)$ans, $yMatch);
-                                    $instagramMatch = preg_match('/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/', (string)$ans, $iMatch);
-                                    $tiktokMatch = preg_match('/tiktok\.com\/.*\/video\/([0-9]+)/', (string)$ans, $tMatch);
-                                    ?>
-                                    <?php if ($youtubeMatch): ?>
-                                        <div class="yt-embed-compact">
-                                            <iframe src="https://www.youtube.com/embed/<?= $yMatch[1] ?>" allowfullscreen></iframe>
+                                    <div style="display: flex; gap: 12px; align-items: flex-start; width: 100%;">
+                                        <div style="flex: 1;">
+                                            <?php 
+                                            if (filter_var($qa['answer'], FILTER_VALIDATE_URL)) {
+                                                $rendered_media_urls[] = trim($qa['answer']);
+                                            }
+                                            echo embed_media($qa['answer']); 
+                                            ?>
                                         </div>
-                                    <?php elseif ($instagramMatch): ?>
-                                        <div class="social-embed-compact">
-                                            <blockquote class="instagram-media" data-instgrm-permalink="<?= htmlspecialchars((string)$ans) ?>" data-instgrm-version="14" style="width:100%; border:0; border-radius:12px; margin:0; padding:0;"></blockquote>
-                                            <script async src="//www.instagram.com/embed.js"></script>
-                                        </div>
-                                    <?php elseif ($tiktokMatch): ?>
-                                        <div class="social-embed-compact">
-                                            <blockquote class="tiktok-embed" cite="<?= htmlspecialchars((string)$ans) ?>" data-video-id="<?= $tMatch[1] ?>" style="width:100%; margin:0; padding:0;"> <section> </section> </blockquote> 
-                                            <script async src="https://www.tiktok.com/embed.js"></script>
-                                        </div>
-                                    <?php else: ?>
-                                        <?= htmlspecialchars((string)($ans ?? '')) ?>
-                                    <?php endif; ?>
+                                        <?php if (filter_var($qa['answer'], FILTER_VALIDATE_URL)): ?>
+                                            <button class="action-btn" onclick="updateCuration(<?= $currentStep['response_id'] ?>, '<?= addslashes($qa['answer']) ?>')" 
+                                                    style="background: var(--accent-amber); color: white; border: none; padding: 6px 12px; border-radius: 10px; font-size: 0.65rem; font-weight: 800; white-space: nowrap; cursor: pointer; transform: translateY(4px);">
+                                                DESTACAR ESTE LINK
+                                            </button>
+                                        <?php endif; ?>
+                                    </div>
                                 <?php endif; ?>
                             </div>
 
@@ -663,29 +649,22 @@ if ($isProgram) {
                         <div class="qa-block" style="border-left: 4px solid var(--accent-primary);">
                             <div class="question-text">Resposta Consolidada</div>
                             <div class="answer-text">
-                                <?php 
-                                $ans = $currentStep['response_text'];
-                                $youtubeMatch = preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/', (string)$ans, $yMatch);
-                                $instagramMatch = preg_match('/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/', (string)$ans, $iMatch);
-                                $tiktokMatch = preg_match('/tiktok\.com\/.*\/video\/([0-9]+)/', (string)$ans, $tMatch);
-                                ?>
-                                <?php if ($youtubeMatch): ?>
-                                    <div class="yt-embed-compact">
-                                        <iframe src="https://www.youtube.com/embed/<?= $yMatch[1] ?>" allowfullscreen></iframe>
+                                <div style="display: flex; gap: 12px; align-items: flex-start; width: 100%;">
+                                    <div style="flex: 1;">
+                                        <?php 
+                                        if (filter_var($currentStep['response_text'], FILTER_VALIDATE_URL)) {
+                                            $rendered_media_urls[] = trim($currentStep['response_text']);
+                                        }
+                                        echo embed_media($currentStep['response_text']); 
+                                        ?>
                                     </div>
-                                <?php elseif ($instagramMatch): ?>
-                                    <div class="social-embed-compact">
-                                        <blockquote class="instagram-media" data-instgrm-permalink="<?= htmlspecialchars((string)$ans) ?>" data-instgrm-version="14" style="width:100%; border:0; border-radius:12px; margin:0; padding:0;"></blockquote>
-                                        <script async src="//www.instagram.com/embed.js"></script>
-                                    </div>
-                                <?php elseif ($tiktokMatch): ?>
-                                    <div class="social-embed-compact">
-                                        <blockquote class="tiktok-embed" cite="<?= htmlspecialchars((string)$ans) ?>" data-video-id="<?= $tMatch[1] ?>" style="width:100%; margin:0; padding:0;"> <section> </section> </blockquote> 
-                                        <script async src="https://www.tiktok.com/embed.js"></script>
-                                    </div>
-                                <?php else: ?>
-                                    <?= htmlspecialchars((string)($ans ?? '')) ?>
-                                <?php endif; ?>
+                                    <?php if (filter_var($currentStep['response_text'], FILTER_VALIDATE_URL)): ?>
+                                        <button class="action-btn" onclick="updateCuration(<?= $currentStep['response_id'] ?>, '<?= addslashes($currentStep['response_text']) ?>')" 
+                                                style="background: var(--accent-amber); color: white; border: none; padding: 6px 12px; border-radius: 10px; font-size: 0.65rem; font-weight: 800; white-space: nowrap; cursor: pointer; transform: translateY(4px);">
+                                            DESTACAR ESTE LINK
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
                             </div>
 
                             <?php if (($currentStep['response_status'] ?? '') === 'submitted'): ?>
@@ -715,67 +694,41 @@ if ($isProgram) {
             <?php 
                 $responseFile = $currentStep['response_file'] ?? ($proof['content'] ?? null);
                 $responseUrl = $currentStep['response_url'] ?? null;
+                
+                // Deduplication logic: If the URL or File is identical to what we already rendered in structured blocks, skip it.
+                $skipEvidence = false;
+                if ($responseUrl && in_array(trim($responseUrl), $rendered_media_urls)) {
+                    $skipEvidence = true;
+                }
+                if ($responseFile && in_array(trim($responseFile), $rendered_media_urls)) {
+                    $skipEvidence = true;
+                }
+
                 $isUrl = ($currentStep['type'] ?? 'upload') === 'url' || filter_var($responseUrl, FILTER_VALIDATE_URL);
             ?>
 
-            <?php if ($responseFile || $responseUrl): ?>
+            <?php if (($responseFile || $responseUrl) && !$skipEvidence): ?>
                 <div class="evidence-section qa-block" style="border-top: 2px solid #f1f5f9; padding-top: 30px;">
                     <span class="section-label">Evidência Principal</span>
                     
                     <div class="evidence-content" style="margin-bottom: 20px;">
                         <?php if ($isUrl): ?>
-                            <?php 
-                                $url = $responseUrl ?: $responseFile;
-                                $youtubeId = null;
-                                if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $url, $match)) {
-                                    $youtubeId = $match[1];
-                                }
-                                
-                                $isTikTok = strpos($url, 'tiktok.com') !== false;
-                                $isInstagram = strpos($url, 'instagram.com') !== false;
-                            ?>
-
-                            <?php if ($youtubeId): ?>
-                                <div class="main-video-frame">
-                                    <iframe src="https://www.youtube.com/embed/<?= $youtubeId ?>" allowfullscreen></iframe>
-                                    <div class="video-overlay-info">
-                                        <iconify-icon icon="logos:youtube-icon"></iconify-icon>
-                                        <span>Conteúdo Principal</span>
-                                    </div>
-                                </div>
-                            <?php elseif ($isTikTok): ?>
-                                <div class="social-embed">
-                                    <?php 
-                                        $parts = explode('/', rtrim($url, '/'));
-                                        $videoId = end($parts);
-                                    ?>
-                                    <blockquote class="tiktok-embed" cite="<?= htmlspecialchars((string)($url ?? '')) ?>" data-video-id="<?= htmlspecialchars((string)($videoId ?? '')) ?>" style="max-width: 605px;min-width: 325px;"> <section> </section> </blockquote> 
-                                    <script async src="https://www.tiktok.com/embed.js"></script>
-                                </div>
-                            <?php elseif ($isInstagram): ?>
-                                <div class="social-embed">
-                                    <blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="<?= htmlspecialchars((string)($url ?? '')) ?>" data-instgrm-version="14" style=" background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:540px; min-width:326px; padding:0; width:99.375%;"></blockquote>
-                                    <script async src="//www.instagram.com/embed.js"></script>
-                                </div>
-                            <?php else: ?>
-                                <div class="attachment-link-card" style="display:flex; align-items:center; gap:20px; background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
-                                    <iconify-icon icon="solar:link-circle-bold-duotone" style="font-size:32px; color:var(--accent-primary)"></iconify-icon>
-                                    <div style="flex:1">
-                                        <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Link Externo</div>
-                                        <a href="<?= htmlspecialchars((string)($url ?? '')) ?>" target="_blank" style="color:var(--accent-primary); font-weight:700; text-decoration:none; display:block; margin-top:4px; max-width:100%; overflow:hidden; text-overflow:ellipsis;"><?= htmlspecialchars((string)($url ?? '')) ?></a>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
+                            <?= embed_media($responseUrl ?: $responseFile) ?>
 
                         <?php else: ?>
                             <!-- Image/File Display -->
                             <?php 
-                                $ext = strtolower(pathinfo((string)$responseFile, PATHINFO_EXTENSION));
-                                $isImg = in_array($ext, ['jpg', 'jpeg', 'png', 'svg', 'webp']);
+                                $proofPath = (string)$responseFile;
+                                // Handle legacy storage paths
+                                if (strpos($proofPath, 'storage/proofs/') === 0) {
+                                    $proofPath = '/' . $proofPath;
+                                }
+                                $isImg = in_array(strtolower(pathinfo($proofPath, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'svg', 'webp', 'gif']);
+                                $fullUrl = base_url($proofPath);
                             ?>
                             <?php if ($isImg): ?>
                                 <div class="image-preview-container">
-                                    <img src="<?= base_url($responseFile) ?>">
+                                    <img src="<?= $fullUrl ?>">
                                     <div class="zoom-hint">Evidência Anexada</div>
                                 </div>
                             <?php else: ?>
@@ -783,9 +736,9 @@ if ($isProgram) {
                                     <iconify-icon icon="solar:document-bold-duotone" style="font-size:32px; color:var(--accent-primary)"></iconify-icon>
                                     <div style="flex:1">
                                         <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Arquivo de Comprovação</div>
-                                        <a href="<?= base_url($responseFile) ?>" target="_blank" style="color:var(--accent-primary); font-weight:700; text-decoration:none; display:block; margin-top:4px;"><?= htmlspecialchars(basename($responseFile)) ?></a>
+                                        <a href="<?= $fullUrl ?>" target="_blank" style="color:var(--accent-primary); font-weight:700; text-decoration:none; display:block; margin-top:4px;"><?= htmlspecialchars(basename($proofPath)) ?></a>
                                     </div>
-                                    <a href="<?= base_url($responseFile) ?>" download class="btn-dock btn-secondary" style="height:40px; padding:0 15px;">
+                                    <a href="<?= $fullUrl ?>" download class="btn-dock btn-secondary" style="height:40px; padding:0 15px;">
                                         <iconify-icon icon="solar:download-bold-duotone"></iconify-icon>
                                     </a>
                                 </div>
@@ -809,6 +762,25 @@ if ($isProgram) {
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
+
+            <!-- Hub Toggle -->
+            <div style="padding: 16px 24px; background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 16px; margin-top: 32px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 280px;">
+                    <input type="checkbox" id="public_lms_<?= $currentStep['response_id'] ?? '' ?>" 
+                           <?= !empty($currentStep['show_public']) ? 'checked' : '' ?>
+                           style="width: 24px; height: 24px; accent-color: var(--accent-amber); cursor: pointer;">
+                    <label for="public_lms_<?= $currentStep['response_id'] ?? '' ?>" style="font-weight: 800; cursor: pointer; color: var(--text-dark); font-size: 1rem; user-select: none;">
+                        <iconify-icon icon="solar:stars-line-duotone" style="color: var(--accent-amber); vertical-align: middle; margin-right: 8px; font-size: 1.4rem;"></iconify-icon>
+                        Highlight Mission on Club Public Hub (Event Hub)
+                    </label>
+                </div>
+
+                <button class="action-btn" onclick="updateCuration(<?= $currentStep['response_id'] ?>)" 
+                        style="background: var(--accent-amber); color: white; border: none; padding: 8px 20px; border-radius: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s ease;">
+                    <iconify-icon icon="solar:diskette-bold-duotone" style="font-size: 1.2rem;"></iconify-icon>
+                    SALVAR DESTAQUE
+                </button>
+            </div>
 
             <!-- Consolidated Card Actions -->
             <div class="card-actions">
@@ -942,6 +914,10 @@ if ($isProgram) {
 
         if (result.isConfirmed) {
             try {
+                // Determine `show_public`
+                const isPublicBox = document.getElementById(`public_lms_${responseId}`);
+                const showPublic = isPublicBox && isPublicBox.checked;
+
                 // Using path from root to ensure absolute reliability across different access environments
                 const targetUrl = `/${tenantSlug}/admin/aprovacoes/${responseId}/${action}`;
                 console.log('Submitting to:', targetUrl);
@@ -951,7 +927,8 @@ if ($isProgram) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         feedback: '', 
-                        item_evaluations: reviewState.item_evaluations
+                        item_evaluations: reviewState.item_evaluations,
+                        show_public: showPublic
                     })
                 });
                 
@@ -986,6 +963,48 @@ if ($isProgram) {
                 console.error('Submission Error:', e);
                 Swal.fire('Falha na Comunicação', e.message, 'error');
             }
+        }
+    }
+
+    async function updateCuration(responseId, preferredUrl = null) {
+        const isPublicBox = document.getElementById(`public_lms_${responseId}`);
+        
+        // If a specific link is chosen, force the visibility to TRUE
+        if (preferredUrl && isPublicBox) {
+            isPublicBox.checked = true;
+        }
+
+        const showPublic = isPublicBox && isPublicBox.checked;
+        const tenantSlug = '<?= $tenant['slug'] ?>';
+
+        try {
+            const body = { show_public: showPublic ? 1 : 0 };
+            if (preferredUrl) body.preferred_url = preferredUrl;
+
+            const response = await fetch(`/${tenantSlug}/admin/aprovacoes/${responseId}/curation`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) throw new Error('Falha ao atualizar destaque');
+
+            const data = await response.json();
+            if (data.success) {
+                Swal.fire({
+                    title: 'Destaque Atualizado!',
+                    text: data.message,
+                    icon: 'success',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            } else {
+                throw new Error(data.error || 'Erro desconhecido');
+            }
+        } catch (e) {
+            Swal.fire('Erro', e.message, 'error');
         }
     }
 </script>

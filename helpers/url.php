@@ -18,13 +18,50 @@
  */
 function base_url(string $path = ''): string
 {
-    $baseUrl = rtrim(config('app.base_url'), '/');
+    static $detectedBaseUrl = null;
+
+    $baseUrl = config('app.base_url');
+
+    // If config is missing or set to default local, try to detect
+    if (($baseUrl === 'http://localhost:8080' || empty($baseUrl)) && isset($_SERVER['HTTP_HOST'])) {
+        if ($detectedBaseUrl === null) {
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'];
+            
+            // Handle subfolder installations if index.php is not in root
+            $scriptName = $_SERVER['SCRIPT_NAME'];
+            $scriptDir = dirname($scriptName);
+            // If we are in public/index.php, the root is one level up relative to web root
+            // But usually, APP_BASE_URL should point to the public folder or the root if redirected
+            
+            $detectedBaseUrl = $protocol . '://' . $host;
+        }
+        $baseUrl = $detectedBaseUrl;
+    }
+
+    $baseUrl = rtrim($baseUrl, '/');
 
     if (empty($path)) {
         return $baseUrl;
     }
 
-    return $baseUrl . '/' . ltrim($path, '/');
+    // Separate fragment (#) and query string (?) from the path
+    $hashSplit = explode('#', $path, 2);
+    $pathWithoutHash = $hashSplit[0];
+    $fragment = isset($hashSplit[1]) ? '#' . $hashSplit[1] : '';
+
+    $querySplit = explode('?', $pathWithoutHash, 2);
+    $pathPart = $querySplit[0];
+    $query = isset($querySplit[1]) ? '?' . $querySplit[1] : '';
+
+    // Encode spaces in path segments but keep slashes
+    $segments = explode('/', ltrim($pathPart, '/'));
+    $encodedSegments = array_map(function($segment) {
+        return rawurlencode($segment);
+    }, $segments);
+    $encodedPath = implode('/', $encodedSegments);
+
+    return $baseUrl . '/' . $encodedPath . $query . $fragment;
 }
 
 /**

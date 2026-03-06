@@ -135,4 +135,45 @@
             </div>
         </div>
     </section>
+    <!-- Recent Notifications Board -->
+    <section class="dashboard-card" id="notification-board-container">
+        <div class="dashboard-card-header">
+            <span class="material-icons-round" style="color: #ef4444;">notifications</span>
+            <h3>Avisos e Alertas</h3>
+            <a href="<?= base_url($tenant['slug'] . '/notificacoes') ?>" class="link-more" style="margin-left: auto;">Ver Todas</a>
+        </div>
+        <div class="dashboard-card-body">
+            <?php if (empty($notifications)): ?>
+                <div class="empty-state small">
+                    <span class="material-icons-round empty-icon" style="font-size: 2rem;">notifications_none</span>
+                    <p>Nenhuma notificação recente.</p>
+                </div>
+            <?php else: ?>
+                <div class="summary-list">
+                    <?php foreach ($notifications as $n): 
+                        $icon = 'notifications';
+                        $color = '#64748b';
+                        if (str_contains(strtolower($n['title']), 'sos')) { $icon = 'emergency'; $color = '#ef4444'; }
+                        elseif (str_contains(strtolower($n['title']), 'missão')) { $icon = 'rocket_launch'; $color = '#00d9ff'; }
+                        elseif (str_contains(strtolower($n['title']), 'conquista')) { $icon = 'military_tech'; $color = '#00ff88'; }
+                    ?>
+                        <a href="<?= base_url($tenant['slug'] . '/notificacoes') ?>" class="summary-item" style="text-decoration: none; color: inherit; padding: 10px; border-radius: 8px; transition: background 0.2s;">
+                            <div class="summary-label" style="gap: 12px;">
+                                <span class="material-icons-round" style="color: <?= $color ?>; font-size: 20px;"><?= $icon ?></span>
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-weight: 600; font-size: 0.9rem;"><?= htmlspecialchars($n['title']) ?></span>
+                                    <span style="font-size: 0.75rem; opacity: 0.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">
+                                        <?= htmlspecialchars($n['message']) ?>
+                                    </span>
+                                </div>
+                            </div>
+                            <span class="summary-value" style="font-size: 0.7rem; font-weight: normal; opacity: 0.5;">
+                                <?= date('d/m H:i', strtotime($n['created_at'])) ?>
+                            </span>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </section>
 </div>

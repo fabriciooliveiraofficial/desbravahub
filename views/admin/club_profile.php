@@ -84,6 +84,37 @@
                     <input type="text" name="seo_meta_description" class="form-control" value="<?= htmlspecialchars($profile['seo_meta_description'] ?? '') ?>" maxlength="160" placeholder="Descrição curta para o Google (máx 160 char)">
                 </div>
 
+                <div class="dashboard-card-header" style="margin-top: 32px; padding-left: 0; padding-right: 0;">
+                    <span class="material-icons-round" style="color: #f59e0b;">local_fire_department</span>
+                    <h3 style="margin:0;">Identidade e Event Hub</h3>
+                </div>
+
+                <div class="form-group" style="margin-top: 16px;">
+                    <label>Lema do Clube</label>
+                    <input type="text" name="club_motto" class="form-control" value="<?= htmlspecialchars($profile['club_motto'] ?? '') ?>" placeholder="Ex: O amor de Cristo nos motiva...">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label>Voto do Desbravador</label>
+                        <textarea name="club_vow" class="form-control" rows="4"><?= htmlspecialchars($profile['club_vow'] ?? '') ?></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Lei do Desbravador</label>
+                        <textarea name="club_law" class="form-control" rows="4"><?= htmlspecialchars($profile['club_law'] ?? '') ?></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Estilo Visual da Página Pública (Hub)</label>
+                    <select name="layout_vibe" class="form-control" style="background: var(--bg-dashboard); border: 1px solid var(--border-light); color: var(--text-primary); padding: 12px; border-radius: 8px; width: 100%;">
+                        <option value="hybrid" <?= ($profile['layout_vibe'] ?? 'hybrid') === 'hybrid' ? 'selected' : '' ?>>Híbrido Premium (Feed Social + Galeria Instagram) - Recomendado</option>
+                        <option value="feed" <?= ($profile['layout_vibe'] ?? '') === 'feed' ? 'selected' : '' ?>>Apenas Feed Linear (Estilo X/Twitter)</option>
+                        <option value="grid" <?= ($profile['layout_vibe'] ?? '') === 'grid' ? 'selected' : '' ?>>Apenas Galeria Visual (Estilo Instagram)</option>
+                    </select>
+                    <small style="color: var(--text-secondary); font-size: 0.8rem; display: block; margin-top: 4px;">Escolha o Layout do Hub. Os temas Claro (Bússola) e Escuro (Fogueira) estarão sempre disponíveis ao visitante público.</small>
+                </div>
+
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
                     <span class="material-icons-round">save</span> Salvar Perfil
                 </button>

@@ -336,13 +336,16 @@ class LearningController
 
             // Handle file upload
             if (isset($_FILES['response_file']) && $_FILES['response_file']['error'] === UPLOAD_ERR_OK) {
-                $uploadDir = BASE_PATH . '/public/uploads/responses/' . $tenant['id'] . '/' . $user['id'] . '/';
+                $file = $_FILES['response_file'];
+                $tenantId = $tenant['id'];
+                $userId = $user['id'];
+                $uploadDir = BASE_PATH . '/public/uploads/responses/' . $tenantId . '/' . $userId . '/';
                 if (!is_dir($uploadDir)) {
                     @mkdir($uploadDir, 0755, true);
                 }
-                $filename = time() . '_' . basename($_FILES['response_file']['name']);
-                move_uploaded_file($_FILES['response_file']['tmp_name'], $uploadDir . $filename);
-                $responseFile = '/uploads/responses/' . $tenant['id'] . '/' . $user['id'] . '/' . $filename;
+                $filename = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $file['name']);
+                move_uploaded_file($file['tmp_name'], $uploadDir . '/' . $filename);
+                $responseFile = '/uploads/responses/' . $tenantId . '/' . $userId . '/' . $filename;
             }
 
             // Handle nested file uploads for structured sub-questions
@@ -385,11 +388,12 @@ class LearningController
 
                 db_update('user_step_responses', [
                     'response_text' => $responseText,
-                    'response_url' => $responseUrl,
+                    'response_url' => $responseUrl, // This will be null from $_POST if empty
                     'response_file' => $responseFile ?: $oldFile,
                     'status' => $status,
-                    'submitted_at' => date('Y-m-d H:i:s')
-                ], 'id = ?', [$existing['id']]);
+                    'submitted_at' => date('Y-m-d H:i:s'),
+                    'show_public' => 0 
+                ], 'id = ?', [(int)$existing['id']]);
             } else {
                 // Create new
                 db_insert('user_step_responses', [

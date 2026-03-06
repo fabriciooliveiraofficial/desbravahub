@@ -235,7 +235,7 @@
                     color: #fff;
                 }
             `;
-            document.head.appendChild(style);
+            document.head.appendChild(uasStyles);
         }
     }
 

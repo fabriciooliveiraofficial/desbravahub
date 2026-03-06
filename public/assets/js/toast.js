@@ -77,6 +77,16 @@ if (typeof window.ToastNotification !== 'undefined') {
                 }
             }
 
+            /* Center Position Modifer */
+            #toast-container.center {
+                top: 50% !important;
+                left: 50% !important;
+                right: auto !important;
+                transform: translate(-50%, -50%) !important;
+                width: 400px !important;
+                max-width: 95vw !important;
+            }
+
             .toast {
                 /* Reset & Base */
                 all: initial; 
@@ -247,7 +257,7 @@ if (typeof window.ToastNotification !== 'undefined') {
                 box-shadow: 0 0 20px rgba(239, 68, 68, 0.1) !important;
             }
             `;
-            document.head.appendChild(toastStyles);
+            document.head.appendChild(style);
         }
 
         /**
@@ -261,18 +271,32 @@ if (typeof window.ToastNotification !== 'undefined') {
                 duration = this.defaultDuration,
                 onClick = null,
                 priority = 'normal',
-                icon = null
+                icon = null,
+                position = 'default'
             } = options;
 
-            // Limit number of toasts
-            while (this.container.children.length >= this.maxToasts) {
-                this.dismiss(this.container.firstChild);
+            // Handle container position
+            if (this.container) {
+                if (position === 'center') {
+                    this.container.classList.add('center');
+                } else if (!this.container.querySelector('.toast-critical')) {
+                    // Only remove center class if no other critical toasts are showing
+                    this.container.classList.remove('center');
+                }
+            }
+
+            // Limit number of toasts (with safety check)
+            if (this.container) {
+                while (this.container.children.length >= this.maxToasts) {
+                    this.dismiss(this.container.firstChild);
+                }
             }
 
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
             if (priority === 'critical') {
                 toast.classList.add('toast-critical');
+                if (this.container) this.container.classList.add('center');
             }
 
             // Enhanced Icon Logic
@@ -328,10 +352,15 @@ if (typeof window.ToastNotification !== 'undefined') {
                 });
             }
 
-            this.container.appendChild(toast);
+            if (this.container) {
+                this.container.appendChild(toast);
+            } else {
+                console.warn('[Toast] Container not found, appending to body as fallback');
+                document.body.appendChild(toast);
+            }
 
             // Play notification sound
-            this.playSound();
+            this.playSound(priority);
 
             // Auto dismiss
             if (duration > 0) {
@@ -344,25 +373,33 @@ if (typeof window.ToastNotification !== 'undefined') {
         /**
          * Play a subtle notification sound using Web Audio API
          */
-        playSound() {
+        playSound(priority = 'normal') {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
 
-                osc.connect(gain);
-                gain.connect(ctx.destination);
+                const playDing = (freq1, freq2, gainVal, duration) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq1, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(freq2, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(gainVal, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                    osc.start(ctx.currentTime);
+                    osc.stop(ctx.currentTime + duration);
+                };
 
-                // Two-tone "ding" sound
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(830, ctx.currentTime);
-                osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
-
-                gain.gain.setValueAtTime(0.15, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-
-                osc.start(ctx.currentTime);
-                osc.stop(ctx.currentTime + 0.4);
+                if (priority === 'critical') {
+                    // Urgent SOS-like sound
+                    playDing(900, 1200, 0.3, 0.8);
+                    setTimeout(() => playDing(900, 1200, 0.3, 0.8), 200);
+                    setTimeout(() => playDing(900, 1200, 0.3, 0.8), 400);
+                } else {
+                    // Standard ding
+                    playDing(830, 1100, 0.15, 0.4);
+                }
             } catch (e) {
                 // Silently fail if AudioContext isn't available
             }

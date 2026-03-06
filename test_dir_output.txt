@@ -1,0 +1,8 @@
+--- DIRECTORY LISTING ---
+Checking directory: D:\1. Clientes\50. DesbravaHub/public/uploads/responses/2/1/
+Directory NOT found: D:\1. Clientes\50. DesbravaHub/public/uploads/responses/2/1/
+
+--- REQUEST INFO ---
+HTTP_HOST: N/A
+SERVER_NAME: N/A
+REQUEST_URI: N/A

@@ -84,7 +84,7 @@ class ProofService
         );
 
         // Move uploaded file
-        $uploadDir = BASE_PATH . '/storage/proofs/' . date('Y/m');
+        $uploadDir = BASE_PATH . '/public/uploads/proofs/' . date('Y/m');
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
@@ -95,7 +95,7 @@ class ProofService
         }
 
         // Store relative path
-        $relativePath = 'storage/proofs/' . date('Y/m') . '/' . $filename;
+        $relativePath = '/uploads/proofs/' . date('Y/m') . '/' . $filename;
 
         // Create proof record
         $proofId = db_insert('activity_proofs', [
@@ -144,7 +144,7 @@ class ProofService
     /**
      * Review a proof (for directors)
      */
-    public function reviewProof(int $proofId, string $action, ?string $comment = null): array
+    public function reviewProof(int $proofId, string $action, ?string $comment = null, bool $showPublic = false): array
     {
         $tenantId = App::tenantId();
         $reviewer = App::user();
@@ -163,10 +163,14 @@ class ProofService
         }
 
         // Update proof status
+        $thumbnailUrl = ($action === 'approved' && $showPublic) ? fetch_media_thumbnail($proof['content']) : null;
+
         db_update('activity_proofs', [
             'status' => $action === 'requested_changes' ? 'pending' : $action,
             'reviewed_at' => date('Y-m-d H:i:s'),
             'reviewed_by' => $reviewer['id'],
+            'show_public' => ($action === 'approved' && $showPublic) ? 1 : 0,
+            'thumbnail_url' => $thumbnailUrl
         ], 'id = ?', [$proofId]);
 
         // Create review record

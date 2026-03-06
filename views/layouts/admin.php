@@ -130,7 +130,17 @@
         };
     </script>
     <script src="<?= asset_url('js/toast.js') ?>"></script>
+    <script src="<?= asset_url('js/notifications-ui.js') ?>"></script>
+    <script src="<?= asset_url('js/push-notifications.js') ?>"></script>
     <script src="<?= asset_url('js/uas.js') ?>"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof initNotificationUI !== 'undefined') {
+                initNotificationUI('<?= $tenant['slug'] ?>');
+            }
+        });
+    </script>
     
     <!-- Session Guard (Per-Tab Isolation) -->
     <script src="<?= asset_url('js/session-guard.js') ?>?v=<?= time() ?>"></script>

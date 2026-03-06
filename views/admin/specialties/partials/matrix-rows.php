@@ -86,12 +86,12 @@
                         <i class="fa-solid fa-list-ul"></i>
                     </a>
 
-                    <!-- Remover Missão -->
-                    <?php if (!$isStarted): ?>
+                    <!-- Desatribuir / Remover Missão -->
+                    <?php if (!$isStarted || ($canForceDelete ?? false)): ?>
                         <button 
                             class="btn-god-action btn-delete-mission" 
                             style="color: var(--danger);"
-                            title="Remover Missão"
+                            title="Desatribuir Missão<?= $isStarted ? ' (Forçar Remocão de Missão Ativa)' : '' ?>"
                             data-assignment-id="<?= $a['assignment_id'] ?? 0 ?>"
                         >
                             <i class="fa-solid fa-trash-can"></i>
@@ -100,7 +100,7 @@
                         <button 
                             class="btn-god-action" 
                             style="opacity: 0.3; cursor: not-allowed;" 
-                            title="Não é possível remover (Missão em andamento)"
+                            title="Não é possível remover (Missão em andamento - requer permissão especial)" 
                             disabled
                         >
                             <i class="fa-solid fa-trash-can"></i>

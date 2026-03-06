@@ -58,25 +58,26 @@ class SosController
             // --- 1. Log the SOS event (self-healing table) ---
             $this->logSosAlert($user['id'], $tenant['id'], $lat, $lng);
 
-            // --- 2. Get all leader/staff users in this tenant ---
-            $leaders = $this->getClubLeaders($tenant['id']);
+            // --- 2. Get all active users in this tenant ---
+            $allUsers = $this->getTenantUsers($tenant['id']);
 
-            // --- 3. Send notifications to each leader ---
+            // --- 3. Send notifications to each user ---
             $alertCount = 0;
             $errors = [];
 
-            $sosTitle = "🆘 ALERTA SOS - {$userName}";
-            $sosMessage = "O desbravador {$userName} acionou o botão de emergência SOS!";
+            $sosTitle = "🆘 SOS EMERGÊNCIA - {$userName}";
+            $sosMessage = "🚨 ALERTA GERAL: O desbravador {$userName} acionou o SOS!";
             if ($mapLink) {
-                $sosMessage .= "\n\n📍 Ver localização no mapa:\n{$mapLink}";
-            } else {
-                $sosMessage .= "\n\n⚠️ Localização não disponível (GPS desativado ou negado).";
+                $sosMessage .= "\n\n📍 Mapa: {$mapLink}";
             }
 
-            foreach ($leaders as $leader) {
+            foreach ($allUsers as $targetUser) {
+                // Skip the user who triggered it (optional, but usually good)
+                if ($targetUser['id'] === $user['id']) continue;
+
                 try {
                     $this->notifyLeader(
-                        $leader['id'],
+                        $targetUser['id'],
                         $tenant['id'],
                         $sosTitle,
                         $sosMessage,
@@ -87,8 +88,7 @@ class SosController
                     );
                     $alertCount++;
                 } catch (\Throwable $e) {
-                    error_log('[SOS] Notification failed for leader ' . $leader['id'] . ': ' . $e->getMessage());
-                    $errors[] = 'Leader #' . $leader['id'];
+                    error_log('[SOS] Notification failed for user ' . $targetUser['id'] . ': ' . $e->getMessage());
                 }
             }
 
@@ -98,18 +98,18 @@ class SosController
             if ($alertCount > 0) {
                 echo json_encode([
                     'success' => true,
-                    'message' => "🆘 SOS enviado! {$alertCount} líder(es) notificado(s)."
+                    'message' => "🆘 SOS enviado! {$alertCount} membros do clube notificados."
                 ]);
-            } elseif (!empty($leaders)) {
-                // Leaders exist but all notifications failed — alert was still logged
+            } elseif (!empty($allUsers)) {
+                // Users exist but all notifications failed — alert was still logged
                 echo json_encode([
                     'success' => true,
-                    'message' => "⚠️ SOS registrado! As notificações falharam, mas seu alerta foi gravado. Tente ligar para um líder."
+                    'message' => "⚠️ SOS registrado! As notificações falharam, mas seu alerta foi gravado."
                 ]);
             } else {
                 echo json_encode([
                     'success' => true,
-                    'message' => "⚠️ SOS registrado, mas nenhum líder ativo foi encontrado neste clube."
+                    'message' => "⚠️ SOS registrado, mas nenhum outro usuário ativo foi encontrado no clube."
                 ]);
             }
 
@@ -166,22 +166,20 @@ class SosController
     }
 
     /**
-     * Get all club leaders/staff for the given tenant
+     * Get all active users for the given tenant
      */
-    private function getClubLeaders(int $tenantId): array
+    private function getTenantUsers(int $tenantId): array
     {
         try {
             return db_fetch_all("
-                SELECT u.id, u.name, u.email
-                FROM users u 
-                JOIN roles r ON u.role_id = r.id
-                WHERE u.tenant_id = ?
-                AND r.name IN ('admin', 'director', 'associate_director', 'chaplain', 'instructor', 'counselor', 'leader', 'secretary')
-                AND u.status = 'active'
-                AND u.deleted_at IS NULL
+                SELECT id, name, email
+                FROM users 
+                WHERE tenant_id = ?
+                AND status = 'active'
+                AND deleted_at IS NULL
             ", [$tenantId]);
         } catch (\Throwable $e) {
-            error_log('[SOS] Error fetching leaders: ' . $e->getMessage());
+            error_log('[SOS] Error fetching tenant users: ' . $e->getMessage());
             return [];
         }
     }

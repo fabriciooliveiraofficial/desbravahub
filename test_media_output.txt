@@ -1,0 +1,59 @@
+--- MEDIA EMBED TEST ---
+
+[youtube]
+URL: https://www.youtube.com/watch?v=anMWFsy4Gt0
+Result:
+<div class="yt-embed-compact" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; margin-top: 8px;">
+                    <iframe src="https://www.youtube.com/embed/anMWFsy4Gt0" 
+                            title="YouTube video player" 
+                            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                            referrerpolicy="strict-origin-when-cross-origin" 
+                            allowfullscreen>
+                    </iframe>
+                </div>
+
+[youtube_short]
+URL: https://youtu.be/anMWFsy4Gt0
+Result:
+<div class="yt-embed-compact" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; margin-top: 8px;">
+                    <iframe src="https://www.youtube.com/embed/anMWFsy4Gt0" 
+                            title="YouTube video player" 
+                            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                            referrerpolicy="strict-origin-when-cross-origin" 
+                            allowfullscreen>
+                    </iframe>
+                </div>
+
+[instagram]
+URL: https://www.instagram.com/reel/DU8XUKmGf1K/?utm_source=ig_web_button_share_sheet&igsh=MzRlODBiNWFlZA==
+Result:
+<div class="social-embed-compact" style="margin-top: 8px; display: flex; justify-content: center; width: 100%;">
+                    <blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DU8XUKmGf1K/?utm_source=ig_embed&amp;utm_campaign=loading" data-instgrm-version="14" 
+                                style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:540px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);">
+                    </blockquote>
+                    <script async src="//www.instagram.com/embed.js"></script>
+                </div>
+
+[tiktok]
+URL: https://www.tiktok.com/@luannafreitas._/video/7582625338941820181?is_from_webapp=1&sender_device=pc
+Result:
+<div class="social-embed-compact" style="margin-top: 8px; display: flex; justify-content: center; width: 100%;">
+                    <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@luannafreitas._/video/7582625338941820181" data-video-id="7582625338941820181" 
+                                style="max-width: 605px; min-width: 325px; margin: 0;"> 
+                        <section> </section> 
+                    </blockquote> 
+                    <script async src="https://www.tiktok.com/embed.js"></script>
+                </div>
+
+[tiktok_mobile]
+URL: https://vm.tiktok.com/ZMkYv5t3x/
+Result:
+<a href="https://vm.tiktok.com/ZMkYv5t3x/" target="_blank" style="color: var(--accent-primary);"><iconify-icon icon="logos:tiktok-icon"></iconify-icon> Ver vídeo no TikTok</a>
+
+[standard]
+URL: https://google.com
+Result:
+<a href="https://google.com" target="_blank" style="color: var(--accent-primary);"><iconify-icon icon="solar:link-circle-bold-duotone"></iconify-icon> https://google.com</a>
+

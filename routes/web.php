@@ -36,6 +36,11 @@ use App\Controllers\PublicController;
 
 $router = new Router();
 
+$router->get('/patch2', function() {
+    require BASE_PATH . '/patch2.php';
+    exit;
+});
+
 // Super Admin Group (Global, Protected by SuperAdminMiddleware)
 use App\Controllers\SuperAdminController;
 use App\Middleware\SuperAdminMiddleware;
@@ -83,6 +88,7 @@ $router->get('/api/clubs', [ApiController::class, 'clubs']);
 $router->get('/c/{slug}', [PublicController::class, 'clubProfile']);
 $router->get('/c/{club_slug}/evento/{event_slug}', [PublicController::class, 'eventDetails']);
 $router->post('/c/{club_slug}/evento/{id}/inscrever', [PublicController::class, 'registerEvent']);
+$router->post('/c/{club_slug}/like', [PublicController::class, 'toggleLike']);
 
 // Support Ticket Management (merged into Super Admin)
 $router->get('/super-admin/suporte', [SuperAdminController::class, 'supportDashboard'], [SuperAdminMiddleware::class]);
@@ -159,6 +165,8 @@ $router->post('/{tenant}/admin/activities/{id}', [AdminController::class, 'updat
     $router->post('/{tenant}/admin/usuarios/{id}/delete', [AdminController::class, 'deleteUser'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/provas', [AdminController::class, 'proofs'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/proofs/{id}/review', [AdminController::class, 'reviewUnifiedProof'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/proofs/{id}/curation', [AdminController::class, 'updateActivityCuration'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/admin/proofs/history', [AdminController::class, 'proofsHistory'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/versoes', [AdminController::class, 'versions'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/features', [AdminController::class, 'features'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/notificacoes', [AdminController::class, 'notifications'], [TenantMiddleware::class, AuthMiddleware::class]);
@@ -225,6 +233,7 @@ $router->get('/{tenant}/admin/aprovacoes', [ApprovalController::class, 'index'],
 $router->get('/{tenant}/admin/aprovacoes/{id}/review', [ApprovalController::class, 'review'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/aprovacoes/{id}/approve', [ApprovalController::class, 'approve'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/aprovacoes/{id}/reject', [ApprovalController::class, 'reject'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/aprovacoes/{id}/curation', [ApprovalController::class, 'updateCuration'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/aprovacoes/{id}/bulk-approve-program', [ApprovalController::class, 'bulkApproveProgram'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/aprovacoes/bulk-approve', [ApprovalController::class, 'bulkApprove'], [TenantMiddleware::class, AuthMiddleware::class]);
 
