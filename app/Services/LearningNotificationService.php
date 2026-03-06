@@ -23,7 +23,7 @@ class LearningNotificationService
             "Você foi atribuído a: {$program['icon']} {$program['name']}",
             [
                 'data' => [
-                    'link' => base_url("{$tenantSlug}/aprendizado/{$program['id']}"),
+                    'link' => "/{$tenantSlug}/aprendizado/{$program['id']}",
                     'icon' => $program['icon'] ?? '📚'
                 ],
                 'channels' => ['toast', 'push']
@@ -51,7 +51,7 @@ class LearningNotificationService
                 "{$user['name']} completou: {$step['title']} ({$program['name']})",
                 [
                     'data' => [
-                        'link' => base_url("{$tenantSlug}/admin/aprovacoes"),
+                        'link' => "/{$tenantSlug}/admin/aprovacoes",
                         'icon' => '📋'
                     ],
                     'channels' => ['toast', 'push']
@@ -77,8 +77,8 @@ class LearningNotificationService
             $message,
             [
                 'data' => [
-                    'link' => base_url("{$tenantSlug}/aprendizado/{$program['id']}"),
-                    'url' => base_url("{$tenantSlug}/aprendizado/{$program['id']}"),
+                    'link' => "/{$tenantSlug}/aprendizado/{$program['id']}",
+                    'url' => "/{$tenantSlug}/aprendizado/{$program['id']}",
                     'icon' => '✅',
                     'program_name' => $program['name'],
                     'step_name' => $step['title']
@@ -111,8 +111,8 @@ class LearningNotificationService
             $message,
             [
                 'data' => [
-                    'link' => base_url("{$tenantSlug}/aprendizado/{$program['id']}"),
-                    'url' => base_url("{$tenantSlug}/aprendizado/{$program['id']}"),
+                    'link' => "/{$tenantSlug}/aprendizado/{$program['id']}",
+                    'url' => "/{$tenantSlug}/aprendizado/{$program['id']}",
                     'icon' => '❌',
                     'program_name' => $program['name'],
                     'step_name' => $step['title']
@@ -135,7 +135,7 @@ class LearningNotificationService
             "Parabéns! Você completou {$program['icon']} {$program['name']}!",
             [
                 'data' => [
-                    'link' => base_url("{$tenantSlug}/aprendizado/{$program['id']}"),
+                    'link' => "/{$tenantSlug}/aprendizado/{$program['id']}",
                     'icon' => '🎉'
                 ],
                 'channels' => ['toast', 'push']

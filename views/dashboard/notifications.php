@@ -88,6 +88,12 @@
                 <?php 
                     $data = json_decode($n['data'] ?? '{}', true);
                     $link = $data['link'] ?? '#';
+                    
+                    // Portability fix: Dynamic prepending for relative links
+                    if ($link !== '#' && !str_starts_with($link, 'http')) {
+                        $link = base_url($link);
+                    }
+                    
                     $isUnread = empty($n['read_at']);
                     
                     // Icon logic
