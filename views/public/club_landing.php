@@ -622,8 +622,12 @@ body {
                 <div class="insta-grid">
                     <?php foreach ($curatedMedia as $media): ?>
                         <?php 
-                            $rawUrl = (string)($media['media_content'] ?? '');
+                            $rawUrl = trim((string)($media['media_content'] ?? ''));
                             $isVid = preg_match('/youtube\.com|youtu\.be|tiktok\.com|instagram\.com|reels|shorts|\.mp4/i', $rawUrl);
+                            
+                            // Validate raw video files vs social links
+                            $isDirectVid = preg_match('/(\.mp4|\.webm|\.mov)$/i', $rawUrl) || strpos($rawUrl, 'storage/') !== false;
+                            
                             $url = $rawUrl;
                             $thumb = '';
 
@@ -632,14 +636,17 @@ body {
                                 $thumb = $media['thumbnail_url'];
                             } elseif ($isVid) {
                                 // YouTube high-res thumb
-                                if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/i', $url, $match)) {
+                                if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/|live\/)|youtu\.be\/)([^"&?\/\s]{11})/i', $url, $match)) {
                                     $thumb = 'https://img.youtube.com/vi/' . $match[1] . '/hqdefault.jpg';
                                 } elseif (strpos($url, 'tiktok.com') !== false) {
                                     $thumb = 'https://www.google.com/s2/favicons?sz=128&domain=tiktok.com';
                                 } elseif (strpos($url, 'instagram.com') !== false) {
                                     $thumb = 'https://www.google.com/s2/favicons?sz=128&domain=instagram.com';
-                                } else {
+                                } elseif ($isDirectVid) {
                                     $thumb = 'https://placehold.co/600x600/1e293b/white?text=Video';
+                                } else {
+                                    // It was flagged as isVid (social link) but no specific thumb logic worked
+                                    $thumb = 'https://www.google.com/s2/favicons?sz=128&domain=' . parse_url($url, PHP_URL_HOST);
                                 }
                             } else {
                                 $thumb = strpos($url, 'storage/') === 0 ? base_url('/' . $url) : $url;
@@ -754,7 +761,7 @@ body {
     function openMediaModal(url, isVideo, sourceType, sourceId, likeCount, hasLiked) {
         let contentHtml = '';
         if (isVideo) {
-            let ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/i);
+            let ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/|live\/)|youtu\.be\/)([^"&?\/ ]{11})/i);
             let ttMatch = url.match(/(?:https?:\/\/)?(?:www\.)?tiktok\.com\/.*\/video\/([0-9]+)/i);
             let igMatch = url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/i);
 
@@ -764,8 +771,30 @@ body {
                 contentHtml = `<iframe width="100%" style="aspect-ratio:9/16; max-height: 80vh; border-radius:16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);" src="https://www.tiktok.com/embed/v2/${ttMatch[1]}" frameborder="0" allowfullscreen></iframe>`;
             } else if (igMatch) {
                 contentHtml = `<iframe width="100%" style="aspect-ratio:9/16; max-height: 80vh; border-radius:16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);" src="https://www.instagram.com/reel/${igMatch[1]}/embed" frameborder="0" scrolling="no" allowtransparency="true"></iframe>`;
-            } else {
+            } else if (url.includes('tiktok.com')) {
+                // Short TikTok links handled gracefully
+                contentHtml = `
+                    <div style="text-align:center; padding: 40px; background: rgba(255,255,255,0.05); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+                        <iconify-icon icon="logos:tiktok-icon" style="font-size: 4rem; margin-bottom: 20px;"></iconify-icon>
+                        <h3 style="color:white; margin-bottom: 20px;">Vídeo do TikTok</h3>
+                        <p style="color:rgba(255,255,255,0.7); margin-bottom: 30px;">O link curto não suporta pré-visualização direta no momento.</p>
+                        <a href="${url}" target="_blank" class="hud-btn primary" style="text-decoration:none; display:inline-flex; align-items:center; gap: 10px;">
+                            <iconify-icon icon="solar:round-alt-arrow-right-bold"></iconify-icon>
+                            ABRIR NO TIKTOK
+                        </a>
+                    </div>
+                `;
+            } else if (url.match(/(\.mp4|\.webm|\.mov)$/i) || url.includes('storage/')) {
                 contentHtml = `<video src="${url}" controls autoplay playsinline style="max-height:70vh; max-width:100%; width:100%; border-radius:16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); object-fit: contain;"></video>`;
+            } else {
+                // Generative link fallback inside modal
+                contentHtml = `
+                    <div style="text-align:center; padding: 40px;">
+                        <iconify-icon icon="solar:link-bold-duotone" style="font-size: 4rem; color: #38BDF8; margin-bottom: 20px;"></iconify-icon>
+                        <h3 style="color:white; margin-bottom: 30px;">Link Externo</h3>
+                        <a href="${url}" target="_blank" class="hud-btn primary" style="text-decoration:none;">ABRIR LINK ORIGINAL</a>
+                    </div>
+                `;
             }
         } else {
             let imgUrl = url.startsWith('storage/') ? `/${url}` : url;

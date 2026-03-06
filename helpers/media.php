@@ -24,9 +24,9 @@ function embed_media(string $url): string
 
     // ---------------------------------------------------------
     // 1. YouTube
-    // Matches: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID, youtube.com/shorts/ID
+    // Matches: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID, youtube.com/shorts/ID, youtube.com/live/ID
     // ---------------------------------------------------------
-    $youtubePattern = '/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/ ]{11})/i';
+    $youtubePattern = '/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/|live\/)|youtu\.be\/)([^"&?\/ ]{11})/i';
     if (preg_match($youtubePattern, $url, $matches)) {
         $videoId = htmlspecialchars($matches[1], ENT_QUOTES, 'UTF-8');
         return '<div class="yt-embed-compact" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; margin-top: 8px;">
@@ -48,8 +48,8 @@ function embed_media(string $url): string
     $instagramPattern = '/(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/i';
     if (preg_match($instagramPattern, $url, $matches)) {
         $postId = htmlspecialchars($matches[1], ENT_QUOTES, 'UTF-8');
-        // Construct a clean, canonical URL for the embed
-        $cleanUrl = 'https://www.instagram.com/reel/' . $postId . '/?utm_source=ig_embed&amp;utm_campaign=loading';
+        // Construct a clean, canonical URL for the embed, stripping any existing query params
+        $cleanUrl = "https://www.instagram.com/reel/{$postId}/?utm_source=ig_embed&utm_campaign=loading";
         
         return '<div class="social-embed-compact" style="margin-top: 8px; display: flex; justify-content: center; width: 100%;">
                     <blockquote class="instagram-media" data-instgrm-permalink="' . $cleanUrl . '" data-instgrm-version="14" 
@@ -109,7 +109,7 @@ function fetch_media_thumbnail(string $url): ?string
     if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) return null;
 
     // 1. YouTube
-    $youtubePattern = '/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/ ]{11})/i';
+    $youtubePattern = '/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/|live\/)|youtu\.be\/)([^"&?\/ ]{11})/i';
     if (preg_match($youtubePattern, $url, $matches)) {
         return "https://img.youtube.com/vi/{$matches[1]}/hqdefault.jpg";
     }
