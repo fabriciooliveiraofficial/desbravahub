@@ -210,7 +210,7 @@
     // Sidebar
     // Added hx-preserve="true" to keep persistent navigation during HTMX swaps
     ?>
-    <div id="sidebar-container" hx-preserve="true">
+    <div id="sidebar-container">
         <?php require BASE_PATH . '/views/admin/partials/sidebar.php'; ?>
     </div>
 
