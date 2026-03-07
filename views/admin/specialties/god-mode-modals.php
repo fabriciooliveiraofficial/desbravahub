@@ -951,7 +951,7 @@ function openGodClassIconPicker() {
 
 <script>
 // Smart Autocomplete for Mission Control 
-document.addEventListener('DOMContentLoaded', function() {
+function initMissionControlAutocomplete() {
     const specNameInput = document.getElementById('spec-name');
     const autocompleteResults = document.getElementById('spec-autocomplete-results');
     let autocompleteTimeout = null;
@@ -967,7 +967,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             autocompleteTimeout = setTimeout(() => {
-                fetch(`<?= base_url($tenant['slug'] . '/admin/mission-control/search-master') ?>?q=${encodeURIComponent(query)}`)
+                const tenantSlug = window.tenantSlug || 'clube-demo';
+                fetch(`/${tenantSlug}/admin/mission-control/search-master?q=${encodeURIComponent(query)}`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.length === 0) {
@@ -980,7 +981,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Ensure safe quotes
                             const safeSpec = JSON.stringify(spec).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
                             html += `
-                                <div class="autocomplete-item" style="padding: 12px; cursor: pointer; border-bottom: 1px solid var(--border-color, #e5e7eb); display: flex; align-items: center; gap: 10px;" onclick="selectMasterSpecialty('${safeSpec}')" onmouseover="this.style.background='var(--bg-hover, #f3f4f6)'" onmouseout="this.style.background='transparent'">
+                                <div class="autocomplete-item" style="padding: 12px; cursor: pointer; border-bottom: 1px solid var(--border-color, #e5e7eb); display: flex; align-items: center; gap: 10px;" onclick="window.selectMasterSpecialty('${safeSpec}')" onmouseover="this.style.background='var(--bg-hover, #f3f4f6)'" onmouseout="this.style.background='transparent'">
                                     <div style="font-size: 1.5rem;">${spec.badge_icon || '📁'}</div>
                                     <div>
                                         <div style="font-weight: 600; color: var(--text-main);">${spec.name}</div>
@@ -1002,9 +1003,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
+}
 
-function selectMasterSpecialty(specJson) {
+window.selectMasterSpecialty = function(specJson) {
     const spec = JSON.parse(specJson.replace(/&quot;/g, '"').replace(/&#39;/g, "'"));
     
     document.getElementById('spec-name').value = spec.name;
@@ -1025,10 +1026,12 @@ function selectMasterSpecialty(specJson) {
         };
         // Auto select by name match or ID match in options
         const select = document.getElementById('spec-category');
-        for (let i = 0; i < select.options.length; i++) {
-            if (select.options[i].text.includes(map[spec.category_id] || spec.category_id) || select.options[i].value === spec.category_id) {
-                select.selectedIndex = i;
-                break;
+        if (select) {
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].text.includes(map[spec.category_id] || spec.category_id) || select.options[i].value === spec.category_id) {
+                    select.selectedIndex = i;
+                    break;
+                }
             }
         }
     }
@@ -1050,10 +1053,8 @@ function selectMasterSpecialty(specJson) {
     if (spec.requirements && spec.requirements.length > 0) {
         list.innerHTML = '';
         spec.requirements.forEach(req => {
-            if (typeof addRequirement === 'function') {
-                // If the wizard has addRequirement, call it and then populate
-                addRequirement();
-                // Wait, it's safer to just let the user know they were imported
+            if (typeof window.addRequirement === 'function') {
+                window.addRequirement();
             }
         });
     } else {
@@ -1061,15 +1062,30 @@ function selectMasterSpecialty(specJson) {
             <div class="empty-requirements">
                 <i class="fa-solid fa-magic"></i>
                 <p>Template "${spec.name}" importado. Os requisitos oficias serão carregados em breve. Prossiga normalmente.</p>
-                <button type="button" class="btn-add-first" onclick="addRequirement()">
+                <button type="button" class="btn-add-first" onclick="window.addRequirement()">
                     <i class="fa-solid fa-plus"></i> Adicionar Requisito Especial
                 </button>
             </div>
         `;
     }
     
-    if (typeof showToast === 'function') {
-        showToast('Template importado com sucesso! Dados preenchidos.', 'success');
+    if (window.Toast && typeof window.Toast.show === 'function') {
+        window.Toast.show('Template importado com sucesso! Dados preenchidos.', 'success');
     }
 }
+
+// Initialize on load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMissionControlAutocomplete);
+} else {
+    initMissionControlAutocomplete();
+}
+
+// Support for HTMX navigation
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    // Re-init if the wizard modal was swapped or included in a swap
+    if (evt.detail.target.id === 'specialty-wizard-modal' || evt.detail.target.closest('#specialty-wizard-modal')) {
+        initMissionControlAutocomplete();
+    }
+});
 </script>

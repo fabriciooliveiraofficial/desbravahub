@@ -628,10 +628,8 @@
 
 <!-- Vanilla JS Toast and Delete Logic (Event Delegation) -->
 <script>
-console.log('God Mode Script Loaded'); // Force log to see if module loads
-
 // Robust Toast Implementation
-window.Toast = {
+window.Toast = window.Toast || {
     show: function(message, type) {
         let container = document.getElementById('god-toast-container');
         if (!container) {
@@ -681,25 +679,27 @@ window.Toast = {
 };
 
 // Modal Logic
-let pendingServerDelete = null;
+if (typeof window.pendingServerDelete === 'undefined') {
+    window.pendingServerDelete = null;
+}
 
 window.closeGodModal = function(confirmed) {
     const modal = document.getElementById('god-confirm-modal');
     modal.style.display = 'none';
     
-    if (confirmed && pendingServerDelete) {
-        pendingServerDelete();
+    if (confirmed && window.pendingServerDelete) {
+        window.pendingServerDelete();
     }
-    pendingServerDelete = null;
+    window.pendingServerDelete = null;
 };
 
-function showGodModal(callback) {
-    pendingServerDelete = callback;
+window.showGodModal = function(callback) {
+    window.pendingServerDelete = callback;
     const modal = document.getElementById('god-confirm-modal');
     modal.style.display = 'flex';
 }
 
-function handleGlobalDelete(evt) {
+window.handleGlobalDelete = function(evt) {
     const btn = evt.target.closest('.btn-delete-mission');
     if (!btn) return;
 
@@ -712,19 +712,18 @@ function handleGlobalDelete(evt) {
     if (!assignmentId) return;
 
     // Trigger Modal
-    showGodModal(() => executeDelete(assignmentId, btn));
+    window.showGodModal(() => window.executeDelete(assignmentId, btn));
 }
 
 // Attach listener globally (once)
-document.body.removeEventListener('click', handleGlobalDelete); // Safety removal
-document.body.addEventListener('click', handleGlobalDelete); 
+document.body.removeEventListener('click', window.handleGlobalDelete); // Safety removal
+document.body.addEventListener('click', window.handleGlobalDelete); 
 
-async function executeDelete(assignmentId, button) {
+window.executeDelete = async function(assignmentId, button) {
     console.log('LOG: executeDelete started for', assignmentId); // DEBUG
 
     // Define URL inside
     const DELETE_URL = '<?= base_url($tenant['slug'] . '/admin/especialidades/atribuicao/delete') ?>';
-    console.log('LOG: Target URL', DELETE_URL); // DEBUG
     
     // UI Feedback
     const originalContent = button.innerHTML;
@@ -733,7 +732,6 @@ async function executeDelete(assignmentId, button) {
     const row = button.closest('tr');
 
     try {
-        console.log('LOG: Starting fetch...'); // DEBUG
         const response = await fetch(DELETE_URL, {
             method: 'POST',
             headers: {
@@ -741,31 +739,17 @@ async function executeDelete(assignmentId, button) {
             },
             body: 'assignment_id=' + encodeURIComponent(assignmentId)
         });
-        console.log('LOG: Response received', response.status, response.statusText); // DEBUG
 
         let data;
+        const textHTML = await response.text();
         try {
-            const textHTML = await response.text(); // Get raw text first
-            console.log('LOG: Raw response body:', textHTML.substring(0, 100) + '...'); // DEBUG
-            
-            try {
-                data = JSON.parse(textHTML);
-                console.log('LOG: JSON Parsed successfully', data); // DEBUG
-            } catch(e) {
-                // If not JSON, maybe it's the 200 OK HTML we were sending before?
-                // Or maybe an error page.
-                console.error('LOG: Failed to parse JSON', e);
-                throw new Error('Resposta não é JSON válido');
-            }
-
-        } catch (e) {
-            console.error('Error processing response:', e);
-            if (response.ok) throw new Error('Erro de parsing mas resposta OK');
-            throw new Error('Erro na resposta do servidor');
+            data = JSON.parse(textHTML);
+        } catch(e) {
+            console.error('LOG: Failed to parse JSON', e);
+            throw new Error('Resposta não é JSON válido');
         }
 
         if (response.ok && data.success) {
-            console.log('LOG: Success condition met'); // DEBUG
             window.Toast.show(data.message, 'success');
             if (row) {
                 row.style.transition = 'all 0.5s ease';
@@ -774,7 +758,6 @@ async function executeDelete(assignmentId, button) {
                 setTimeout(() => row.remove(), 500);
             }
         } else {
-            console.log('LOG: Error condition met', data.message); // DEBUG
             window.Toast.show(data.message || 'Erro ao remover missão', 'warning');
             button.disabled = false;
             button.innerHTML = originalContent;
@@ -795,39 +778,39 @@ async function executeDelete(assignmentId, button) {
 // MISSION CONTROL - CREATION WIZARD
 // ============================================
 
-const SPECIALTY_CREATE_URL = '<?= base_url($tenant['slug'] . '/admin/mission-control/specialty') ?>';
-const CLASS_CREATE_URL = '<?= base_url($tenant['slug'] . '/admin/mission-control/class') ?>';
+window.SPECIALTY_CREATE_URL = '<?= base_url($tenant['slug'] . '/admin/mission-control/specialty') ?>';
+window.CLASS_CREATE_URL = '<?= base_url($tenant['slug'] . '/admin/mission-control/class') ?>';
 
-let currentWizardStep = 1;
-let requirementCounter = 0;
+if (typeof window.currentWizardStep === 'undefined') window.currentWizardStep = 1;
+if (typeof window.requirementCounter === 'undefined') window.requirementCounter = 0;
 
 // --- Modal Management ---
-function openModal(modalId) {
+window.openModal = function(modalId) {
     document.getElementById(modalId).style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }
 
-function closeModal(modalId) {
+window.closeModal = function(modalId) {
     document.getElementById(modalId).style.display = 'none';
     document.body.style.overflow = '';
 }
 
-function openSpecialtyWizard() {
-    closeModal('program-type-modal');
-    resetSpecialtyWizard();
-    openModal('specialty-wizard-modal');
+window.openSpecialtyWizard = function() {
+    window.closeModal('program-type-modal');
+    window.resetSpecialtyWizard();
+    window.openModal('specialty-wizard-modal');
 }
 
-function openClassModal() {
-    closeModal('program-type-modal');
+window.openClassModal = function() {
+    window.closeModal('program-type-modal');
     document.getElementById('class-form').reset();
-    openModal('class-modal');
+    window.openModal('class-modal');
 }
 
 // --- Wizard Navigation ---
-function resetSpecialtyWizard() {
-    currentWizardStep = 1;
-    requirementCounter = 0;
+window.resetSpecialtyWizard = function() {
+    window.currentWizardStep = 1;
+    window.requirementCounter = 0;
     document.getElementById('specialty-wizard-form').reset();
     document.getElementById('requirements-list').innerHTML = `
         <div class="empty-requirements">
@@ -838,33 +821,33 @@ function resetSpecialtyWizard() {
             </button>
         </div>
     `;
-    updateWizardUI();
+    window.updateWizardUI();
 }
 
-function updateWizardUI() {
+window.updateWizardUI = function() {
     // Update step indicators
     document.querySelectorAll('.wizard-step').forEach(step => {
         const stepNum = parseInt(step.dataset.step);
         step.classList.remove('active', 'completed');
-        if (stepNum < currentWizardStep) step.classList.add('completed');
-        if (stepNum === currentWizardStep) step.classList.add('active');
+        if (stepNum < window.currentWizardStep) step.classList.add('completed');
+        if (stepNum === window.currentWizardStep) step.classList.add('active');
     });
     
     // Update panels
     document.querySelectorAll('.wizard-panel').forEach(panel => {
         const panelNum = parseInt(panel.dataset.panel);
-        panel.classList.toggle('active', panelNum === currentWizardStep);
+        panel.classList.toggle('active', panelNum === window.currentWizardStep);
     });
     
     // If on review step, generate preview
-    if (currentWizardStep === 3) {
-        generateReviewPreview();
+    if (window.currentWizardStep === 3) {
+        window.generateReviewPreview();
     }
 }
 
-function wizardNext() {
+window.wizardNext = function() {
     // Validate current step
-    if (currentWizardStep === 1) {
+    if (window.currentWizardStep === 1) {
         const name = document.getElementById('spec-name').value.trim();
         const category = document.getElementById('spec-category').value;
         if (!name || !category) {
@@ -873,21 +856,21 @@ function wizardNext() {
         }
     }
     
-    if (currentWizardStep < 3) {
-        currentWizardStep++;
-        updateWizardUI();
+    if (window.currentWizardStep < 3) {
+        window.currentWizardStep++;
+        window.updateWizardUI();
     }
 }
 
-function wizardPrev() {
-    if (currentWizardStep > 1) {
-        currentWizardStep--;
-        updateWizardUI();
+window.wizardPrev = function() {
+    if (window.currentWizardStep > 1) {
+        window.currentWizardStep--;
+        window.updateWizardUI();
     }
 }
 
 // --- Requirements Builder ---
-function addRequirement() {
+window.addRequirement = function() {
     // Remove empty state if exists
     const emptyState = document.querySelector('.empty-requirements');
     if (emptyState) emptyState.remove();
@@ -896,20 +879,20 @@ function addRequirement() {
     const clone = template.content.cloneNode(true);
     const item = clone.querySelector('.requirement-item');
     
-    requirementCounter++;
-    item.dataset.index = requirementCounter;
-    item.querySelector('.requirement-number').textContent = '#' + requirementCounter;
+    window.requirementCounter++;
+    item.dataset.index = window.requirementCounter;
+    item.querySelector('.requirement-number').textContent = '#' + window.requirementCounter;
     
     document.getElementById('requirements-list').appendChild(clone);
 }
 
-function removeRequirement(btn) {
+window.removeRequirement = function(btn) {
     const item = btn.closest('.requirement-item');
     item.style.opacity = '0';
     item.style.transform = 'translateX(50px)';
     setTimeout(() => {
         item.remove();
-        renumberRequirements();
+        window.renumberRequirements();
         
         // Show empty state if no requirements left
         const list = document.getElementById('requirements-list');
@@ -927,21 +910,21 @@ function removeRequirement(btn) {
     }, 300);
 }
 
-function renumberRequirements() {
+window.renumberRequirements = function() {
     document.querySelectorAll('.requirement-item').forEach((item, idx) => {
         item.dataset.index = idx + 1;
         item.querySelector('.requirement-number').textContent = '#' + (idx + 1);
     });
-    requirementCounter = document.querySelectorAll('.requirement-item').length;
+    window.requirementCounter = document.querySelectorAll('.requirement-item').length;
 }
 
-function onRequirementTypeChange(select) {
+window.onRequirementTypeChange = function(select) {
     const container = select.closest('.requirement-item').querySelector('.quiz-questions-container');
     if (select.value === 'quiz') {
         container.style.display = 'block';
         // Add first question if none
         if (container.querySelector('.quiz-questions-list').children.length === 0) {
-            addQuestion(container.querySelector('.btn-add-question'));
+            window.addQuestion(container.querySelector('.btn-add-question'));
         }
     } else {
         container.style.display = 'none';
@@ -949,7 +932,7 @@ function onRequirementTypeChange(select) {
 }
 
 // --- Quiz Question Builder ---
-function addQuestion(btn) {
+window.addQuestion = function(btn) {
     const list = btn.closest('.quiz-questions-container').querySelector('.quiz-questions-list');
     const reqItem = btn.closest('.requirement-item');
     const reqIdx = reqItem.dataset.index;
@@ -970,7 +953,7 @@ function addQuestion(btn) {
     list.appendChild(clone);
 }
 
-function removeQuestion(btn) {
+window.removeQuestion = function(btn) {
     const qItem = btn.closest('.question-item');
     qItem.remove();
     
@@ -983,7 +966,7 @@ function removeQuestion(btn) {
 }
 
 // --- Review Preview ---
-function generateReviewPreview() {
+window.generateReviewPreview = function() {
     const name = document.getElementById('spec-name').value;
     const icon = document.getElementById('spec-icon').value || '🏅';
     const category = document.getElementById('spec-category').selectedOptions[0]?.text || 'N/A';
@@ -1034,7 +1017,7 @@ function generateReviewPreview() {
 }
 
 // --- Save Specialty ---
-async function saveSpecialty(action) {
+window.saveSpecialty = async function(action) {
     const form = document.getElementById('specialty-wizard-form');
     
     // Collect data
@@ -1091,7 +1074,7 @@ async function saveSpecialty(action) {
     btns.forEach(b => b.disabled = true);
     
     try {
-        const response = await fetch(SPECIALTY_CREATE_URL, {
+        const response = await fetch(window.SPECIALTY_CREATE_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(specialty)
@@ -1101,7 +1084,7 @@ async function saveSpecialty(action) {
         
         if (response.ok && data.success) {
             window.Toast.show(data.message || 'Especialidade criada!', 'success');
-            closeModal('specialty-wizard-modal');
+            window.closeModal('specialty-wizard-modal');
             
             // Optionally redirect to edit requirements
             if (data.redirect) {
@@ -1119,7 +1102,7 @@ async function saveSpecialty(action) {
 }
 
 // --- Save Class ---
-async function saveClass(evt) {
+window.saveClass = async function(evt) {
     evt.preventDefault();
     
     const classData = {
@@ -1138,7 +1121,7 @@ async function saveClass(evt) {
     btn.disabled = true;
     
     try {
-        const response = await fetch(CLASS_CREATE_URL, {
+        const response = await fetch(window.CLASS_CREATE_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(classData)
@@ -1148,7 +1131,7 @@ async function saveClass(evt) {
         
         if (response.ok && data.success) {
             window.Toast.show(data.message || 'Classe criada!', 'success');
-            closeModal('class-modal');
+            window.closeModal('class-modal');
             
             // Redirect to edit requirements (V3.1 Engine)
             if (data.redirect) {
@@ -1169,35 +1152,35 @@ async function saveClass(evt) {
 </script>
 
 <script>
-    /* --- Intelligent Filter Logic (Migrated) --- */
-    function filterMatrix() {
-        const query = document.getElementById('searchInput').value.toLowerCase().trim();
-        const rows = document.querySelectorAll('#mission-matrix-body tr');
+/* --- Intelligent Filter Logic (Migrated) --- */
+window.filterMatrix = function() {
+    const query = document.getElementById('searchInput').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#mission-matrix-body tr');
+    
+    rows.forEach(row => {
+        const pathfinder = row.querySelector('.member-info .name')?.textContent?.toLowerCase() || '';
+        const mission = row.querySelector('.mission-name')?.textContent?.toLowerCase() || '';
         
-        rows.forEach(row => {
-            const pathfinder = row.querySelector('.member-info .name')?.textContent?.toLowerCase() || '';
-            const mission = row.querySelector('.mission-name')?.textContent?.toLowerCase() || '';
-            
-            // Allow searching by status as well? Maybe later.
-            const match = pathfinder.includes(query) || mission.includes(query);
-            row.style.display = match ? '' : 'none';
-        });
-    }
-
-    // Re-apply filter after HTMX updates (Polling persistence)
-    document.body.addEventListener('htmx:afterSwap', function(evt) {
-        if (evt.target.id === 'mission-matrix-body') {
-            const query = document.getElementById('searchInput').value;
-            if (query && query.length > 0) {
-                filterMatrix();
-            }
-        }
+        // Allow searching by status as well? Maybe later.
+        const match = pathfinder.includes(query) || mission.includes(query);
+        row.style.display = match ? '' : 'none';
     });
+}
 
-    // Make tenantSlug available for Modals (if not already)
-    if (typeof window.tenantSlug === 'undefined') {
-        window.tenantSlug = '<?= $tenant['slug'] ?>';
+// Re-apply filter after HTMX updates (Polling persistence)
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.target.id === 'mission-matrix-body') {
+        const query = document.getElementById('searchInput').value;
+        if (query && query.length > 0) {
+            window.filterMatrix();
+        }
     }
+});
+
+// Make tenantSlug available for Modals (if not already)
+if (typeof window.tenantSlug === 'undefined') {
+    window.tenantSlug = '<?= $tenant['slug'] ?>';
+}
 </script>
 
 <!-- Create Program Modal (Reused) -->

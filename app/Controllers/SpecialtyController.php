@@ -487,6 +487,7 @@ class SpecialtyController
 
         View::render('admin/specialties/assignment-details', [
             'tenant' => $tenant,
+            'user' => App::user(),
             'assignment' => $assignment,
             'requirements' => $requirementsWithProgress,
             'logs' => $logs

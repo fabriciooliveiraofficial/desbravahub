@@ -95,6 +95,9 @@
 
         const modal = document.getElementById('categoryModal');
         modal.style.display = 'flex';
+        // Force reflow for transitions
+        modal.offsetHeight;
+        modal.classList.add('active');
         document.getElementById('catName').focus();
     }
     
@@ -109,7 +112,11 @@
 
     function closeCategoryModal(e) {
         if (e && e.target !== e.currentTarget) return;
-        document.getElementById('categoryModal').style.display = 'none';
+        const modal = document.getElementById('categoryModal');
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
     }
 
     async function submitCategoryForm(e) {

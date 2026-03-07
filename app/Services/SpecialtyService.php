@@ -564,15 +564,17 @@ class SpecialtyService
                 'created_at' => $pa['created_at'],
                 'user_name' => $pa['user_name'],
                 'user_email' => $pa['user_email'],
-                'assigned_by_name' => 'Sistema/Admin', // Programs track assigned_by? Not in query currently
+                'due_date' => null, // Programs don't have deadlines yet
+                'instructions' => null,
+                'assigned_by_name' => 'Sistema/Admin',
                 'specialty' => [
                     'id' => 'prog_' . $pa['program_id'],
                     'name' => $pa['program_name'],
                     'badge_icon' => $pa['program_icon'],
-                'type' => $pa['program_type'],
+                    'type' => $pa['program_type'],
                 ],
                 'type_label' => 'program',
-                'xp_earned' => 0, // TODO: fetch if completed
+                'xp_earned' => 0,
                 // Proxy for read_at: if updated_at is newer than created_at, it has been "touched" (viewed)
                 'read_at' => ($pa['updated_at'] && $pa['updated_at'] > $pa['created_at']) ? $pa['updated_at'] : null
             ];
@@ -744,12 +746,19 @@ class SpecialtyService
      */
     public static function calculateProgress(int $assignmentId, string $specialtyId): array
     {
-        $specialty = self::getSpecialty($specialtyId);
-        if (!$specialty || empty($specialty['requirements'])) {
-            return ['total' => 0, 'completed' => 0, 'percentage' => 0, 'answered' => 0, 'answered_percentage' => 0];
+        // Try getting requirements from DB first (handles custom specialties and programs)
+        $dbRequirements = self::getRequirementsFromDB($specialtyId);
+        $total = count($dbRequirements);
+        
+        // Fallback to static repository if no DB requirements found
+        if ($total === 0) {
+            $specialty = self::getSpecialty($specialtyId);
+            if (!$specialty || empty($specialty['requirements'])) {
+                return ['total' => 0, 'completed' => 0, 'percentage' => 0, 'answered' => 0, 'answered_percentage' => 0];
+            }
+            $total = count($specialty['requirements']);
         }
 
-        $total = count($specialty['requirements']);
         $progress = self::getRequirementsProgress($assignmentId);
 
         $completed = 0;
@@ -782,10 +791,10 @@ class SpecialtyService
         string $content
     ): bool {
         return db_query(
-            "UPDATE assignment_requirements 
-             SET status = 'submitted', proof_type = ?, proof_content = ?, submitted_at = NOW() 
+            "UPDATE user_requirement_progress 
+             SET status = 'answered', answer = ?, answered_at = NOW() 
              WHERE assignment_id = ? AND requirement_id = ?",
-            [$proofType, $content, $assignmentId, $requirementId]
+            [$content, $assignmentId, $requirementId]
         ) !== false;
     }
 
@@ -795,7 +804,7 @@ class SpecialtyService
     public static function approveRequirement(int $requirementRowId, int $reviewerId, ?string $feedback = null): bool
     {
         return db_query(
-            "UPDATE assignment_requirements 
+            "UPDATE user_requirement_progress 
              SET status = 'approved', reviewed_by = ?, reviewed_at = NOW(), feedback = ? 
              WHERE id = ?",
             [$reviewerId, $feedback, $requirementRowId]
@@ -808,7 +817,7 @@ class SpecialtyService
     public static function rejectRequirement(int $requirementRowId, int $reviewerId, string $feedback): bool
     {
         return db_query(
-            "UPDATE assignment_requirements 
+            "UPDATE user_requirement_progress 
              SET status = 'rejected', reviewed_by = ?, reviewed_at = NOW(), feedback = ? 
              WHERE id = ?",
             [$reviewerId, $feedback, $requirementRowId]

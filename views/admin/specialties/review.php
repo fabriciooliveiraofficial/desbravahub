@@ -2,559 +2,489 @@
 /**
  * Admin: Review Assignment Progress with Requirements
  */
-$pageTitle = 'Revisar Atribuição';
+use App\Services\SpecialtyService;
+
+$pageTitle = 'Revisar Missão';
+$pageIcon = 'assignment_ind';
+
+// Load requirements with proper unified progress data
+$requirements = SpecialtyService::getRequirementsWithProgress((int)$assignment['id'], $assignment['specialty_id']);
 $specialty = $assignment['specialty'];
-$requirements = $specialty['requirements'] ?? [];
-$progress = $requirementsProgress ?? [];
+$pathfinder = $pathfinder ?? ['name' => 'Usuário', 'email' => ''];
 
 // Calculate stats
 $totalReqs = count($requirements);
 $completedReqs = 0;
 $pendingReview = 0;
-foreach ($progress as $p) {
-    if ($p['status'] === 'approved')
+foreach ($requirements as $req) {
+    if (($req['status'] ?? '') === 'approved')
         $completedReqs++;
-    if ($p['status'] === 'submitted')
+    if (($req['status'] ?? '') === 'answered' || ($req['status'] ?? '') === 'submitted')
         $pendingReview++;
 }
 $progressPercent = $totalReqs > 0 ? round(($completedReqs / $totalReqs) * 100) : 0;
 ?>
+
 <style>
-    .review-container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 0 10px;
+    /* ============ Page Hero & Back Link ============ */
+    .page-hero {
+        margin-bottom: 24px;
+    }
+    
+    @media (max-width: 768px) {
+        .page-hero { padding-top: 60px; }
     }
 
     .back-link {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        color: var(--text-secondary);
+        gap: 6px;
+        color: var(--text-muted);
         text-decoration: none;
-        margin-bottom: 20px;
-        font-size: 0.9rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 16px;
+        transition: all 0.2s;
     }
 
     .back-link:hover {
-        color: var(--accent-cyan);
+        color: var(--primary);
+        transform: translateX(-4px);
     }
 
-    .assignment-header {
+    /* ============ Assignment Summary Card ============ */
+    .summary-card {
         background: var(--bg-card);
-        border: 1px solid var(--border-light);
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 20px;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
         display: flex;
-        gap: 14px;
-        flex-wrap: wrap;
-    }
-
-    .specialty-icon {
-        font-size: 2.5rem;
-        flex-shrink: 0;
-    }
-
-    .header-info {
-        flex: 1;
-        min-width: 200px;
-    }
-
-    .header-info h1 {
-        margin: 0 0 6px;
-        font-size: 1.2rem;
-        line-height: 1.3;
-    }
-
-    .header-meta {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        color: var(--text-secondary);
-        font-size: 0.85rem;
-    }
-
-    .user-info {
-        background: var(--bg-card);
-        border: 1px solid var(--border-light);
-        border-radius: 10px;
-        padding: 14px 16px;
-        margin-bottom: 20px;
-        display: flex;
-        justify-content: space-between;
         align-items: center;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-
-    .user-details h3 {
-        margin: 0 0 4px;
-        font-size: 1rem;
-    }
-
-    .user-details span {
-        color: var(--text-secondary);
-        font-size: 0.85rem;
-    }
-
-    .progress-section {
-        background: var(--bg-card);
-        border: 1px solid var(--border-light);
-        border-radius: 10px;
-        padding: 16px;
-        margin-bottom: 20px;
-    }
-
-    .progress-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 10px;
-        font-size: 0.9rem;
-    }
-
-    .progress-bar {
-        height: 8px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 4px;
+        gap: 24px;
+        position: relative;
         overflow: hidden;
     }
 
-    .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
-        border-radius: 4px;
+    .spec-badge-large {
+        font-size: 3.5rem;
+        flex-shrink: 0;
+        filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));
     }
 
-    .stats-row {
+    .summary-info h1 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin: 0 0 8px 0;
+        color: var(--text-main);
+    }
+
+    .user-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: var(--bg-dark);
+        border-radius: 50px;
+        border: 1px solid var(--border-color);
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+    }
+
+    /* ============ Progress Section ============ */
+    .stats-container {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-        margin-top: 14px;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
     }
 
-    .stat-box {
-        padding: 10px;
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 8px;
+    .stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 16px;
         text-align: center;
     }
 
-    .stat-value {
-        font-size: 1.3rem;
-        font-weight: 700;
+    .stat-card .val {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-main);
     }
 
-    .stat-label {
+    .stat-card .label {
         font-size: 0.75rem;
-        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        font-weight: 600;
     }
 
-    .requirements-list {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .requirement-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-light);
-        border-radius: 10px;
-        padding: 14px;
-        border-left: 4px solid var(--border-light);
-    }
-
-    .requirement-card.pending {
-        border-left-color: #ff9800;
-    }
-
-    .requirement-card.submitted {
-        border-left-color: #9c27b0;
-        background: rgba(156, 39, 176, 0.05);
-    }
-
-    .requirement-card.approved {
-        border-left-color: var(--accent-green);
-        background: rgba(0, 255, 136, 0.05);
-    }
-
-    .requirement-card.rejected {
-        border-left-color: #f44336;
-    }
-
-    .requirement-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 10px;
-        margin-bottom: 10px;
-        flex-wrap: wrap;
-    }
-
-    .requirement-number {
-        font-weight: 700;
-        color: var(--accent-cyan);
-        margin-right: 6px;
-    }
-
-    .requirement-text {
-        flex: 1;
-        min-width: 200px;
-        line-height: 1.4;
-        font-size: 0.9rem;
-    }
-
-    .status-badge {
-        padding: 3px 10px;
-        border-radius: 16px;
-        font-size: 0.75rem;
-        font-weight: 500;
-        white-space: nowrap;
-    }
-
-    .status-badge.pending {
-        background: rgba(255, 152, 0, 0.2);
-        color: #ff9800;
-    }
-
-    .status-badge.submitted {
-        background: rgba(156, 39, 176, 0.2);
-        color: #9c27b0;
-    }
-
-    .status-badge.approved {
-        background: rgba(0, 255, 136, 0.2);
-        color: var(--accent-green);
-    }
-
-    .status-badge.rejected {
-        background: rgba(244, 67, 54, 0.2);
-        color: #f44336;
-    }
-
-    .proof-section {
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 8px;
-        padding: 12px;
-        margin-top: 10px;
-    }
-
-    .proof-section h4 {
-        margin: 0 0 10px;
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-    }
-
-    .proof-content {
+    /* ============ Requirements List ============ */
+    .section-title {
         display: flex;
         align-items: center;
         gap: 10px;
-        margin-bottom: 12px;
-        flex-wrap: wrap;
-        word-break: break-all;
-    }
-
-    .proof-content a {
-        color: var(--accent-cyan);
-        font-size: 0.85rem;
-    }
-
-    .review-actions {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    .btn-approve {
-        padding: 8px 16px;
-        background: var(--accent-green);
-        border: none;
-        border-radius: 6px;
-        color: var(--bg-primary);
-        font-weight: 600;
-        cursor: pointer;
-        font-size: 0.85rem;
-    }
-
-    .btn-reject {
-        padding: 8px 16px;
-        background: transparent;
-        border: 2px solid #f44336;
-        border-radius: 6px;
-        color: #f44336;
-        font-weight: 600;
-        cursor: pointer;
-        font-size: 0.85rem;
-    }
-
-    .feedback-input {
-        width: 100%;
-        padding: 10px;
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid var(--border-light);
-        border-radius: 6px;
-        color: var(--text-primary);
-        margin-top: 10px;
-        display: none;
-        font-size: 0.9rem;
-    }
-
-    .feedback-input.active {
-        display: block;
-    }
-
-    .complete-btn {
-        display: block;
-        width: 100%;
-        padding: 14px;
-        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
-        border: none;
-        border-radius: 10px;
-        color: var(--bg-primary);
+        margin: 32px 0 16px;
+        font-size: 1.1rem;
         font-weight: 700;
-        font-size: 1rem;
-        cursor: pointer;
-        margin-top: 20px;
+        color: var(--text-main);
     }
 
-    .complete-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+    .req-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
     }
 
-    .toast {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 14px 20px;
-        background: var(--accent-green);
-        color: var(--bg-primary);
+    .req-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.2s;
+        border-left: 4px solid var(--border-color);
+    }
+
+    .req-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .req-card.approved { border-left-color: var(--accent-emerald); background: rgba(16, 185, 129, 0.02); }
+    .req-card.answered { border-left-color: var(--primary); background: rgba(6, 182, 212, 0.02); }
+    .req-card.rejected { border-left-color: #ef4444; }
+
+    .req-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+
+    .req-body {
+        font-size: 0.9375rem;
+        line-height: 1.6;
+        color: var(--text-main);
+        flex: 1;
+    }
+
+    .req-num {
+        font-weight: 800;
+        color: var(--primary);
+        margin-right: 8px;
+    }
+
+    /* ============ Proof Section ============ */
+    .proof-box {
+        margin-top: 16px;
+        padding: 16px;
+        background: var(--bg-dark);
         border-radius: 8px;
-        font-weight: 600;
-        display: none;
-        z-index: 1000;
-        max-width: 90%;
+        border: 1px solid var(--border-color);
     }
 
-    .toast.show {
-        display: block;
-        animation: slideIn 0.3s ease;
+    .proof-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
 
-    @keyframes slideIn {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
+    /* ============ Actions ============ */
+    .action-btns {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
     }
 
-    /* Responsive */
-    @media (max-width: 600px) {
-        .admin-main {
-            padding: 16px 10px;
-        }
+    .btn-action {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
 
-        .review-container {
-            padding: 0;
-        }
+    .btn-approve { background: var(--accent-emerald); color: white; }
+    .btn-approve:hover { background: #059669; }
 
-        .assignment-header {
-            padding: 14px;
-        }
+    .btn-reject { background: transparent; border-color: #ef4444; color: #ef4444; }
+    .btn-reject:hover { background: #ef4444; color: white; }
 
-        .specialty-icon {
-            font-size: 2rem;
-        }
+    .finish-section {
+        margin-top: 40px;
+        padding: 24px;
+        background: var(--bg-sidebar);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        text-align: center;
+    }
 
-        .header-info h1 {
-            font-size: 1.1rem;
-        }
+    .btn-complete {
+        width: 100%;
+        max-width: 400px;
+        padding: 16px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        cursor: pointer;
+        box-shadow: var(--shadow-cyan);
+        transition: all 0.2s;
+    }
 
-        .stats-row {
-            gap: 8px;
-        }
-
-        .stat-value {
-            font-size: 1.1rem;
-        }
-
-        .requirement-card {
-            padding: 12px;
-        }
-
-        .review-actions {
-            flex-direction: column;
-        }
-
-        .btn-approve,
-        .btn-reject {
-            width: 100%;
-            text-align: center;
-        }
+    .btn-complete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(6, 182, 212, 0.4);
     }
 </style>
 
-    <!-- Content -->
-    <div class="review-container">
-        <a href="<?= base_url($tenant['slug'] . '/admin/especialidades/atribuicoes') ?>" class="back-link">
-            ← Voltar às Atribuições
-        </a>
+<div class="page-hero">
+    <a href="<?= base_url($tenant['slug'] . '/admin/especialidades/atribuicoes') ?>" class="back-link">
+        <span class="material-icons-round" style="font-size: 18px;">chevron_left</span>
+        Voltar para Atribuições
+    </a>
 
-        <!-- Assignment Header -->
-        <div class="assignment-header"
-            style="border-left: 4px solid <?= $specialty['category']['color'] ?? '#00d9ff' ?>;">
-            <span class="specialty-icon"><?= $specialty['badge_icon'] ?? '📘' ?></span>
-            <div class="header-info">
-                <h1><?= htmlspecialchars($specialty['name']) ?></h1>
-                <div class="header-meta">
-                    <span><?= $specialty['category']['icon'] ?? '' ?>
-                        <?= htmlspecialchars($specialty['category']['name'] ?? '') ?></span>
-                    <span>⏱️ <?= $specialty['duration_hours'] ?? '?' ?>h</span>
-                    <span>🌟 <?= $specialty['xp_reward'] ?? 0 ?> XP</span>
-                </div>
+    <div class="summary-card" style="border-left: 6px solid <?= $specialty['category']['color'] ?? 'var(--primary)' ?>;">
+        <div class="spec-badge-large"><?= $specialty['badge_icon'] ?? '🎖️' ?></div>
+        <div class="summary-info">
+            <h1><?= htmlspecialchars($specialty['name']) ?></h1>
+            <div class="user-pill">
+                <span class="material-icons-round" style="font-size: 16px;">person</span>
+                <?= htmlspecialchars($pathfinder['name']) ?>
             </div>
         </div>
-
-        <!-- User Info -->
-        <div class="user-info">
-            <div class="user-details">
-                <h3>👤 <?= htmlspecialchars($pathfinder['name']) ?></h3>
-                <span><?= htmlspecialchars($pathfinder['email']) ?></span>
-            </div>
-            <div>
-                <span class="status-badge <?= $assignment['status'] ?>">
-                    <?php
-                    $statusLabels = [
-                        'pending' => 'Pendente',
-                        'in_progress' => 'Em Andamento',
-                        'pending_review' => 'Aguardando Avaliação',
-                        'completed' => 'Concluída'
-                    ];
-                    echo $statusLabels[$assignment['status']] ?? $assignment['status'];
-                    ?>
-                </span>
-            </div>
-        </div>
-
-        <!-- Progress -->
-        <div class="progress-section">
-            <div class="progress-header">
-                <strong>Progresso Geral</strong>
-                <span><?= $progressPercent ?>%</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill" style="width: <?= $progressPercent ?>%;"></div>
-            </div>
-            <div class="stats-row">
-                <div class="stat-box">
-                    <div class="stat-value" style="color: var(--accent-green);"><?= $completedReqs ?></div>
-                    <div class="stat-label">Aprovados</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value" style="color: #9c27b0;"><?= $pendingReview ?></div>
-                    <div class="stat-label">Aguardando</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value"><?= $totalReqs ?></div>
-                    <div class="stat-label">Total</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Requirements List -->
-        <h2 style="margin-bottom: 16px;">📝 Requisitos</h2>
-        <div class="requirements-list">
-            <?php foreach ($requirements as $i => $req): ?>
-                <?php
-                $reqProgress = $progress[$req['id']] ?? ['status' => 'pending', 'id' => null];
-                $status = $reqProgress['status'];
-                $hasProof = $status === 'submitted' || $status === 'rejected';
-                ?>
-                <div class="requirement-card <?= $status ?>" data-req-id="<?= $reqProgress['id'] ?? 0 ?>">
-                    <div class="requirement-header">
-                        <div class="requirement-text">
-                            <span class="requirement-number"><?= $i + 1 ?>.</span>
-                            <?= htmlspecialchars($req['description']) ?>
-                        </div>
-                        <span class="status-badge <?= $status ?>">
-                            <?php
-                            $statusLabels = [
-                                'pending' => 'Pendente',
-                                'submitted' => '⏳ Aguardando',
-                                'approved' => '✓ Aprovado',
-                                'rejected' => 'Rejeitado'
-                            ];
-                            echo $statusLabels[$status] ?? $status;
-                            ?>
-                        </span>
-                    </div>
-
-                    <?php if ($hasProof && !empty($reqProgress['proof_content'])): ?>
-                        <div class="proof-section">
-                            <h4>📎 Prova Enviada</h4>
-                            <div class="proof-content">
-                                <?php if ($reqProgress['proof_type'] === 'url'): ?>
-                                    <?= embed_media($reqProgress['proof_content']) ?>
-                                <?php else: ?>
-                                    <?php 
-                                    $proofPath = $reqProgress['proof_content'];
-                                    // Handle legacy storage paths
-                                    if (strpos($proofPath, 'storage/proofs/') === 0) {
-                                        $proofPath = '/' . $proofPath;
-                                    }
-                                    $fullUrl = base_url($proofPath);
-                                    $ext = strtolower(pathinfo($proofPath, PATHINFO_EXTENSION));
-                                    $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
-                                    ?>
-                                    
-                                    <?php if ($isImage): ?>
-                                        <div style="margin-top: 10px; width: 100%;">
-                                            <img src="<?= $fullUrl ?>" style="max-width: 100%; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;" onclick="window.open('<?= $fullUrl ?>', '_blank')">
-                                            <div style="margin-top: 8px;">
-                                                <a href="<?= $fullUrl ?>" target="_blank" style="font-size: 0.8rem;">Visualizar em tela cheia</a>
-                                            </div>
-                                        </div>
-                                    <?php else: ?>
-                                        📁 <a href="<?= $fullUrl ?>" target="_blank">
-                                            Ver arquivo (<?= strtoupper($ext) ?>)
-                                        </a>
-                                    <?php endif; ?>
-                                <?php endif; ?>
-                            </div>
-
-                            <?php if ($status === 'submitted'): ?>
-                                <div class="review-actions">
-                                    <button class="btn-approve" onclick="approveRequirement(<?= $reqProgress['id'] ?>)">
-                                        ✓ Aprovar
-                                    </button>
-                                    <button class="btn-reject" onclick="showRejectFeedback(<?= $reqProgress['id'] ?>)">
-                                        ✗ Rejeitar
-                                    </button>
-                                </div>
-                                <input type="text" class="feedback-input" id="feedback-<?= $reqProgress['id'] ?>"
-                                    placeholder="Motivo da rejeição..."
-                                    onkeypress="if(event.key==='Enter') rejectRequirement(<?= $reqProgress['id'] ?>)">
-                            <?php endif; ?>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if ($status === 'approved' && !empty($reqProgress['reviewed_at'])): ?>
-                        <small style="color: var(--text-secondary); margin-top: 8px; display: block;">
-                            ✓ Aprovado em <?= date('d/m/Y H:i', strtotime($reqProgress['reviewed_at'])) ?>
-                        </small>
-                    <?php endif; ?>
-                </div>
-            <?php endforeach; ?>
-        </div>
-
-        <?php if ($completedReqs === $totalReqs && $totalReqs > 0 && $assignment['status'] !== 'completed'): ?>
-            <button class="complete-btn" onclick="completeAssignment()">
-                🎉 Concluir Especialidade e Atribuir XP
-            </button>
-        <?php endif; ?>
     </div>
+
+    <div class="stats-container">
+        <div class="stat-card">
+            <span class="val"><?= $progressPercent ?>%</span>
+            <span class="label">Concluído</span>
+        </div>
+        <div class="stat-card">
+            <span class="val" style="color: var(--accent-emerald);"><?= $completedReqs ?></span>
+            <span class="label">Aprovados</span>
+        </div>
+        <div class="stat-card">
+            <span class="val" style="color: var(--primary);"><?= $pendingReview ?></span>
+            <span class="label">Pendentes</span>
+        </div>
+    </div>
+
+    <div class="section-title">
+        <span class="material-icons-round">rule</span>
+        Lista de Requisitos
+    </div>
+
+    <div class="req-grid">
+        <?php foreach ($requirements as $i => $req): ?>
+            <?php 
+                $status = $req['status'] ?? 'pending';
+                // Map 'answered' (from DB) to 'submitted' (UI label)
+                $uiStatus = $status === 'answered' ? 'submitted' : $status;
+                $hasStatus = $status !== 'pending';
+            ?>
+            <div class="req-card <?= $status ?>" id="req-<?= $req['progress_id'] ?? 'virtual-'.$i ?>">
+                <div class="req-header">
+                    <div class="req-body">
+                        <span class="req-num"><?= $i + 1 ?>.</span>
+                        <?= htmlspecialchars($req['description']) ?>
+                    </div>
+                    <?php if ($hasStatus): ?>
+                        <div class="status-pill <?= $uiStatus ?>">
+                           <?php
+                                if($status === 'approved') echo '✨ Aprovado';
+                                elseif($status === 'answered' || $status === 'submitted') echo '⏳ Revisar';
+                                elseif($status === 'rejected') echo '❌ Rejeitado';
+                           ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <?php if (!empty($req['answer']) || !empty($req['file_path'])): ?>
+                    <div class="proof-box">
+                        <div class="proof-label">
+                            <span class="material-icons-round" style="font-size: 14px;">attachment</span>
+                            Evidência enviada
+                        </div>
+                        
+                        <?php if (!empty($req['answer'])): ?>
+                            <div style="margin-bottom: 12px; color: var(--text-main); font-size: 0.9rem;">
+                                <?= nl2br(htmlspecialchars($req['answer'])) ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($req['file_path'])): ?>
+                            <?php 
+                                $fullUrl = base_url($req['file_path']);
+                                $ext = strtolower(pathinfo($req['file_path'], PATHINFO_EXTENSION));
+                                $isImg = in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
+                            ?>
+                            <?php if ($isImg): ?>
+                                <img src="<?= $fullUrl ?>" style="max-width: 100%; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer;" onclick="window.open('<?= $fullUrl ?>', '_blank')">
+                            <?php else: ?>
+                                <a href="<?= $fullUrl ?>" target="_blank" class="user-pill" style="text-decoration: none; color: var(--primary);">
+                                    <span class="material-icons-round">description</span>
+                                    Ver arquivo anexo
+                                </a>
+                            <?php endif; ?>
+                        <?php endif; ?>
+
+                        <?php if ($status === 'answered' || $status === 'submitted'): ?>
+                            <div class="action-btns">
+                                <button class="btn-action btn-approve" onclick="approveRequirement(<?= $req['progress_id'] ?>)">
+                                    <span class="material-icons-round">check_circle</span>
+                                    Aprovar
+                                </button>
+                                <button class="btn-action btn-reject" onclick="showRejectModal(<?= $req['progress_id'] ?>)">
+                                    <span class="material-icons-round">cancel</span>
+                                    Rejeitar
+                                </button>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <?php if ($completedReqs === $totalReqs && $totalReqs > 0 && $assignment['status'] !== 'completed'): ?>
+        <div class="finish-section">
+            <h3 style="margin-bottom: 16px;">Missão Cumprida!</h3>
+            <p style="color: var(--text-muted); margin-bottom: 24px;">Todos os requisitos foram aprovados. Você já pode oficializar a conclusão desta especialidade.</p>
+            <button class="btn-complete" onclick="completeAssignment(<?= $assignment['id'] ?>)">
+                CONCLUIR E ATRIBUIR XP
+            </button>
+        </div>
+    <?php endif; ?>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    async function approveRequirement(progressId) {
+        if (!progressId) return;
+
+        try {
+            const response = await fetch(`<?= base_url($tenant['slug'] . '/admin/especialidades/aprovar-requisito/') ?>${progressId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                showToast('✨ Requisito aprovado com sucesso!', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast(result.error || 'Erro ao aprovar requisito', 'error');
+            }
+        } catch (error) {
+            showToast('Erro de conexão com o servidor', 'error');
+        }
+    }
+
+    async function showRejectModal(progressId) {
+        const { value: feedback } = await Swal.fire({
+            title: 'Rejeitar Requisito',
+            input: 'textarea',
+            inputLabel: 'Feedback para o desbravador',
+            inputPlaceholder: 'Diga por que o requisito foi rejeitado e o que precisa ser corrigido...',
+            inputAttributes: { 'aria-label': 'Feedback' },
+            showCancelButton: true,
+            confirmButtonText: 'Confirmar Rejeição',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#ef4444',
+            inputValidator: (value) => {
+                if (!value) return 'Você precisa fornecer um feedback!';
+            }
+        });
+
+        if (feedback) {
+            rejectRequirement(progressId, feedback);
+        }
+    }
+
+    async function rejectRequirement(progressId, feedback) {
+        try {
+            const response = await fetch(`<?= base_url($tenant['slug'] . '/admin/especialidades/rejeitar-requisito/') ?>${progressId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ feedback })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                showToast('Requisito rejeitado', 'info');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast(result.error || 'Erro ao rejeitar requisito', 'error');
+            }
+        } catch (error) {
+            showToast('Erro de conexão com o servidor', 'error');
+        }
+    }
+
+    async function completeAssignment(assignmentId) {
+        const confirm = await Swal.fire({
+            title: 'Concluir Especialidade?',
+            text: 'Isso enviará o certificado digital e atribuirá o XP ao desbravador.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sim, concluir!',
+            cancelButtonText: 'Agora não',
+            confirmButtonColor: 'var(--primary)'
+        });
+
+        if (confirm.isConfirmed) {
+            try {
+                const response = await fetch(`<?= base_url($tenant['slug'] . '/admin/especialidades/concluir-atribuicao/') ?>${assignmentId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    await Swal.fire('Parabéns!', `A especialidade foi concluída e o desbravador recebeu ${result.xp} XP.`, 'success');
+                    location.href = '<?= base_url($tenant['slug'] . '/admin/especialidades/atribuicoes') ?>';
+                } else {
+                    showToast(result.error || 'Erro ao concluir missão', 'error');
+                }
+            } catch (error) {
+                showToast('Erro de conexão com o servidor', 'error');
+            }
+        }
+    }
+
+    function showToast(message, type = 'success') {
+        // Use standard platform toast if available, or fallback to SweetAlert
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+        Toast.fire({
+            icon: type,
+            title: message
+        });
+    }
+</script>

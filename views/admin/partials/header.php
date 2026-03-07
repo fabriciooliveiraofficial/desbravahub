@@ -30,8 +30,8 @@
         <!-- User Info & Logout -->
         <div class="user-actions">
             <div class="user-info">
-                <span class="user-name"><?= htmlspecialchars($user['name']) ?></span>
-                <span class="user-email"><?= htmlspecialchars($user['email']) ?></span>
+                <span class="user-name"><?= htmlspecialchars($user['name'] ?? 'Admin') ?></span>
+                <span class="user-email"><?= htmlspecialchars($user['email'] ?? '') ?></span>
             </div>
             <a href="<?= base_url($tenant['slug'] . '/logout') ?>" class="btn-logout" hx-boost="false">Sair</a>
         </div>

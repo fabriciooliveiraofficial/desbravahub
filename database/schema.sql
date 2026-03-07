@@ -596,5 +596,24 @@ CREATE TABLE `user_requirement_progress` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================
+-- PUBLIC INTERACTIONS (Likes, etc)
+-- ============================================================================
+
+CREATE TABLE `public_interactions` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `tenant_id` INT UNSIGNED NOT NULL,
+    `source_type` VARCHAR(50) NOT NULL COMMENT 'activity, program_step, event',
+    `source_id` INT UNSIGNED NOT NULL,
+    `session_hash` VARCHAR(255) NOT NULL,
+    `interaction_type` VARCHAR(50) NOT NULL DEFAULT 'like',
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_public_interactions` (`tenant_id`, `source_type`, `source_id`, `session_hash`, `interaction_type`),
+    KEY `idx_public_interactions_tenant` (`tenant_id`),
+    KEY `idx_public_interactions_source` (`source_type`, `source_id`),
+    CONSTRAINT `fk_public_interactions_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
 -- END OF SCHEMA
 -- ============================================================================

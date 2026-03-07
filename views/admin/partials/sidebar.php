@@ -1,5 +1,5 @@
 <!-- Admin Sidebar (Redesigned - Light/Dark Theme) -->
-<aside class="admin-sidebar" role="navigation" id="admin-sidebar" style="transform: none !important; visibility: visible !important; display: flex !important; z-index: 9999 !important;">
+<aside class="admin-sidebar" role="navigation" id="admin-sidebar">
     <!-- Header -->
     <div class="sidebar-header">
         <div class="brand-wrapper">
