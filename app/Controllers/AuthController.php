@@ -108,7 +108,14 @@ class AuthController
         
         $redirectUrl = $tenant ? base_url($tenant['slug'] . '/login') : base_url();
 
-        // Handle both JSON and redirect responses
+        // If it's a GET request (standard link click), ALWAYS redirect
+        // This avoids issues where mobile browsers might request JSON headers for standard links
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            header('Location: ' . $redirectUrl);
+            exit;
+        }
+
+        // Handle both JSON and redirect responses for other methods (e.g. POST from AJAX)
         if ($this->isJsonRequest()) {
             $this->jsonSuccess(['message' => 'Logged out successfully']);
         } else {

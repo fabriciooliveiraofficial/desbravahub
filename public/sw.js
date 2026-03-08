@@ -64,7 +64,8 @@ self.addEventListener('fetch', (event) => {
 
     // By-pass Service Worker entirely for logout routes
     // This prevents the SW from intercepting the logout redirect and mistakenly showing the offline page
-    if (url.pathname.includes('/logout')) {
+    // We check for /logout at the end of the URL or as a standalone path segment
+    if (url.pathname.endsWith('/logout') || url.pathname.includes('/logout/')) {
         event.respondWith(fetch(request));
         return;
     }
