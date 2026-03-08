@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'desbravahub-v25';
+const CACHE_VERSION = 'desbravahub-v26';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const DYNAMIC_CACHE = CACHE_VERSION + '-dynamic';
 const OFFLINE_URL = '/offline.html';
@@ -242,60 +242,112 @@ function getAllFromStore(store) {
 }
 
 // ==========================================
-// PUSH NOTIFICATIONS (preserved from v14)
+// PUSH NOTIFICATIONS
 // ==========================================
 self.addEventListener('push', (event) => {
     let data = {
         title: 'DesbravaHub',
         body: 'Você tem uma nova notificação!',
         icon: '/assets/images/icon-192.png',
-        badge: '/assets/images/badge-72.png'
+        badge: '/assets/images/badge-72.png',
+        priority: 'normal'
     };
 
     if (event.data) {
         try {
-            const rawText = event.data.text();
-            const json = JSON.parse(rawText);
+            const json = JSON.parse(event.data.text());
             data = { ...data, ...json };
-            if (json.message && !json.body) {
-                data.body = json.message;
-            }
+            if (json.message && !json.body) data.body = json.message;
         } catch (e) {
-            data.body = event.data ? event.data.text() : 'Nova notificação';
+            data.body = event.data.text();
         }
     }
 
+    const isCritical = data.priority === 'critical';
+
     const options = {
         body: data.body,
-        icon: data.icon,
-        badge: data.badge,
-        vibrate: [200, 100, 200],
-        data: { url: data.url || '/' },
+        icon: data.icon || '/assets/images/icon-192.png',
+        badge: data.badge || '/assets/images/badge-72.png',
+        vibrate: isCritical ? [300, 100, 300, 100, 300] : [200, 100, 200],
+        data: { url: data.url || '/', priority: data.priority },
         actions: [
             { action: 'open', title: 'Abrir' },
             { action: 'close', title: 'Fechar' }
         ],
-        tag: 'desbravahub-' + Date.now(),
+        // Critical: fixed tag so it replaces itself; always renotify for sound/vibration.
+        // Normal: timestamp tag so multiple notifications stack.
+        tag: isCritical ? 'desbravahub-critical' : 'desbravahub-' + Date.now(),
         renotify: true,
-        requireInteraction: true,
+        requireInteraction: isCritical,
         silent: false
     };
 
     event.waitUntil(
         Promise.all([
-            self.registration.showNotification(data.title, options),
-            // Broadcast to all open windows for immediate toast/sound
-            self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-                clients.forEach(client => {
-                    client.postMessage({
-                        type: 'PUSH_NOTIFICATION',
-                        data: data,
-                        priority: data.priority || 'normal'
-                    });
+            // Always show native OS notification — works when app is closed/minimized/logged out
+            self.registration.showNotification(data.title, options).catch(err => {
+                console.error('[SW] showNotification failed:', err);
+                // Fallback: show generic notification so the browser doesn't auto-close the push
+                return self.registration.showNotification('DesbravaHub', {
+                    body: 'Você tem uma nova notificação.',
+                    icon: '/assets/images/icon-192.png',
+                    tag: 'desbravahub-fallback'
                 });
+            }),
+            // Broadcast to open tabs for in-app toast + sound
+            self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+                clients.forEach(client => client.postMessage({
+                    type: 'PUSH_NOTIFICATION',
+                    data: data,
+                    priority: data.priority || 'normal'
+                }));
             })
         ])
     );
+});
+
+// ==========================================
+// PUSH SUBSCRIPTION CHANGE
+// Fires when the browser/FCM rotates the push endpoint (happens periodically).
+// Without this handler, rotated subscriptions are never updated on the server
+// and all future pushes fail silently.
+// ==========================================
+self.addEventListener('pushsubscriptionchange', (event) => {
+    event.waitUntil((async () => {
+        try {
+            let newSub = event.newSubscription;
+
+            // Chrome 72+ provides oldSubscription.options.applicationServerKey.
+            // If newSubscription is not provided, re-subscribe using the old VAPID key.
+            if (!newSub) {
+                const appServerKey = event.oldSubscription?.options?.applicationServerKey;
+                if (!appServerKey) {
+                    console.warn('[SW] pushsubscriptionchange: no applicationServerKey — cannot resubscribe');
+                    return;
+                }
+                newSub = await self.registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: appServerKey
+                });
+            }
+
+            // Send new subscription + old endpoint to server so it can update the record.
+            // This endpoint requires no auth — it identifies the user by the old endpoint.
+            await fetch('/api/push/resubscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...newSub.toJSON(),
+                    old_endpoint: event.oldSubscription?.endpoint
+                })
+            });
+
+            console.log('[SW] Subscription rotated and updated on server');
+        } catch (err) {
+            console.error('[SW] pushsubscriptionchange failed:', err);
+        }
+    })());
 });
 
 // Notification click handler

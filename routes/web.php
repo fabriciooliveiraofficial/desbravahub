@@ -135,6 +135,8 @@ $router->post('/{tenant}/api/notifications/broadcast', [NotificationController::
 $router->post('/{tenant}/api/push/subscribe', [NotificationController::class, 'subscribe'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/api/push/unsubscribe', [NotificationController::class, 'unsubscribe'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/api/push/test', [NotificationController::class, 'testPush'], [TenantMiddleware::class, AuthMiddleware::class]);
+// Global (no tenant/auth) — called by Service Worker on pushsubscriptionchange
+$router->post('/api/push/resubscribe', [NotificationController::class, 'resubscribe']);
 
 // Version routes (protected)
 $router->get('/{tenant}/api/version', [VersionController::class, 'current'], [TenantMiddleware::class, AuthMiddleware::class]);

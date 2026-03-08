@@ -181,6 +181,61 @@ class NotificationController
     }
 
     /**
+     * Handle push subscription rotation (pushsubscriptionchange SW event).
+     * Called by the Service Worker — no user session required.
+     * Identifies the user by the old endpoint and updates to the new one.
+     */
+    public function resubscribe(): void
+    {
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        $newEndpoint = $input['endpoint'] ?? null;
+        $oldEndpoint = $input['old_endpoint'] ?? null;
+        $p256dh = $input['keys']['p256dh'] ?? '';
+        $auth   = $input['keys']['auth'] ?? '';
+
+        if (!$newEndpoint || !$oldEndpoint) {
+            $this->jsonError('endpoint and old_endpoint required', 400);
+            return;
+        }
+
+        try {
+            $existing = db_fetch_one(
+                "SELECT * FROM push_subscriptions WHERE endpoint = ?",
+                [$oldEndpoint]
+            );
+
+            if (!$existing) {
+                // Old endpoint not found — nothing to rotate
+                $this->json(['success' => false, 'reason' => 'old_endpoint not found']);
+                return;
+            }
+
+            db_update('push_subscriptions', [
+                'endpoint'   => $newEndpoint,
+                'p256dh'     => $p256dh,
+                'auth'       => $auth,
+                'updated_at' => date('Y-m-d H:i:s'),
+            ], 'id = ?', [$existing['id']]);
+
+            file_put_contents(BASE_PATH . '/storage/logs/push.log',
+                "[" . date('Y-m-d H:i:s') . "] RESUBSCRIBE user {$existing['user_id']}: ..." .
+                substr($oldEndpoint, -20) . " → ..." . substr($newEndpoint, -20) . "\n",
+                FILE_APPEND
+            );
+
+            $this->json(['success' => true]);
+
+        } catch (\Exception $e) {
+            file_put_contents(BASE_PATH . '/storage/logs/push.log',
+                "[" . date('Y-m-d H:i:s') . "] RESUBSCRIBE ERROR: " . $e->getMessage() . "\n",
+                FILE_APPEND
+            );
+            $this->jsonError('Erro ao atualizar assinatura', 500);
+        }
+    }
+
+    /**
      * Unsubscribe from push notifications
      */
     public function unsubscribe(): void
