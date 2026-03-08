@@ -290,7 +290,7 @@ self.addEventListener('push', (event) => {
                     client.postMessage({
                         type: 'PUSH_NOTIFICATION',
                         data: data,
-                        priority: options.priority || 'normal'
+                        priority: data.priority || 'normal'
                     });
                 });
             })

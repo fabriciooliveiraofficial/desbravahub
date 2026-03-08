@@ -1227,7 +1227,12 @@ $pageIcon = 'school';
                         <div class="form-group">
                             <label for="specIcon">Ícone da Especialidade</label>
                             <input type="hidden" id="specIcon" name="badge_icon" value="noto:blue-book">
-                            <div class="icon-picker-trigger" onclick="IconPicker.open('specIcon', 'specIconPreview', 'specIconText')">
+                            <div class="icon-picker-trigger" 
+                                 onclick="IconPicker.open(document.getElementById('specIcon').value, (sel) => {
+                                     document.getElementById('specIcon').value = sel;
+                                     document.getElementById('specIconPreview').innerHTML = `<iconify-icon icon='${sel}' style='font-size: 1.5rem;'></iconify-icon>`;
+                                     document.getElementById('specIconText').textContent = sel;
+                                 })">
                                 <div class="icon-preview" id="specIconPreview">
                                     <iconify-icon icon="noto:blue-book" style="font-size: 1.5rem;"></iconify-icon>
                                 </div>

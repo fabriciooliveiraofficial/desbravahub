@@ -231,9 +231,12 @@ class NotificationService
             $this->sendEmail($userId, $title, $message, $data);
         }
 
-        // Push channel (structure ready, implementation in future)
+        // Push channel
         if (in_array('push', $channels) && $userId) {
-            $this->queuePush($userId, $title, $message, $data);
+            // Include notification_id so client can mark as read on receipt,
+            // preventing duplicate toasts from the DB polling channel.
+            $pushData = array_merge($data ?? [], ['notification_id' => $notificationId, 'priority' => $priority]);
+            $this->queuePush($userId, $title, $message, $pushData);
         }
 
         // Toast is handled client-side via polling or websocket

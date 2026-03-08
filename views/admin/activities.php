@@ -127,7 +127,13 @@
                 <div class="form-group">
                     <label>Ícone da Especialidade</label>
                     <input type="hidden" id="actIcon" name="badge_icon" value="noto:blue-book">
-                    <div class="icon-picker-trigger" onclick="IconPicker.open('actIcon', 'actIconPreview', 'actIconText')" style="display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer;">
+                    <div class="icon-picker-trigger" 
+                         onclick="IconPicker.open(document.getElementById('actIcon').value, (sel) => {
+                             document.getElementById('actIcon').value = sel;
+                             document.getElementById('actIconPreview').innerHTML = `<iconify-icon icon='${sel}' style='font-size: 1.5rem;'></iconify-icon>`;
+                             document.getElementById('actIconText').textContent = sel;
+                         })"
+                         style="display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer;">
                         <div id="actIconPreview">
                             <iconify-icon icon="noto:blue-book" style="font-size: 1.5rem;"></iconify-icon>
                         </div>

@@ -105,6 +105,18 @@
 
         // Init Push Notifications Core
         document.addEventListener('DOMContentLoaded', async () => {
+            // HUD v3.0 - Unified Toast Polling
+            // toast.js IIFE already creates window.toast without apiUrl — set it explicitly.
+            const _toastApiUrl = '<?= base_url($tenant["slug"] . "/api/notifications") ?>';
+            if (!window.toast) {
+                window.toast = new ToastNotification({ apiUrl: _toastApiUrl });
+            } else if (!window.toast.apiUrl) {
+                window.toast.apiUrl = _toastApiUrl;
+            }
+            if (!window.toast.pollTimer) {
+                window.toast.startPolling();
+            }
+
             if (typeof pushNotifications !== 'undefined' && pushNotifications.isSupported()) {
                 const publicKey = '<?= config('vapid.public_key', '') ?>';
                 const apiEndpoint = '<?= base_url("{$tenant['slug']}/api/push/subscribe") ?>';

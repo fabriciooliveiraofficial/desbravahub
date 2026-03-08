@@ -47,7 +47,13 @@
                  <div class="form-group">
                     <label>Ícone do Programa</label>
                     <input type="hidden" id="editProgramIcon" name="icon" value="noto:blue-book">
-                    <div class="icon-picker-trigger" onclick="IconPicker.open('editProgramIcon', 'editProgramIconPreview', 'editProgramIconText')" style="display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer; height: 42px;">
+                    <div class="icon-picker-trigger" 
+                         onclick="IconPicker.open(document.getElementById('editProgramIcon').value, (sel) => {
+                             document.getElementById('editProgramIcon').value = sel;
+                             document.getElementById('editProgramIconPreview').innerHTML = `<iconify-icon icon='${sel}' style='font-size: 1.5rem;'></iconify-icon>`;
+                             document.getElementById('editProgramIconText').textContent = sel;
+                         })" 
+                         style="display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer; height: 42px;">
                         <div id="editProgramIconPreview">
                             <iconify-icon icon="noto:blue-book" style="font-size: 1.5rem;"></iconify-icon>
                         </div>

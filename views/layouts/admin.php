@@ -136,8 +136,20 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // HUD v3.0 - Resilient Toast Polling
+            // toast.js IIFE already creates window.toast without apiUrl — set it explicitly.
+            const _toastApiUrl = '<?= base_url($tenant["slug"] . "/api/notifications") ?>';
+            if (!window.toast) {
+                window.toast = new ToastNotification({ apiUrl: _toastApiUrl });
+            } else if (!window.toast.apiUrl) {
+                window.toast.apiUrl = _toastApiUrl;
+            }
+            if (!window.toast.pollTimer) {
+                window.toast.startPolling();
+            }
+
             if (typeof initNotificationUI !== 'undefined') {
-                initNotificationUI('<?= $tenant['slug'] ?>');
+                initNotificationUI('<?= $tenant["slug"] ?>');
             }
         });
     </script>
@@ -347,9 +359,6 @@
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
     <?php require BASE_PATH . '/views/admin/partials/footer.php'; ?>
 
-    <!-- Toast Container for OOB Swaps -->
-    <div id="toast-container" class="toast-container"></div>
-
     <!-- PWA Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
@@ -357,6 +366,14 @@
                 navigator.serviceWorker.register('/sw.js')
                     .then(registration => {
                         console.log('[SW] Registered with scope:', registration.scope);
+                        
+                        // Initialize Push Notifications for Admin/Leaders
+                        if (typeof pushNotifications !== 'undefined') {
+                            pushNotifications.init(
+                                '<?= config("vapid.public_key") ?>',
+                                '<?= base_url($tenant["slug"] . "/api/push/subscribe") ?>'
+                            );
+                        }
                     })
                     .catch(err => {
                         console.error('[SW] Registration failed:', err);

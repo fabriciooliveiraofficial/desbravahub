@@ -73,15 +73,38 @@ class PushNotifications {
         return 'serviceWorker' in navigator && 'PushManager' in window;
     }
 
-    /**
-     * Synchronize subscription with server
-     */
     async sync() {
         if (!this.initialized || !this.apiEndpoint) return;
-        this.log('Syncing subscription...');
+
         try {
-            await this.subscribe(this.apiEndpoint);
-            this.log('Sync success');
+            const existingSub = await this.getSubscription();
+
+            if (existingSub) {
+                // Subscription exists in browser — always heartbeat to server.
+                // Handles: server DB resets, FCM key rotation (Chrome refreshes endpoints
+                // periodically), and cases where the subscribe POST failed silently before.
+                this.log('Heartbeating subscription to server...');
+                const response = await fetch(this.apiEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(existingSub)
+                });
+                this.log(response.ok ? 'Heartbeat OK' : 'Heartbeat server error');
+                return;
+            }
+
+            // No subscription in browser — create one (permission already granted at this point)
+            this.log('No subscription found — creating new...');
+            const subscription = await this.registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: this.urlBase64ToUint8Array(this.publicKey)
+            });
+            const res = await fetch(this.apiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(subscription)
+            });
+            this.log(res.ok ? 'New subscription saved' : 'Failed to save subscription');
         } catch (e) {
             this.log('Sync failed:', e.message);
         }
@@ -127,19 +150,19 @@ class PushNotifications {
         if (permission !== 'granted') throw new Error('Permission denied');
 
         try {
-            // IMPORTANT: Always unsubscribe first to clear any stale endpoints
-            let existingSub = await this.getSubscription();
-            if (existingSub) {
-                this.log('Unsubscribing old endpoint...');
-                await existingSub.unsubscribe();
+            // Reuse existing browser subscription if available — do NOT unsubscribe first.
+            // Unsubscribing destroys the endpoint on the push service immediately, creating a
+            // window where pushes sent before the new subscription reaches the server are lost.
+            let subscription = await this.getSubscription();
+            if (!subscription) {
+                this.log('Creating new subscription...');
+                subscription = await this.registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: this.urlBase64ToUint8Array(this.publicKey)
+                });
+            } else {
+                this.log('Reusing existing subscription:', subscription.endpoint.slice(-20));
             }
-
-            // Create fresh subscription
-            this.log('Creating new subscription...');
-            const subscription = await this.registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: this.urlBase64ToUint8Array(this.publicKey)
-            });
 
             this.log('Subscription object:', !!subscription);
 
@@ -211,6 +234,15 @@ class PushNotifications {
             icon: data.icon,
             onClick: data.url ? () => { window.location.href = data.url; } : null
         });
+
+        // Mark notification as read in DB immediately to prevent duplicate toast from polling.
+        const notifId = data?.data?.notification_id;
+        if (notifId && window.toast?.apiUrl) {
+            fetch(`${window.toast.apiUrl}/${notifId}/read`, {
+                method: 'POST',
+                credentials: 'include'
+            }).catch(() => {});
+        }
 
         // Notify other components (like badge poller)
         document.dispatchEvent(new CustomEvent('push-notification-received', { detail: payload }));

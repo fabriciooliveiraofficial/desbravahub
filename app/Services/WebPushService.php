@@ -62,7 +62,8 @@ class WebPushService
             'title' => $title,
             'body' => $message,
             'url' => $deepLinkUrl,
-            'data' => $data
+            'data' => $data,
+            'priority' => $data['priority'] ?? 'normal'
         ]);
 
         foreach ($subscriptions as $sub) {

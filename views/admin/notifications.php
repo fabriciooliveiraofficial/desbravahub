@@ -100,6 +100,37 @@
                             <div style="font-weight: 600; color: var(--text-dark);">E-mail Oficial</div>
                         </div>
                     </label>
+
+                    <label for="channel_push" style="cursor: pointer; position: relative;">
+                        <input type="checkbox" id="channel_push" name="channels[]" value="push"
+                               style="position: absolute; opacity: 0; width: 0; height: 0;"
+                               onchange="this.nextElementSibling.style.borderColor = this.checked ? 'var(--primary)' : 'var(--border-color)';
+                                         this.nextElementSibling.style.backgroundColor = this.checked ? 'rgba(var(--primary-rgb), 0.05)' : 'transparent';
+                                         this.nextElementSibling.querySelector('.icon-box').style.color = this.checked ? 'var(--primary)' : 'var(--text-muted)';
+                                         this.nextElementSibling.querySelector('.icon-box').style.backgroundColor = this.checked ? 'rgba(var(--primary-rgb), 0.1)' : 'var(--bg-hover)';">
+                        <div style="
+                            padding: 1.25rem; 
+                            border: 2px solid var(--border-color); 
+                            border-radius: var(--radius-lg); 
+                            display: flex; 
+                            align-items: center; 
+                            gap: 1rem;
+                            transition: all 0.2s;
+                            background-color: transparent;
+                        ">
+                            <div class="icon-box" style="
+                                width: 40px; height: 40px; 
+                                border-radius: 50%; 
+                                display: flex; align-items: center; justify-content: center;
+                                background-color: var(--bg-hover);
+                                color: var(--text-muted);
+                                transition: all 0.2s;
+                            ">
+                                <span class="material-icons-round">phonelink_ring</span>
+                            </div>
+                            <div style="font-weight: 600; color: var(--text-dark);">Web Push (PWA)</div>
+                        </div>
+                    </label>
                 </div>
             </div>
 
@@ -120,7 +151,7 @@
     </div>
 </div>
 
-<div id="toast-container" style="position: fixed; top: 40px; right: 40px; z-index: 9999; display: flex; flex-direction: column; gap: 12px;"></div>
+<!-- Toast container handled automatically by toast.js -->
 
 <script>
     var toast;

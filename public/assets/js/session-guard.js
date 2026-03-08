@@ -77,8 +77,12 @@
 
             // --- HTMX: Inject Authorization header on every request ---
             document.body.addEventListener('htmx:configRequest', function (event) {
+                // Only send token to internal API/routes
+                const url = event.detail.path || '';
+                const isInternal = !url.startsWith('http') || url.includes(window.location.host);
+
                 const token = SessionGuard.getToken();
-                if (token) {
+                if (token && isInternal) {
                     event.detail.headers['Authorization'] = 'Bearer ' + token;
                 }
             });
@@ -88,7 +92,12 @@
             window.fetch = function (url, options) {
                 options = options || {};
                 const token = SessionGuard.getToken();
-                if (token) {
+
+                // Detection: Is this an external request? (e.g. Iconify API)
+                const urlString = (typeof url === 'string') ? url : (url.url || '');
+                const isInternal = !urlString.startsWith('http') || urlString.includes(window.location.host);
+
+                if (token && isInternal) {
                     options.headers = options.headers || {};
                     // Don't overwrite if already set
                     if (!options.headers['Authorization']) {

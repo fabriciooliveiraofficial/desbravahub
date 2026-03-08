@@ -159,7 +159,7 @@ class NotificationController
                 'endpoint' => $input['endpoint'],
                 'p256dh' => $input['keys']['p256dh'] ?? '',
                 'auth' => $input['keys']['auth'] ?? '',
-                'browser' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
                 'device_type' => $this->detectDeviceType(),
             ];
 
@@ -169,8 +169,8 @@ class NotificationController
                 db_insert('push_subscriptions', $data);
             }
 
-            // Auto-enable push in preferences if subscribing
-            $this->service->updatePreferences($user['id'], 'all', ['push']);
+            // Auto-enable both toast and push in preferences if subscribing
+            $this->service->updatePreferences($user['id'], 'all', ['toast', 'push']);
 
             $this->json(['success' => true]);
 

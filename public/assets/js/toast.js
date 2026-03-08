@@ -20,8 +20,10 @@ if (typeof window.ToastNotification !== 'undefined') {
             this.apiUrl = options.apiUrl || '';
             this.maxToasts = options.maxToasts || 5;
             this.defaultDuration = options.defaultDuration || 5000;
+            this.audioCtx = null;
 
             this.init();
+            this.initAudio();
         }
 
         init() {
@@ -275,6 +277,21 @@ if (typeof window.ToastNotification !== 'undefined') {
                 position = 'default'
             } = options;
 
+            // Re-validate container on every show — HTMX body swaps can detach it from the DOM
+            if (!this.container || !document.contains(this.container)) {
+                const existing = document.getElementById('toast-container');
+                if (existing) {
+                    this.container = existing;
+                } else {
+                    this.container = document.createElement('div');
+                    this.container.id = 'toast-container';
+                    document.body.appendChild(this.container);
+                }
+                if (!document.getElementById('toast-notification-styles')) {
+                    this.addStyles();
+                }
+            }
+
             // Handle container position
             if (this.container) {
                 if (position === 'center') {
@@ -371,11 +388,33 @@ if (typeof window.ToastNotification !== 'undefined') {
         }
 
         /**
+         * Initialize AudioContext on first user interaction to bypass browser blocks
+         */
+        initAudio() {
+            const unlock = () => {
+                if (!this.audioCtx) {
+                    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.audioCtx.state === 'suspended') {
+                    this.audioCtx.resume();
+                }
+                // Once unlocked, remove listeners
+                window.removeEventListener('click', unlock);
+                window.removeEventListener('touchstart', unlock);
+            };
+            window.addEventListener('click', unlock);
+            window.addEventListener('touchstart', unlock);
+        }
+
+        /**
          * Play a subtle notification sound using Web Audio API
          */
         playSound(priority = 'normal') {
             try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (!this.audioCtx) return; // Not yet unlocked by user
+
+                const ctx = this.audioCtx;
+                if (ctx.state === 'suspended') ctx.resume();
 
                 const playDing = (freq1, freq2, gainVal, duration) => {
                     const osc = ctx.createOscillator();
