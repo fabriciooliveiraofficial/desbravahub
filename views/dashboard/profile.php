@@ -451,7 +451,7 @@ $activeTab = $_GET['tab'] ?? (isset($_GET['incomplete']) ? 'registry' : 'overvie
                 </a>
             </div>
 
-            <a href="<?= base_url($tenant['slug'] . '/logout') ?>" class="btn-logout-hud" hx-boost="false">
+            <a href="<?= base_url($tenant['slug'] . '/logout?t=' . time()) ?>" hx-boost="false" class="nav-item-hud danger btn-logout-hud">
                 <span class="material-icons-round" style="font-size: 1rem;">logout</span>
                 ENCERRAR SESSÃO
             </a>

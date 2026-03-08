@@ -22,7 +22,27 @@ class VersionCheck {
      */
     init() {
         this.check();
+        this.checkLogoutState();
         this.timer = setInterval(() => this.check(), this.checkInterval);
+    }
+
+    /**
+     * Specialized check for logout hangs
+     * If we are in a /dashboard/ path but the network or SW returns 
+     * a 401 or specific JSON, we force a hard reload.
+     */
+    checkLogoutState() {
+        // Detect if we just attempted a logout
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('t') && window.location.pathname.includes('/logout')) {
+            console.log('[VersionCheck] Logout attempt detected, ensuring redirect...');
+            // If we are still on this page after 3 seconds, force reload
+            setTimeout(() => {
+                if (window.location.pathname.includes('/logout')) {
+                    window.location.href = window.location.origin + window.location.pathname.split('/logout')[0] + '/login?timeout=1';
+                }
+            }, 3000);
+        }
     }
 
     /**

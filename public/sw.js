@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'desbravahub-v23';
+const CACHE_VERSION = 'desbravahub-v25';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const DYNAMIC_CACHE = CACHE_VERSION + '-dynamic';
 const OFFLINE_URL = '/offline.html';

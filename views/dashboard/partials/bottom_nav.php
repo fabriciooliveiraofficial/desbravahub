@@ -24,6 +24,11 @@
         <span class="material-icons-round nav-icon">person</span>
         <span class="nav-label">Perfil</span>
     </a>
+    
+    <a href="<?= base_url($tenant['slug'] . '/logout?t=' . time()) ?>" hx-boost="false" class="nav-item danger">
+        <span class="material-icons-round nav-icon">logout</span>
+        <span class="nav-label">Sair</span>
+    </a>
 </nav>
 
 <style>
