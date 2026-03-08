@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'desbravahub-v26';
+const CACHE_VERSION = 'desbravahub-v27';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const DYNAMIC_CACHE = CACHE_VERSION + '-dynamic';
 const OFFLINE_URL = '/offline.html';
@@ -12,6 +12,7 @@ const PRECACHE_ASSETS = [
     '/assets/js/push-notifications.js',
     '/assets/js/pwa-install.js',
     '/assets/js/offline-sync.js',
+    '/assets/audio/notif.mp3',
     '/offline.html'
 ];
 

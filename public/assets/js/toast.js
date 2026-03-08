@@ -21,6 +21,7 @@ if (typeof window.ToastNotification !== 'undefined') {
             this.maxToasts = options.maxToasts || 5;
             this.defaultDuration = options.defaultDuration || 5000;
             this.audioCtx = null;
+            this.audioBuffer = null;
 
             this.init();
             this.initAudio();
@@ -398,12 +399,30 @@ if (typeof window.ToastNotification !== 'undefined') {
                 if (this.audioCtx.state === 'suspended') {
                     this.audioCtx.resume();
                 }
+
+                // Pre-load the custom notification sound
+                this.loadAudio('/assets/audio/notif.mp3');
+
                 // Once unlocked, remove listeners
                 window.removeEventListener('click', unlock);
                 window.removeEventListener('touchstart', unlock);
             };
             window.addEventListener('click', unlock);
             window.addEventListener('touchstart', unlock);
+        }
+
+        /**
+         * Load audio file into buffer for low-latency playback
+         */
+        async loadAudio(url) {
+            try {
+                if (!this.audioCtx) return;
+                const response = await fetch(url);
+                const arrayBuffer = await response.arrayBuffer();
+                this.audioBuffer = await this.audioCtx.decodeAudioData(arrayBuffer);
+            } catch (err) {
+                console.warn('[Toast] Failed to load custom audio:', err.message);
+            }
         }
 
         /**
@@ -416,6 +435,16 @@ if (typeof window.ToastNotification !== 'undefined') {
                 const ctx = this.audioCtx;
                 if (ctx.state === 'suspended') ctx.resume();
 
+                // 1. Try playing custom voice if loaded
+                if (this.audioBuffer) {
+                    const source = ctx.createBufferSource();
+                    source.buffer = this.audioBuffer;
+                    source.connect(ctx.destination);
+                    source.start(0);
+                    return;
+                }
+
+                // 2. Fallback to procedural ding
                 const playDing = (freq1, freq2, gainVal, duration) => {
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
