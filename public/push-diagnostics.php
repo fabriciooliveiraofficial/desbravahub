@@ -65,77 +65,89 @@ try {
     ", []);
 } catch (\Throwable $e) {}
 
-// AJAX: send test push to a specific user
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
-    header('Content-Type: application/json');
+// ── Helper: bootstrap tenant context from a user ID ─────────────────────────
+function diag_set_tenant_for_user(int $userId): bool
+{
+    $user = db_fetch_one("SELECT tenant_id FROM users WHERE id = ?", [$userId]);
+    if (!$user) return false;
+    $tenant = db_fetch_one("SELECT * FROM tenants WHERE id = ?", [$user['tenant_id']]);
+    if (!$tenant) return false;
+    \App\Core\App::setTenant($tenant);
+    return true;
+}
 
+// ── AJAX actions ─────────────────────────────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
+    // Capture any PHP warnings/errors that would break JSON output
+    ob_start();
+    set_error_handler(function ($severity, $message, $file, $line) {
+        throw new \ErrorException($message, 0, $severity, $file, $line);
+    });
+
+    header('Content-Type: application/json');
     $action = $_GET['action'];
 
-    if ($action === 'send_test') {
-        $userId = (int) ($_POST['user_id'] ?? 0);
-        if (!$userId) { echo json_encode(['ok' => false, 'error' => 'user_id required']); exit; }
+    try {
+        if ($action === 'send_test' || $action === 'send_critical') {
+            $userId = (int) ($_POST['user_id'] ?? 0);
+            if (!$userId) throw new \RuntimeException('user_id required');
 
-        try {
+            // Set tenant context from the user (required by NotificationService)
+            if (!diag_set_tenant_for_user($userId)) {
+                throw new \RuntimeException("Usuário $userId não encontrado ou sem tenant");
+            }
+
+            $isCritical = ($action === 'send_critical');
             $service = new \App\Services\NotificationService();
             $service->send(
                 $userId,
                 'test_push',
-                '🔧 Diagnóstico DesbravaHub',
-                'Notificação de teste enviada às ' . date('H:i:s') . '. Se você está vendo isso, push está funcionando! 🎯',
+                $isCritical ? '🆘 TESTE SOS — Diagnóstico' : '🔧 Diagnóstico DesbravaHub',
+                $isCritical
+                    ? 'Alerta crítico de teste às ' . date('H:i:s') . '. Deve aparecer CENTRALIZADO com som urgente.'
+                    : 'Notificação de teste enviada às ' . date('H:i:s') . '. Push funcionando! 🎯',
                 [
                     'channels' => ['toast', 'push'],
-                    'priority' => 'normal',
-                    'data' => ['icon' => '🔧']
+                    'priority' => $isCritical ? 'critical' : 'normal',
+                    'data' => ['icon' => $isCritical ? '🆘' : '🔧']
                 ]
             );
-            echo json_encode(['ok' => true, 'message' => "Push enviado para user $userId"]);
-        } catch (\Throwable $e) {
-            echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+
+            ob_end_clean();
+            echo json_encode(['ok' => true, 'message' => ($isCritical ? 'Push crítico' : 'Push normal') . " enviado para user $userId"]);
+            exit;
         }
-        exit;
-    }
 
-    if ($action === 'send_critical') {
-        $userId = (int) ($_POST['user_id'] ?? 0);
-        if (!$userId) { echo json_encode(['ok' => false, 'error' => 'user_id required']); exit; }
-
-        try {
-            $service = new \App\Services\NotificationService();
-            $service->send(
-                $userId,
-                'test_push',
-                '🆘 TESTE SOS — Diagnóstico',
-                'Alerta crítico de teste às ' . date('H:i:s') . '. Deve aparecer CENTRALIZADO com som urgente.',
-                [
-                    'channels' => ['toast', 'push'],
-                    'priority' => 'critical',
-                    'data' => ['icon' => '🆘']
-                ]
-            );
-            echo json_encode(['ok' => true, 'message' => "Push crítico enviado para user $userId"]);
-        } catch (\Throwable $e) {
-            echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+        if ($action === 'delete_subs') {
+            $userId = (int) ($_POST['user_id'] ?? 0);
+            if (!$userId) throw new \RuntimeException('user_id required');
+            db_query("DELETE FROM push_subscriptions WHERE user_id = ?", [$userId]);
+            ob_end_clean();
+            echo json_encode(['ok' => true, 'message' => "Subscriptions deletadas para user $userId"]);
+            exit;
         }
-        exit;
-    }
 
-    if ($action === 'delete_subs') {
-        $userId = (int) ($_POST['user_id'] ?? 0);
-        if (!$userId) { echo json_encode(['ok' => false, 'error' => 'user_id required']); exit; }
-        db_query("DELETE FROM push_subscriptions WHERE user_id = ?", [$userId]);
-        echo json_encode(['ok' => true, 'message' => "Subscriptions deletadas para user $userId"]);
-        exit;
-    }
+        if ($action === 'log') {
+            $lines = file_exists($logFile)
+                ? array_slice(file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES), -80)
+                : [];
+            ob_end_clean();
+            echo json_encode(['lines' => $lines]);
+            exit;
+        }
 
-    if ($action === 'log') {
-        $lines = file_exists($logFile)
-            ? array_slice(file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES), -80)
-            : [];
-        echo json_encode(['lines' => $lines]);
-        exit;
-    }
+        ob_end_clean();
+        echo json_encode(['ok' => false, 'error' => 'Unknown action: ' . $action]);
 
-    echo json_encode(['ok' => false, 'error' => 'Unknown action']);
+    } catch (\Throwable $e) {
+        $phpOutput = ob_get_clean(); // discard any HTML error output
+        echo json_encode([
+            'ok'     => false,
+            'error'  => $e->getMessage(),
+            'file'   => basename($e->getFile()) . ':' . $e->getLine(),
+            'php_output' => $phpOutput ? strip_tags($phpOutput) : null,
+        ]);
+    }
     exit;
 }
 ?>
