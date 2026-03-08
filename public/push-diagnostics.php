@@ -9,6 +9,21 @@
  * SECURITY: Delete or protect this file on production when not needed.
  */
 
+// MUST be first: capture ALL output (including PHP errors from bootstrap) so
+// AJAX actions can always return clean JSON regardless of what fails below.
+ob_start();
+
+// Only convert actual errors/warnings to exceptions (not notices/deprecated).
+// This prevents HTML error output from leaking into JSON responses.
+set_error_handler(function (int $severity, string $msg, string $file, int $line): bool {
+    if (!(error_reporting() & $severity)) return false;
+    // Only throw for E_ERROR, E_WARNING — let notices/deprecations pass through silently.
+    if ($severity & (E_ERROR | E_WARNING | E_USER_ERROR | E_USER_WARNING)) {
+        throw new \ErrorException($msg, 0, $severity, $file, $line);
+    }
+    return true; // suppress notice/deprecated silently
+});
+
 require_once __DIR__ . '/../bootstrap/bootstrap.php';
 
 // ── Server-side data ────────────────────────────────────────────────────────
@@ -78,12 +93,6 @@ function diag_set_tenant_for_user(int $userId): bool
 
 // ── AJAX actions ─────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
-    // Capture any PHP warnings/errors that would break JSON output
-    ob_start();
-    set_error_handler(function ($severity, $message, $file, $line) {
-        throw new \ErrorException($message, 0, $severity, $file, $line);
-    });
-
     header('Content-Type: application/json');
     $action = $_GET['action'];
 
@@ -113,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
                 ]
             );
 
-            ob_end_clean();
+            ob_clean(); // discard any buffered PHP warnings/errors before JSON
             echo json_encode(['ok' => true, 'message' => ($isCritical ? 'Push crítico' : 'Push normal') . " enviado para user $userId"]);
             exit;
         }
@@ -122,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
             $userId = (int) ($_POST['user_id'] ?? 0);
             if (!$userId) throw new \RuntimeException('user_id required');
             db_query("DELETE FROM push_subscriptions WHERE user_id = ?", [$userId]);
-            ob_end_clean();
+            ob_clean();
             echo json_encode(['ok' => true, 'message' => "Subscriptions deletadas para user $userId"]);
             exit;
         }
@@ -131,21 +140,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
             $lines = file_exists($logFile)
                 ? array_slice(file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES), -80)
                 : [];
-            ob_end_clean();
+            ob_clean();
             echo json_encode(['lines' => $lines]);
             exit;
         }
 
-        ob_end_clean();
+        ob_clean();
         echo json_encode(['ok' => false, 'error' => 'Unknown action: ' . $action]);
 
     } catch (\Throwable $e) {
-        $phpOutput = ob_get_clean(); // discard any HTML error output
+        $captured = ob_get_contents();
+        ob_clean();
         echo json_encode([
-            'ok'     => false,
-            'error'  => $e->getMessage(),
-            'file'   => basename($e->getFile()) . ':' . $e->getLine(),
-            'php_output' => $phpOutput ? strip_tags($phpOutput) : null,
+            'ok'         => false,
+            'error'      => $e->getMessage(),
+            'file'       => basename($e->getFile()) . ':' . $e->getLine(),
+            'php_output' => $captured ? strip_tags($captured) : null,
         ]);
     }
     exit;
