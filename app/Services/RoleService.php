@@ -48,6 +48,11 @@ class RoleService
             'display_name' => 'Desbravador',
             'description' => 'Membro do clube em progressão',
             'order' => 8
+        ],
+        'parent' => [
+            'display_name' => 'Pai/Responsável',
+            'description' => 'Responsável por desbravador(a) do clube',
+            'order' => 9
         ]
     ];
 

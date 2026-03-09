@@ -970,12 +970,13 @@ class SpecialtyService
         } else {
             // Insert new
             return db_insert('user_requirement_progress', [
-                'assignment_id' => $assignmentId,
+                'tenant_id'      => \App\Core\App::tenantId(),
+                'assignment_id'  => $assignmentId,
                 'requirement_id' => $requirementId,
-                'answer' => $answer,
-                'file_path' => $filePath,
-                'status' => 'answered',
-                'answered_at' => date('Y-m-d H:i:s'),
+                'answer'         => $answer,
+                'file_path'      => $filePath,
+                'status'         => 'answered',
+                'answered_at'    => date('Y-m-d H:i:s'),
             ]) > 0;
         }
     }
@@ -1161,6 +1162,31 @@ class SpecialtyService
         );
 
         return ($result['cnt'] ?? 0) > 0;
+    }
+
+    /**
+     * Fair Play Engine — canonical difficulty → XP and duration mapping.
+     * Single source of truth for both the UI (JS) and backend.
+     *
+     * Difficulty: 1=Iniciante, 2=Básico, 3=Intermediário, 4=Avançado, 5=Expert
+     */
+    public static function getFairPlayRules(): array
+    {
+        return [
+            1 => ['xp' => 100, 'hours' => 4,  'label' => 'Iniciante'],
+            2 => ['xp' => 180, 'hours' => 8,  'label' => 'Básico'],
+            3 => ['xp' => 280, 'hours' => 16, 'label' => 'Intermediário'],
+            4 => ['xp' => 400, 'hours' => 32, 'label' => 'Avançado'],
+            5 => ['xp' => 500, 'hours' => 60, 'label' => 'Expert'],
+        ];
+    }
+
+    /**
+     * Get the canonical duration (hours) for a given difficulty level.
+     */
+    public static function getFairPlayDuration(int $difficulty): int
+    {
+        return self::getFairPlayRules()[$difficulty]['hours'] ?? 8;
     }
 
     /**

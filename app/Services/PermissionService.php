@@ -23,12 +23,6 @@ class PermissionService
             return false;
         }
 
-        // Admins and Directors have all permissions (Unify logic with AdminController)
-        $roleName = $user['role_name'] ?? '';
-        if (in_array($roleName, ['admin', 'director', 'associate_director'])) {
-            return true;
-        }
-
         return $this->userCan($user['id'], $permission);
     }
 
@@ -37,17 +31,6 @@ class PermissionService
      */
     public function userCan(int $userId, string $permission): bool
     {
-        // For specific user ID check, we fetch the permissions from DB
-        // But if the user is the current user and we already know they are admin, we could bypass
-        // However, to keep it consistent with role bypass:
-        $user = App::user();
-        if ($user && $user['id'] === $userId) {
-            $roleName = $user['role_name'] ?? '';
-            if (in_array($roleName, ['admin', 'director', 'associate_director'])) {
-                return true;
-            }
-        }
-
         $permissions = $this->getUserPermissions($userId);
         return in_array($permission, $permissions);
     }
@@ -154,6 +137,40 @@ class PermissionService
     public function isPathfinder(): bool
     {
         return $this->hasRole('pathfinder');
+    }
+
+    /**
+     * Grant all available permissions to admin and director roles for a tenant.
+     * Call this after adding new permissions or when setting up a tenant.
+     */
+    public function syncAdminPermissions(int $tenantId): void
+    {
+        $adminRoles = ['admin', 'director'];
+
+        $allPermissions = db_fetch_all("SELECT id FROM permissions", []);
+
+        foreach ($adminRoles as $roleName) {
+            $role = db_fetch_one(
+                "SELECT id FROM roles WHERE tenant_id = ? AND name = ?",
+                [$tenantId, $roleName]
+            );
+            if (!$role) continue;
+
+            foreach ($allPermissions as $perm) {
+                $exists = db_fetch_one(
+                    "SELECT id FROM role_permissions WHERE role_id = ? AND permission_id = ?",
+                    [$role['id'], $perm['id']]
+                );
+                if (!$exists) {
+                    db_insert('role_permissions', [
+                        'role_id'       => $role['id'],
+                        'permission_id' => $perm['id'],
+                    ]);
+                }
+            }
+        }
+
+        $this->clearCache();
     }
 
     /**

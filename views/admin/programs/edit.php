@@ -1371,10 +1371,6 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
 
                     <div class="form-row" style="margin-top: 16px;">
                         <div class="form-group">
-                            <label>Pontos Individuais (Opcional)</label>
-                            <input type="number" class="form-control" id="newQuestionPoints" value="0" min="0" placeholder="O XP principal é calculado por requisito.">
-                        </div>
-                        <div class="form-group">
                             <label>Obrigatória</label>
                             <select class="form-control" id="newQuestionRequired">
                                 <option value="1" selected>Sim</option>
@@ -1602,7 +1598,6 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
             document.getElementById('optionsList').innerHTML = '';
             document.getElementById('structuredList').innerHTML = '';
             document.getElementById('newQuestionText').value = '';
-            document.getElementById('newQuestionPoints').value = '10';
             document.getElementById('newQuestionRequired').value = '1';
             document.getElementById('trueFalseTrue').classList.remove('correct');
             document.getElementById('trueFalseFalse').classList.remove('correct');
@@ -1618,7 +1613,7 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
 
             const type = card.querySelector('.question-type-input').value;
             const text = card.querySelector('.question-text-input').value;
-            const points = card.querySelector('.question-points-input').value;
+            const points = parseInt(card.querySelector('.question-points-input')?.value) || 10;
             const required = card.querySelector('.question-required-input').value;
 
             // Update Modal UI
@@ -1627,7 +1622,6 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
 
             // Set current values
             document.getElementById('newQuestionText').value = text;
-            document.getElementById('newQuestionPoints').value = points;
             document.getElementById('newQuestionRequired').value = required;
 
             // Select type
@@ -1840,7 +1834,7 @@ $typeLabel = $program['type'] === 'class' ? 'Classe' : 'Especialidade';
                 return;
             }
 
-            const points = parseInt(document.getElementById('newQuestionPoints').value) || 10;
+            const points = 10; // Fixed default — XP is calculated by the Fair Play Engine, not per question
             const isRequired = document.getElementById('newQuestionRequired').value === '1';
 
             // Collect options and correct answers for choice types

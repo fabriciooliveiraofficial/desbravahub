@@ -23,27 +23,15 @@
                         </td>
                         <td data-label="Email"><?= htmlspecialchars($u['email']) ?></td>
                         <td data-label="Cargo">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <select class="form-control" style="width: auto; padding: 6px 10px;" 
-                                        onchange="updateRole(<?= $u['id'] ?>, this.value)"
-                                        <?= $u['id'] === auth()['id'] ? 'disabled' : '' ?>>
-                                    <?php foreach ($roles as $role): ?>
-                                    <option value="<?= $role['id'] ?>" <?= $u['role_id'] == $role['id'] ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($role['display_name']) ?>
-                                    </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <?php if ($u['id'] !== auth()['id']): ?>
-                                <button class="btn btn-sm" 
-                                        onclick="toggleUserStatus(<?= $u['id'] ?>, '<?= $u['status'] ?>')" 
-                                        title="<?= $u['status'] === 'active' ? 'Bloquear Usuário' : 'Desbloquear Usuário' ?>"
-                                        style="padding: 4px; display: flex; align-items: center; justify-content: center; color: <?= $u['status'] === 'active' ? 'var(--text-muted)' : 'var(--danger)' ?>;">
-                                    <span class="material-icons-round" style="font-size: 20px;">
-                                        <?= $u['status'] === 'active' ? 'block' : 'lock_open' ?>
-                                    </span>
-                                </button>
-                                <?php endif; ?>
-                            </div>
+                            <select class="form-control" style="width: auto; padding: 6px 10px;"
+                                    onchange="updateRole(<?= $u['id'] ?>, this.value)"
+                                    <?= $u['id'] === auth()['id'] ? 'disabled' : '' ?>>
+                                <?php foreach ($roles as $role): ?>
+                                <option value="<?= $role['id'] ?>" <?= $u['role_id'] == $role['id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($role['display_name']) ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
                         </td>
                         <td data-label="XP"><?= number_format($u['xp_points']) ?></td>
                         <td data-label="Status">
@@ -58,16 +46,24 @@
                             <span class="badge <?= $statusClass ?>"><?= $statusLabel ?></span>
                         </td>
                         <td data-label="Ações">
-                            <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                                <button class="btn btn-outline-primary btn-sm" 
-                                        onclick="viewUserCatalog(<?= $u['id'] ?>)" 
+                            <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                                <button class="btn btn-outline-primary btn-sm"
+                                        onclick="viewUserCatalog(<?= $u['id'] ?>)"
                                         title="Ver Ficha Completa"
                                         style="padding: 4px; display: flex; align-items: center; justify-content: center;">
                                     <span class="material-icons-round" style="font-size: 20px;">medical_information</span>
                                 </button>
                                 <?php if ($u['id'] !== auth()['id']): ?>
-                                <button class="btn btn-outline-danger btn-sm" 
-                                        onclick="deleteUser(<?= $u['id'] ?>)" 
+                                <button class="btn btn-sm"
+                                        onclick="toggleUserStatus(<?= $u['id'] ?>, '<?= $u['status'] ?>')"
+                                        title="<?= $u['status'] === 'active' ? 'Bloquear Usuário' : 'Desbloquear Usuário' ?>"
+                                        style="padding: 4px; display: flex; align-items: center; justify-content: center; color: <?= $u['status'] === 'active' ? 'var(--text-muted)' : 'var(--danger)' ?>;">
+                                    <span class="material-icons-round" style="font-size: 20px;">
+                                        <?= $u['status'] === 'active' ? 'block' : 'lock_open' ?>
+                                    </span>
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm"
+                                        onclick="deleteUser(<?= $u['id'] ?>)"
                                         title="Excluir Usuário"
                                         style="padding: 4px; display: flex; align-items: center; justify-content: center;">
                                     <span class="material-icons-round" style="font-size: 20px;">delete</span>
@@ -365,7 +361,19 @@
                 });
                 
                 const data = await response.json();
-                
+
+                if (response.status === 403) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Sem permissão',
+                        text: data.error || 'Você não tem permissão para alterar cargos.',
+                    });
+                    // Revert select to original value
+                    event?.target?.dispatchEvent(new Event('cancel'));
+                    location.reload();
+                    return;
+                }
+
                 if (data.success) {
                     showToast('Cargo atualizado', 'success');
                 } else {
@@ -399,6 +407,11 @@
                 
                 const data = await response.json();
                 
+                if (response.status === 403) {
+                    Swal.fire({ icon: 'error', title: 'Sem permissão', text: data.error || 'Você não tem permissão para alterar o status deste usuário.' });
+                    return;
+                }
+
                 if (data.success) {
                     Swal.fire({
                         icon: 'success',
@@ -436,7 +449,12 @@
                 });
                 
                 const data = await response.json();
-                
+
+                if (response.status === 403) {
+                    Swal.fire({ icon: 'error', title: 'Sem permissão', text: data.error || 'Você não tem permissão para excluir usuários.' });
+                    return;
+                }
+
                 if (data.success) {
                     Swal.fire({
                         icon: 'success',

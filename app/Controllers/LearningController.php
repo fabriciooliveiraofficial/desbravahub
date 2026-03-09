@@ -397,13 +397,14 @@ class LearningController
             } else {
                 // Create new
                 db_insert('user_step_responses', [
-                    'progress_id' => $progress['id'],
-                    'step_id' => $stepId,
+                    'tenant_id'     => $tenant['id'],
+                    'progress_id'   => $progress['id'],
+                    'step_id'       => $stepId,
                     'response_text' => $responseText,
-                    'response_url' => $responseUrl,
+                    'response_url'  => $responseUrl,
                     'response_file' => $responseFile,
-                    'status' => $status,
-                    'submitted_at' => date('Y-m-d H:i:s')
+                    'status'        => $status,
+                    'submitted_at'  => date('Y-m-d H:i:s')
                 ]);
             }
 

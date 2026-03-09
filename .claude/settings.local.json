@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker exec desbravahub_db mysql -u root -proot -e \"SHOW COLUMNS FROM u714643564_db_desbravahub.user_requirement_progress; SHOW COLUMNS FROM u714643564_db_desbravahub.user_step_responses;\")",
+      "Bash(docker exec desbravahub_db mysql -u root -proot u714643564_db_desbravahub -e \":*)",
+      "Bash(docker exec desbravahub_db mysql -u root -proot -e \":*)",
+      "Bash(docker exec desbravahub_db mysql -u root -proot u714643564_db_desbravahub -e \"SHOW COLUMNS FROM user_requirement_progress; SHOW COLUMNS FROM user_step_responses;\")",
+      "Bash(docker exec desbravahub_app bash -c \"tail -30 /var/log/apache2/error.log\")",
+      "Bash(docker exec desbravahub_app bash -c \"tail -30 /var/log/apache2/access.log | grep 403\")",
+      "Bash(docker exec desbravahub_db mysql -u root -proot desbravahub -e \"SELECT id, name, slug, status FROM tenants LIMIT 10;\")",
+      "Bash(docker exec desbravahub_db mysql -u desbravahub -pdesbravahub desbravahub -e \"SELECT id, name, slug, status FROM tenants LIMIT 10;\")",
+      "Bash(docker exec desbravahub_db env)",
+      "Bash(docker exec desbravahub_db mysql -uroot -proot u714643564_db_desbravahub -e \"SELECT id, name, slug, status FROM tenants LIMIT 10;\")"
+    ]
+  }
+}

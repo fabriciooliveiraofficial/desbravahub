@@ -130,23 +130,23 @@ $specialtyCategories = SpecialtyService::getCategories();
                         
                         <div class="form-group">
                             <label>Dificuldade</label>
-                            <select name="difficulty" id="spec-difficulty" class="god-input">
-                                <option value="1">⭐ Muito Fácil</option>
-                                <option value="2" selected>⭐⭐ Fácil</option>
-                                <option value="3">⭐⭐⭐ Médio</option>
-                                <option value="4">⭐⭐⭐⭐ Difícil</option>
+                            <select name="difficulty" id="spec-difficulty" class="god-input" onchange="applyFairPlay('spec')">
+                                <option value="1">⭐ Iniciante</option>
+                                <option value="2" selected>⭐⭐ Básico</option>
+                                <option value="3">⭐⭐⭐ Intermediário</option>
+                                <option value="4">⭐⭐⭐⭐ Avançado</option>
                                 <option value="5">⭐⭐⭐⭐⭐ Expert</option>
                             </select>
                         </div>
-                        
+
                         <div class="form-group">
-                            <label>Duração (horas)</label>
-                            <input type="number" name="duration_hours" id="spec-duration" value="4" min="1" max="100" class="god-input">
+                            <label>Duração (horas) <span style="font-size:.7rem;opacity:.6;">⚖️ Fair Play</span></label>
+                            <input type="number" name="duration_hours" id="spec-duration" value="8" min="1" max="100" class="god-input" readonly style="background:var(--bg-body,#f8f9fa);cursor:not-allowed;opacity:.85;" title="Definido automaticamente pela dificuldade">
                         </div>
-                        
+
                         <div class="form-group">
-                            <label>XP de Recompensa</label>
-                            <input type="number" name="xp_reward" id="spec-xp" value="100" min="10" max="1000" step="10" class="god-input">
+                            <label>XP de Recompensa <span style="font-size:.7rem;opacity:.6;">⚖️ Fair Play</span></label>
+                            <input type="number" name="xp_reward" id="spec-xp" value="180" min="10" max="1000" step="10" class="god-input" readonly style="background:var(--bg-body,#f8f9fa);cursor:not-allowed;opacity:.85;" title="Definido automaticamente pela dificuldade">
                         </div>
                     </div>
                 </div>
@@ -938,6 +938,27 @@ function openSpecIconPicker() {
         document.getElementById('spec-icon-preview').setAttribute('icon', icon);
         document.getElementById('spec-icon-text').textContent = icon;
     });
+}
+
+// ── Fair Play Engine ──────────────────────────────────────────────────────────
+// Canonical difficulty → XP and duration mapping (mirrors SpecialtyService::getFairPlayRules()).
+var FAIR_PLAY_RULES = {
+    1: { xp: 100, hours: 4  },
+    2: { xp: 180, hours: 8  },
+    3: { xp: 280, hours: 16 },
+    4: { xp: 400, hours: 32 },
+    5: { xp: 500, hours: 60 },
+};
+
+/**
+ * Apply Fair Play values to XP and duration inputs based on the selected difficulty.
+ * @param {string} prefix — 'spec' for the specialty wizard inputs
+ */
+function applyFairPlay(prefix) {
+    const difficulty = parseInt(document.getElementById(prefix + '-difficulty').value) || 2;
+    const rules = FAIR_PLAY_RULES[difficulty] || FAIR_PLAY_RULES[2];
+    document.getElementById(prefix + '-xp').value      = rules.xp;
+    document.getElementById(prefix + '-duration').value = rules.hours;
 }
 
 function openGodClassIconPicker() {

@@ -275,7 +275,8 @@ if (typeof window.ToastNotification !== 'undefined') {
                 onClick = null,
                 priority = 'normal',
                 icon = null,
-                position = 'default'
+                position = 'default',
+                customSound = false  // true → play "desbravador" mp3; false → procedural ding or silence
             } = options;
 
             // Re-validate container on every show — HTMX body swaps can detach it from the DOM
@@ -378,7 +379,7 @@ if (typeof window.ToastNotification !== 'undefined') {
             }
 
             // Play notification sound
-            this.playSound(priority);
+            this.playSound(priority, customSound);
 
             // Auto dismiss
             if (duration > 0) {
@@ -426,17 +427,23 @@ if (typeof window.ToastNotification !== 'undefined') {
         }
 
         /**
-         * Play a subtle notification sound using Web Audio API
+         * Play a notification sound using Web Audio API.
+         *
+         * customSound = true  → play the "desbravador" mp3 (push notifications only)
+         * customSound = false → play a subtle procedural ding (local UI toasts)
+         *
+         * critical priority always uses the urgent SOS tones regardless of customSound,
+         * so that critical alerts are never silenced even before the mp3 is loaded.
          */
-        playSound(priority = 'normal') {
+        playSound(priority = 'normal', customSound = false) {
             try {
-                if (!this.audioCtx) return; // Not yet unlocked by user
+                if (!this.audioCtx) return; // Not yet unlocked by user gesture
 
                 const ctx = this.audioCtx;
                 if (ctx.state === 'suspended') ctx.resume();
 
-                // 1. Try playing custom voice if loaded
-                if (this.audioBuffer) {
+                // Play the "desbravador" mp3 only for push notifications
+                if (customSound && this.audioBuffer) {
                     const source = ctx.createBufferSource();
                     source.buffer = this.audioBuffer;
                     source.connect(ctx.destination);
@@ -444,7 +451,7 @@ if (typeof window.ToastNotification !== 'undefined') {
                     return;
                 }
 
-                // 2. Fallback to procedural ding
+                // Procedural ding for all other toasts (save alerts, local actions, etc.)
                 const playDing = (freq1, freq2, gainVal, duration) => {
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
@@ -460,12 +467,12 @@ if (typeof window.ToastNotification !== 'undefined') {
                 };
 
                 if (priority === 'critical') {
-                    // Urgent SOS-like sound
+                    // Urgent SOS-like triple tone
                     playDing(900, 1200, 0.3, 0.8);
                     setTimeout(() => playDing(900, 1200, 0.3, 0.8), 200);
                     setTimeout(() => playDing(900, 1200, 0.3, 0.8), 400);
                 } else {
-                    // Standard ding
+                    // Subtle single ding for standard toasts
                     playDing(830, 1100, 0.15, 0.4);
                 }
             } catch (e) {

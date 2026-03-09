@@ -55,7 +55,7 @@
     <script src="<?= asset_url('js/session-guard.js') ?>?v=<?= time() ?>"></script>
 </head>
 
-<body class="hud-body" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-indicator="#global-loader">
+<body class="hud-body" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML" hx-indicator="#global-loader">
     
     <!-- Global Loader -->
     <div id="global-loader" class="htmx-indicator" style="background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green)); height: 3px; position: fixed; top: 0; width: 100%; z-index: 9999; display: none;"></div>

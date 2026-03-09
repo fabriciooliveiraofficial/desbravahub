@@ -5,7 +5,12 @@
  */
 $bellUnreadCount = $unreadCount ?? 0;
 ?>
-<a href="<?= base_url($tenant['slug'] . '/notificacoes') ?>" class="hud-action-btn notification-bell-link" id="notificationBtn" title="Notificações">
+<?php
+// Context-aware routing for notifications (Admin vs Member)
+$currentUri = $_SERVER['REQUEST_URI'] ?? '';
+$notifPath = (strpos($currentUri, '/admin') !== false) ? '/admin/notificacoes' : '/notificacoes';
+?>
+<a href="<?= base_url($tenant['slug'] . $notifPath) ?>" class="hud-action-btn notification-bell-link" id="notificationBtn" title="Notificações">
     <div class="bell-wrapper">
         <span class="material-icons-round">notifications</span>
         <?php if ($bellUnreadCount > 0): ?>

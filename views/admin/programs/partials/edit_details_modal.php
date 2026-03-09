@@ -17,10 +17,12 @@
 
         <form id="editProgramDetailsForm" onsubmit="submitEditProgramDetails(event)">
             <input type="hidden" name="program_id" id="editProgramId">
+
+            <!-- Row 1: Nome + Categoria -->
             <div class="form-row">
                 <div class="form-group" style="position: relative;">
                     <label>Nome *</label>
-                    <input type="text" name="name" class="form-control" required="" placeholder="Ex: Primeiros Socorros"
+                    <input type="text" name="name" class="form-control" required placeholder="Ex: Primeiros Socorros"
                         id="editProgramName" autocomplete="off">
                 </div>
                 <div class="form-group">
@@ -34,7 +36,7 @@
                                 <?php elseif (str_contains($cat['icon'] ?? '', ':')): ?>
                                     (📂)
                                 <?php else: ?>
-                                    <?= $cat['icon'] ?> 
+                                    <?= $cat['icon'] ?>
                                 <?php endif; ?>
                                 <?= htmlspecialchars($cat['name']) ?>
                             </option>
@@ -43,55 +45,71 @@
                 </div>
             </div>
 
-            <div class="form-row">
-                 <div class="form-group">
-                    <label>Ícone do Programa</label>
-                    <input type="hidden" id="editProgramIcon" name="icon" value="noto:blue-book">
-                    <div class="icon-picker-trigger" 
-                         onclick="IconPicker.open(document.getElementById('editProgramIcon').value, (sel) => {
-                             document.getElementById('editProgramIcon').value = sel;
-                             document.getElementById('editProgramIconPreview').innerHTML = `<iconify-icon icon='${sel}' style='font-size: 1.5rem;'></iconify-icon>`;
-                             document.getElementById('editProgramIconText').textContent = sel;
-                         })" 
-                         style="display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer; height: 42px;">
-                        <div id="editProgramIconPreview">
-                            <iconify-icon icon="noto:blue-book" style="font-size: 1.5rem;"></iconify-icon>
-                        </div>
-                        <div class="icon-info" style="flex: 1;">
-                            <span id="editProgramIconText" style="font-size: 0.85rem; color: var(--text-primary);">noto:blue-book</span>
-                        </div>
+            <!-- Row 2: Ícone (full width) -->
+            <div class="form-group">
+                <label>Ícone do Programa</label>
+                <input type="hidden" id="editProgramIcon" name="icon" value="noto:blue-book">
+                <div class="icon-picker-trigger"
+                     onclick="IconPicker.open(document.getElementById('editProgramIcon').value, (sel) => {
+                         document.getElementById('editProgramIcon').value = sel;
+                         document.getElementById('editProgramIconPreview').innerHTML = `<iconify-icon icon='${sel}' style='font-size: 1.5rem;'></iconify-icon>`;
+                         document.getElementById('editProgramIconText').textContent = sel;
+                     })"
+                     style="display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer; height: 42px;">
+                    <div id="editProgramIconPreview">
+                        <iconify-icon icon="noto:blue-book" style="font-size: 1.5rem;"></iconify-icon>
                     </div>
-                </div>
-                 <div class="form-group">
-                    <label>Duração (horas)</label>
-                    <input type="number" name="duration_hours" id="editProgramDuration" class="form-control" value="4" min="1" max="200">
+                    <div class="icon-info" style="flex: 1;">
+                        <span id="editProgramIconText" style="font-size: 0.85rem; color: var(--text-primary);">noto:blue-book</span>
+                    </div>
                 </div>
             </div>
 
+            <!-- Row 3: Descrição (full width) -->
             <div class="form-group">
                 <label>Descrição</label>
                 <textarea name="description" id="editProgramDescription" class="form-control" rows="3"
                     placeholder="Descrição do programa..."></textarea>
             </div>
 
+            <!-- Row 4: Dificuldade / XP (readonly) / Duração (readonly) — Fair Play Engine -->
             <div class="form-row">
                 <div class="form-group">
                     <label>Dificuldade (1-5)</label>
-                    <select name="difficulty" id="editProgramDifficulty" class="form-control">
+                    <select name="difficulty" id="editProgramDifficulty" class="form-control"
+                            onchange="applyEditFairPlayProg()">
                         <option value="1">⭐ Iniciante</option>
                         <option value="2">⭐⭐ Básico</option>
-                        <option value="3" selected="">⭐⭐⭐ Intermediário</option>
+                        <option value="3" selected>⭐⭐⭐ Intermediário</option>
                         <option value="4">⭐⭐⭐⭐ Avançado</option>
                         <option value="5">⭐⭐⭐⭐⭐ Expert</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Recompensa XP</label>
-                    <input type="number" name="xp_reward" id="editProgramXp" class="form-control" value="100" min="0" step="10">
+                    <label style="display:flex;align-items:center;gap:6px;">
+                        Recompensa XP
+                        <span title="Preenchido automaticamente pelo Fair Play Engine"
+                              style="cursor:help;font-size:0.85rem;color:var(--text-secondary);">⚖️</span>
+                    </label>
+                    <input type="number" name="xp_reward" id="editProgramXp" class="form-control"
+                           value="280" min="0" step="10"
+                           readonly style="cursor:not-allowed;border-style:dashed;">
+                </div>
+
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:6px;">
+                        Duração (horas)
+                        <span title="Preenchido automaticamente pelo Fair Play Engine"
+                              style="cursor:help;font-size:0.85rem;color:var(--text-secondary);">⚖️</span>
+                    </label>
+                    <input type="number" name="duration_hours" id="editProgramDuration" class="form-control"
+                           value="16" min="1" max="200"
+                           readonly style="cursor:not-allowed;border-style:dashed;">
                 </div>
             </div>
 
+            <!-- Row 5: Outdoor -->
             <div class="form-group">
                 <label class="form-check" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
                     <input type="checkbox" name="is_outdoor" id="editProgramOutdoor" value="1" style="width: 20px; height: 20px;">
@@ -114,46 +132,58 @@
 </div>
 
 <script>
+    // Fair Play Engine — mirrors create_modal.php
+    var EDIT_FAIR_PLAY = {
+        1: { xp: 100,  hours: 4  },
+        2: { xp: 180,  hours: 8  },
+        3: { xp: 280,  hours: 16 },
+        4: { xp: 400,  hours: 32 },
+        5: { xp: 500,  hours: 60 },
+    };
+
+    function applyEditFairPlayProg() {
+        const diff = parseInt(document.getElementById('editProgramDifficulty').value, 10);
+        const rule = EDIT_FAIR_PLAY[diff];
+        if (!rule) return;
+        document.getElementById('editProgramXp').value       = rule.xp;
+        document.getElementById('editProgramDuration').value = rule.hours;
+    }
+
     window.openEditProgramModal = function(programJson) {
-        console.log("Opening edit modal with data:", programJson);
         let program;
         try {
-            // Decodifica a string JSON. Se vier do HTML enconded, usamos a forma direta
             program = typeof programJson === 'string' ? JSON.parse(programJson) : programJson;
         } catch(e) {
-            console.error("Failed to parse program data", e, programJson);
+            console.error('Failed to parse program data', e, programJson);
             return;
         }
 
         const modal = document.getElementById('editProgramDetailsModal');
-        if (!modal) {
-            console.error("Modal element #editProgramDetailsModal not found!");
-            return;
-        }
+        if (!modal) { console.error('Modal #editProgramDetailsModal not found!'); return; }
         modal.classList.add('active');
-        
-        // Populate fields
-        document.getElementById('editProgramId').value = program.id;
-        document.getElementById('editProgramName').value = program.name;
-        document.getElementById('editProgramCategory').value = program.category_id || '';
-        document.getElementById('editProgramDuration').value = program.duration_hours || 4;
+
+        // Populate base fields
+        document.getElementById('editProgramId').value          = program.id;
+        document.getElementById('editProgramName').value        = program.name;
+        document.getElementById('editProgramCategory').value    = program.category_id || '';
         document.getElementById('editProgramDescription').value = program.description || '';
+        document.getElementById('editProgramOutdoor').checked   = parseInt(program.is_outdoor) === 1;
+
+        // Set difficulty then sync XP + Duration via Fair Play Engine
         document.getElementById('editProgramDifficulty').value = program.difficulty || 3;
-        document.getElementById('editProgramXp').value = program.xp_reward || 100;
-        document.getElementById('editProgramOutdoor').checked = parseInt(program.is_outdoor) === 1;
+        applyEditFairPlayProg();
 
         // Set Icon
         const iconValue = program.icon || 'noto:blue-book';
-        document.getElementById('editProgramIcon').value = iconValue;
+        document.getElementById('editProgramIcon').value        = iconValue;
         document.getElementById('editProgramIconText').textContent = iconValue;
-        
         const preview = document.getElementById('editProgramIconPreview');
         if (iconValue.startsWith('fa-')) {
-            preview.innerHTML = `<i class="${iconValue}" style="font-size: 1.5rem; color: var(--primary);"></i>`;
+            preview.innerHTML = `<i class="${iconValue}" style="font-size:1.5rem;color:var(--primary);"></i>`;
         } else if (iconValue.includes(':')) {
-            preview.innerHTML = `<iconify-icon icon="${iconValue}" style="font-size: 1.5rem;"></iconify-icon>`;
+            preview.innerHTML = `<iconify-icon icon="${iconValue}" style="font-size:1.5rem;"></iconify-icon>`;
         } else {
-             preview.innerHTML = `<span style="font-size: 1.5rem;">${iconValue}</span>`;
+            preview.innerHTML = `<span style="font-size:1.5rem;">${iconValue}</span>`;
         }
     }
 
@@ -163,29 +193,25 @@
     }
 
     // Close on click outside
-    document.getElementById('editProgramDetailsModal').addEventListener('click', function (e) {
-        if (e.target === this) {
-            closeEditProgramModal();
-        }
+    document.getElementById('editProgramDetailsModal').addEventListener('click', function(e) {
+        if (e.target === this) closeEditProgramModal();
     });
 
     async function submitEditProgramDetails(e) {
         e.preventDefault();
 
-        const form = document.getElementById('editProgramDetailsForm');
-        const formData = new FormData(form);
+        const form      = document.getElementById('editProgramDetailsForm');
+        const formData  = new FormData(form);
         const programId = document.getElementById('editProgramId').value;
-        const btn = form.querySelector('button[type="submit"]');
-        const originalText = btn.innerHTML;
+        const btn       = form.querySelector('button[type="submit"]');
+        const original  = btn.innerHTML;
 
         btn.disabled = true;
         btn.innerHTML = 'Salvando...';
 
         try {
             const tSlug = window.programs_tenantSlug || '<?= $tenant['slug'] ?? '' ?>';
-            const submitUrl = `/${tSlug}/admin/programas/${programId}`;
-
-            const response = await fetch(submitUrl, {
+            const response = await fetch(`/${tSlug}/admin/programas/${programId}`, {
                 method: 'POST',
                 body: formData
             });
@@ -199,13 +225,13 @@
             } else {
                 showToast(data.error || 'Erro ao atualizar programa', 'error');
                 btn.disabled = false;
-                btn.innerHTML = originalText;
+                btn.innerHTML = original;
             }
         } catch (error) {
             console.error('Erro:', error);
             showToast('Erro de conexão ao atualizar programa', 'error');
             btn.disabled = false;
-            btn.innerHTML = originalText;
+            btn.innerHTML = original;
         }
     }
 </script>

@@ -232,7 +232,8 @@ class PushNotifications {
             priority: priority || data.priority || 'normal',
             position: priority === 'critical' || data.priority === 'critical' ? 'center' : 'default',
             icon: data.icon,
-            onClick: data.url ? () => { window.location.href = data.url; } : null
+            onClick: data.url ? () => { window.location.href = data.url; } : null,
+            customSound: true  // play "desbravador" mp3 — restricted to push notifications only
         });
 
         // Mark notification as read in DB immediately to prevent duplicate toast from polling.

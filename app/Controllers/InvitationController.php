@@ -10,6 +10,7 @@ namespace App\Controllers;
 use App\Core\App;
 use App\Services\AuthService;
 use App\Services\EmailService;
+use App\Services\RoleService;
 
 class InvitationController
 {
@@ -403,15 +404,8 @@ class InvitationController
      */
     private function sendMemberInvitationEmail(array $tenant, array $inviter, string $email, ?string $name, string $roleName, ?string $customMessage, string $token): void
     {
-        $roleLabels = [
-            'pathfinder' => 'Desbravador',
-            'parent' => 'Pai/Responsável',
-            'instructor' => 'Instrutor',
-            'counselor' => 'Conselheiro',
-            'associate_director' => 'Diretor Associado',
-            'director' => 'Diretor'
-        ];
-        $roleLabel = $roleLabels[$roleName] ?? 'Membro';
+        $officialRoles = RoleService::OFFICIAL_ROLES;
+        $roleLabel = $officialRoles[$roleName]['display_name'] ?? 'Membro';
 
         $inviteUrl = base_url($tenant['slug'] . '/entrar/' . $token);
         $greeting = $name ? "Olá {$name}!" : "Olá!";
@@ -500,9 +494,10 @@ class InvitationController
         $expired = array_filter($invitations, fn($i) => $i['accepted_at'] === null && strtotime($i['expires_at']) <= time());
         $accepted = array_filter($invitations, fn($i) => $i['accepted_at'] !== null);
 
+        $officialRoles = RoleService::OFFICIAL_ROLES;
         $roles = [
-            'pathfinder' => 'Desbravador',
-            'parent' => 'Pai/Responsável'
+            'pathfinder' => $officialRoles['pathfinder']['display_name'],
+            'parent'     => $officialRoles['parent']['display_name'],
         ];
 
         \App\Core\View::render('admin/invitations/members', [
@@ -528,9 +523,10 @@ class InvitationController
         $tenant = App::tenant();
         $user = App::user();
 
+        $officialRoles = RoleService::OFFICIAL_ROLES;
         $roles = [
-            'pathfinder' => 'Desbravador',
-            'parent' => 'Pai/Responsável'
+            'pathfinder' => $officialRoles['pathfinder']['display_name'],
+            'parent'     => $officialRoles['parent']['display_name'],
         ];
 
         \App\Core\View::render('admin/invitations/members-create', [

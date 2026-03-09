@@ -83,13 +83,8 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>Duração (horas)</label>
-                    <input type="number" name="duration_hours" class="form-control" value="4" min="1" max="200">
-                </div>
-
-                <div class="form-group">
                     <label>Dificuldade (1-5)</label>
-                    <select name="difficulty" class="form-control">
+                    <select name="difficulty" id="progDifficulty" class="form-control" onchange="applyFairPlayProg()">
                         <option value="1">⭐ Iniciante</option>
                         <option value="2">⭐⭐ Básico</option>
                         <option value="3" selected="">⭐⭐⭐ Intermediário</option>
@@ -99,8 +94,21 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Recompensa XP</label>
-                    <input type="number" name="xp_reward" class="form-control" value="100" min="0" step="10">
+                    <label style="display:flex;align-items:center;gap:6px;">
+                        Recompensa XP
+                        <span title="Preenchido automaticamente pelo Fair Play Engine" style="cursor:help;font-size:0.85rem;color:var(--text-secondary);">⚖️</span>
+                    </label>
+                    <input type="number" name="xp_reward" id="progXpReward" class="form-control" value="280" min="0" step="10"
+                           readonly style="cursor:not-allowed;border-style:dashed;">
+                </div>
+
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:6px;">
+                        Duração (horas)
+                        <span title="Preenchido automaticamente pelo Fair Play Engine" style="cursor:help;font-size:0.85rem;color:var(--text-secondary);">⚖️</span>
+                    </label>
+                    <input type="number" name="duration_hours" id="progDuration" class="form-control" value="16" min="1" max="200"
+                           readonly style="cursor:not-allowed;border-style:dashed;">
                 </div>
             </div>
 
@@ -210,6 +218,30 @@
             closeCreateProgramModal();
         }
     });
+
+    // Fair Play Engine — canonical difficulty → {xp, hours} mapping
+    var PROG_FAIR_PLAY = {
+        1: { xp: 100,  hours: 4  },
+        2: { xp: 180,  hours: 8  },
+        3: { xp: 280,  hours: 16 },
+        4: { xp: 400,  hours: 32 },
+        5: { xp: 500,  hours: 60 },
+    };
+
+    function applyFairPlayProg() {
+        const diff = parseInt(document.getElementById('progDifficulty').value, 10);
+        const rule = PROG_FAIR_PLAY[diff];
+        if (!rule) return;
+        document.getElementById('progXpReward').value  = rule.xp;
+        document.getElementById('progDuration').value  = rule.hours;
+    }
+
+    // Set correct defaults on load (difficulty 3 = Intermediário → 280 XP / 16h)
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyFairPlayProg);
+    } else {
+        applyFairPlayProg();
+    }
 
     async function submitCreateProgramActionV2(e) {
         e.preventDefault();

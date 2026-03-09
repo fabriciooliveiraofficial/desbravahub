@@ -332,6 +332,18 @@
         100% { opacity: 1; transform: scale(1); }
     }
 
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+    }
+
+    #matrix-refresh-btn:hover:not(:disabled) {
+        border-color: var(--god-blue);
+        color: var(--god-blue);
+        background: rgba(14, 165, 233, 0.06);
+    }
+    #matrix-refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
     .empty-matrix {
         padding: 60px;
         text-align: center;
@@ -597,17 +609,21 @@
                         <th width="120">Ações</th>
                     </tr>
                 </thead>
-                <tbody id="mission-matrix-body" 
-                       hx-get="<?= base_url($tenant['slug'] . '/admin/especialidades/god-mode/matrix') ?>" 
-                       hx-trigger="every 30s"
-                       hx-swap="innerHTML">
+                <tbody id="mission-matrix-body">
                     <?php require BASE_PATH . '/views/admin/specialties/partials/matrix-rows.php'; ?>
                 </tbody>
             </table>
         </div>
         
-        <div style="margin-top: 20px; text-align: right; color: var(--text-muted); font-size: 0.8rem;">
-            <span class="live-dot"></span> Monitoramento em Tempo Real Ativo
+        <div style="margin-top: 20px; display: flex; justify-content: flex-end; align-items: center; gap: 12px;">
+            <span id="matrix-last-updated" style="font-size: 0.8rem; color: var(--text-muted);"></span>
+            <button id="matrix-refresh-btn" onclick="refreshMatrix()" title="Atualizar tabela"
+                style="display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px;
+                       background: transparent; border: 1px solid var(--god-border); color: var(--text-muted);
+                       cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">
+                <span class="material-icons-round" id="matrix-refresh-icon" style="font-size: 18px;">refresh</span>
+                Atualizar
+            </button>
         </div>
     </div>
 
@@ -1167,15 +1183,53 @@ window.filterMatrix = function() {
     });
 }
 
-// Re-apply filter after HTMX updates (Polling persistence)
-document.body.addEventListener('htmx:afterSwap', function(evt) {
-    if (evt.target.id === 'mission-matrix-body') {
-        const query = document.getElementById('searchInput').value;
-        if (query && query.length > 0) {
-            window.filterMatrix();
+// ─── Refresh Manual da Matriz ────────────────────────────────────────────────
+
+async function refreshMatrix() {
+    const btn  = document.getElementById('matrix-refresh-btn');
+    const icon = document.getElementById('matrix-refresh-icon');
+    const last = document.getElementById('matrix-last-updated');
+    const tbody = document.getElementById('mission-matrix-body');
+
+    btn.disabled = true;
+    icon.style.animation = 'spin 0.8s linear infinite';
+
+    try {
+        const url = '<?= base_url($tenant['slug'] . '/admin/especialidades/god-mode/matrix') ?>';
+        const res = await fetch(url, {
+            headers: { 'HX-Request': 'true', 'Accept': 'text/html' }
+        });
+
+        if (res.status === 401 || res.status === 403) {
+            window.location.reload();
+            return;
         }
+
+        const html = await res.text();
+
+        // Safety: only inject if it looks like <tr> rows, not a full HTML page
+        if (html.includes('<!DOCTYPE') || html.includes('<html') || html.includes('<head>')) {
+            window.location.reload();
+            return;
+        }
+
+        tbody.innerHTML = html;
+
+        // Re-apply active search filter
+        const query = document.getElementById('searchInput')?.value;
+        if (query && query.length > 0) window.filterMatrix();
+
+        const now = new Date();
+        last.textContent = 'Atualizado às ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    } catch (err) {
+        console.error('Erro ao atualizar matrix:', err);
+        last.textContent = 'Erro ao atualizar';
+    } finally {
+        btn.disabled = false;
+        icon.style.animation = '';
     }
-});
+}
 
 // Make tenantSlug available for Modals (if not already)
 if (typeof window.tenantSlug === 'undefined') {

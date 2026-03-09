@@ -443,13 +443,28 @@ class SpecialtyController
     {
         $this->requireLeadership();
 
-        $tenant = App::tenant();
-        $assignments = SpecialtyService::getGodModeData($tenant['id']);
-        $permissionService = new \App\Services\PermissionService();
-        $canForceDelete = $permissionService->can('specialties.delete_active');
+        // Only accept HTMX polling requests — reject direct browser navigation
+        if (empty($_SERVER['HTTP_HX_REQUEST'])) {
+            $tenant = App::tenant();
+            header('Location: ' . base_url($tenant['slug'] . '/admin/especialidades/god-mode'));
+            exit;
+        }
 
-        // Return just the rows
-        require BASE_PATH . '/views/admin/specialties/partials/matrix-rows.php';
+        try {
+            $tenant = App::tenant();
+            $assignments = SpecialtyService::getGodModeData($tenant['id']);
+            $permissionService = new \App\Services\PermissionService();
+            $canForceDelete = $permissionService->can('specialties.delete_active');
+
+            // Return just the <tr> rows partial
+            require BASE_PATH . '/views/admin/specialties/partials/matrix-rows.php';
+        } catch (\Throwable $e) {
+            error_log('godModeMatrix error: ' . $e->getMessage());
+            // Return a safe inline error row — HTMX swaps this without breaking the layout
+            echo '<tr><td colspan="7" style="text-align:center;padding:24px;color:#ef4444;">'
+               . '<span style="font-size:1.2rem;">⚠</span> Erro ao carregar dados. Nova tentativa em 30s.'
+               . '</td></tr>';
+        }
     }
 
     /**
@@ -1439,8 +1454,19 @@ class SpecialtyController
 
         if (!in_array($role, ['admin', 'director', 'counselor'])) {
             error_log("SpecialtyController::requireLeadership - Access Denied: User " . ($user['id'] ?? 'unknown') . " with role $role tried to access leadership specialty features.");
-            header('HTTP/1.0 403 Forbidden');
-            echo 'Acesso negado';
+
+            $isHtmx = !empty($_SERVER['HTTP_HX_REQUEST']);
+
+            if ($isHtmx) {
+                // Tell HTMX to navigate the full window — never inject a login page into a <tbody>
+                $tenant = App::tenant();
+                $redirect = base_url(($tenant['slug'] ?? '') . '/login');
+                http_response_code(403);
+                header('HX-Redirect: ' . $redirect);
+            } else {
+                http_response_code(403);
+                echo 'Acesso negado';
+            }
             exit;
         }
     }

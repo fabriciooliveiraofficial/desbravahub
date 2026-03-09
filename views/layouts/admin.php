@@ -211,7 +211,7 @@
     </style>
 </head>
 
-<body class="<?= isset($_COOKIE['theme']) && $_COOKIE['theme'] === 'dark' ? 'dark' : '' ?>" hx-boost="true" hx-indicator="#loading-bar">
+<body class="<?= isset($_COOKIE['theme']) && $_COOKIE['theme'] === 'dark' ? 'dark' : '' ?>" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML" hx-indicator="#loading-bar">
     
     <!-- Global Loading Indicator -->
     <div id="loading-bar" class="htmx-indicator">

@@ -567,7 +567,32 @@ public function deleteUser(array $params): void
     }
 
     /**
-     * Require admin or director role
+     * Determine if the current request expects a JSON response
+     */
+    private function isAjax(): bool
+    {
+        $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
+        $xrw    = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
+        return str_contains($accept, 'application/json') || strtolower($xrw) === 'xmlhttprequest';
+    }
+
+    /**
+     * Send a 403 response: JSON for AJAX requests, plain text otherwise
+     */
+    private function deny(string $message = 'Acesso negado'): void
+    {
+        http_response_code(403);
+        if ($this->isAjax()) {
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $message, 'code' => 403]);
+        } else {
+            echo $message;
+        }
+        exit;
+    }
+
+    /**
+     * Require admin-panel access (role-based gate — guards the panel itself)
      */
     private function requireAdmin(): void
     {
@@ -575,37 +600,17 @@ public function deleteUser(array $params): void
         $roleName = $user['role_name'] ?? '';
 
         if (!in_array($roleName, ['admin', 'director', 'associate_director', 'counselor', 'instructor'])) {
-            http_response_code(403);
-            echo "Acesso negado";
-            exit;
+            $this->deny('Acesso negado ao painel administrativo');
         }
     }
 
     /**
-     * Require specific permission
+     * Require specific permission — strict DB-only check (no role bypass)
      */
     private function requirePermission(string $permission): void
     {
-        $user = App::user();
-        $roleName = $user['role_name'] ?? '';
-
-        // DEBUG: Show role info
-        // echo "<pre>User role_name: " . var_export($roleName, true) . " | User data: " . var_export(array_keys($user ?? []), true) . "</pre>";
-
-        // Admins and Directors have all permissions
-        if (in_array($roleName, ['admin', 'director', 'associate_director'])) {
-            return;
-        }
-
-        // Also check counselor and instructor for some basic admin access
-        if (in_array($roleName, ['counselor', 'instructor'])) {
-            return; // Leadership can access admin pages
-        }
-
         if (!can($permission)) {
-            http_response_code(403);
-            echo "Permissão negada: $permission (role: $roleName)";
-            exit;
+            $this->deny("Permissão necessária: {$permission}");
         }
     }
 
