@@ -420,13 +420,39 @@ window.IconPicker = {
 
     createIconItem: function(icon) {
         const isSelected = icon === this.selectedValue ? 'selected' : '';
-        const lib = icon.split(':')[0];
+        const lib = icon.split(':')[1] ? icon.split(':')[0] : 'ext';
         return `
             <div class="icon-item ${isSelected}" data-icon="${icon}" onclick="IconPicker.select('${icon}')" title="${icon}">
                 <iconify-icon icon="${icon}"></iconify-icon>
                 <div class="icon-lib-tag">${lib}</div>
             </div>
         `;
+    },
+
+    init: function() {
+        const overlay = document.getElementById('universalIconPickerOverlay');
+        if (!overlay || overlay.dataset.pickerInitialized === 'true') return;
+
+        const searchInput = document.getElementById('iconPickerSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(IconPicker.searchTimeout);
+                IconPicker.searchTimeout = setTimeout(() => IconPicker.handleSearch(e.target.value), 400);
+            });
+        }
+
+        const cancelBtn = document.getElementById('pickerCancelBtn');
+        if (cancelBtn) cancelBtn.addEventListener('click', () => IconPicker.close());
+
+        const confirmBtn = document.getElementById('pickerConfirmBtn');
+        if (confirmBtn) confirmBtn.addEventListener('click', () => IconPicker.confirm());
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) IconPicker.close();
+        });
+
+        overlay.dataset.pickerInitialized = 'true';
+        console.log('IconPicker: Initialized.');
     },
 
     handleSearch: async function(query) {
@@ -474,26 +500,17 @@ window.IconPicker = {
 };
 
 // Event Listeners initialization
-document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('iconPickerSearch');
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            clearTimeout(IconPicker.searchTimeout);
-            IconPicker.searchTimeout = setTimeout(() => IconPicker.handleSearch(e.target.value), 400);
-        });
-    }
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => IconPicker.init());
+} else {
+    IconPicker.init();
+}
 
-    const cancelBtn = document.getElementById('pickerCancelBtn');
-    if (cancelBtn) cancelBtn.addEventListener('click', () => IconPicker.close());
-
-    const confirmBtn = document.getElementById('pickerConfirmBtn');
-    if (confirmBtn) confirmBtn.addEventListener('click', () => IconPicker.confirm());
-
-    const overlay = document.getElementById('universalIconPickerOverlay');
-    if (overlay) {
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) IconPicker.close();
-        });
+// HTMX Support
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    // If the swapped content contains the picker, re-init
+    if (document.getElementById('universalIconPickerOverlay')) {
+        IconPicker.init();
     }
 });
 </script>

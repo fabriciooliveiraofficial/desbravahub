@@ -11,7 +11,7 @@ class VersionCheck {
     constructor(options = {}) {
         this.apiUrl = options.apiUrl || '';
         this.currentVersion = localStorage.getItem('app_version') || '1.0.0';
-        this.checkInterval = options.checkInterval || 300000; // 5 minutes
+        this.checkInterval = options.checkInterval || 900000; // 15 minutes
         this.onUpdate = options.onUpdate || null;
         this.toast = options.toast || null;
         this.timer = null;

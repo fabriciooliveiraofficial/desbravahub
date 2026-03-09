@@ -94,12 +94,6 @@ $profileLocked = is_pathfinder() && !is_profile_complete();
             <?php if ($isRanking): ?><span class="active-dot"></span><?php endif; ?>
         </a>
 
-        <a href="<?= base_url($tenant['slug'] . '/logout?t=' . time()) ?>" hx-boost="false" class="dock-item" data-tooltip="Sair">
-            <div class="dock-icon-wrap">
-                <span class="material-icons-round">logout</span>
-                <div class="icon-glow"></div>
-            </div>
-            <span class="dock-label">Sair</span>
         </a>
 
         <!-- Perfil -->

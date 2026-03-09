@@ -337,6 +337,13 @@ class SpecialtyService
             $s['specialty'] = self::getSpecialty($s['specialty_id']);
             $s['type_label'] = 'specialty';
             $s['assignment_id'] = 'spec_' . $s['id'];
+            
+            // Calculate progress for specialty
+            $progress = self::calculateProgress($s['id'], $s['specialty_id']);
+            $s['total_steps'] = $progress['total'];
+            $s['answered_steps'] = $progress['answered'];
+            $s['progress_percent'] = $progress['percentage'];
+            
             $assignments[] = $s;
         }
 

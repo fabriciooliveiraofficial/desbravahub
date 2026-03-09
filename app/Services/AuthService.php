@@ -137,10 +137,20 @@ class AuthService
     }
 
     /**
-     * Refresh a session's expiration time (Rolling Session)
+     * Refresh a session's expiration time (Rolling Session).
+     * Throttled to once per hour via PHP session to avoid a DB UPDATE on every request.
+     * With SESSION_LIFETIME_HOURS = 8760 (1 year), refreshing more often is pure waste.
      */
     public function refreshSession(string $token, string $cookiePath = '/', ?string $slug = null): void
     {
+        // Use a short key derived from the token to avoid exposing the raw token in the session.
+        $sessionKey = 'auth_refreshed_' . substr(hash('sha256', $token), 0, 12);
+
+        // Skip the DB UPDATE if we already refreshed within the last hour.
+        if (!empty($_SESSION[$sessionKey]) && (time() - $_SESSION[$sessionKey]) < 3600) {
+            return;
+        }
+
         $tokenHash = hash('sha256', $token);
         $expiresAt = date('Y-m-d H:i:s', strtotime('+' . self::SESSION_LIFETIME_HOURS . ' hours'));
 
@@ -148,6 +158,9 @@ class AuthService
 
         // Re-issue cookie to extend its lifetime in the browser
         $this->setAuthCookie($token, $cookiePath, $slug);
+
+        // Record the refresh timestamp so subsequent requests skip the DB hit
+        $_SESSION[$sessionKey] = time();
     }
 
     /**

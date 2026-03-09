@@ -599,7 +599,7 @@
                 </thead>
                 <tbody id="mission-matrix-body" 
                        hx-get="<?= base_url($tenant['slug'] . '/admin/especialidades/god-mode/matrix') ?>" 
-                       hx-trigger="every 5s" 
+                       hx-trigger="every 30s"
                        hx-swap="innerHTML">
                     <?php require BASE_PATH . '/views/admin/specialties/partials/matrix-rows.php'; ?>
                 </tbody>

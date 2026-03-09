@@ -555,13 +555,23 @@ if (typeof window.ToastNotification !== 'undefined') {
         }
 
         /**
-         * Start polling for new notifications
+         * Start polling for new notifications.
+         * Automatically pauses when the tab is hidden and resumes when visible.
          */
         startPolling() {
             if (!this.apiUrl) return;
 
             this.poll();
             this.pollTimer = setInterval(() => this.poll(), this.pollInterval);
+
+            // Page Visibility API: skip DB hits while tab is in background.
+            // When the user returns, poll immediately so they see fresh data.
+            if (!this._visibilityListenerAdded) {
+                this._visibilityListenerAdded = true;
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') this.poll();
+                });
+            }
         }
 
         /**
@@ -578,6 +588,9 @@ if (typeof window.ToastNotification !== 'undefined') {
          * Poll for new notifications
          */
         async poll() {
+            // Skip while tab is hidden — avoids wasted DB queries for background tabs
+            if (document.visibilityState === 'hidden') return;
+
             try {
                 const response = await fetch(`${this.apiUrl}/unread`, {
                     credentials: 'include',

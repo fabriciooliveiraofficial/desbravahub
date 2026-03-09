@@ -40,12 +40,27 @@ class QuizService
             [$quizId]
         );
 
+        if (empty($questions)) {
+            return $questions;
+        }
+
+        // Fetch all options in a single query (avoids N+1)
+        $questionIds  = array_column($questions, 'id');
+        $placeholders = implode(',', array_fill(0, count($questionIds), '?'));
+        $cols = "id, question_id, option_text, order_position" . ($includeCorrectAnswers ? ", is_correct" : "");
+        $allOptions = db_fetch_all(
+            "SELECT $cols FROM quiz_options WHERE question_id IN ($placeholders) ORDER BY order_position",
+            $questionIds
+        );
+
+        // Group options by question_id in PHP
+        $optionsByQuestion = [];
+        foreach ($allOptions as $option) {
+            $optionsByQuestion[$option['question_id']][] = $option;
+        }
+
         foreach ($questions as &$question) {
-            $question['options'] = db_fetch_all(
-                "SELECT id, option_text, order_position" . ($includeCorrectAnswers ? ", is_correct" : "") .
-                " FROM quiz_options WHERE question_id = ? ORDER BY order_position",
-                [$question['id']]
-            );
+            $question['options'] = $optionsByQuestion[$question['id']] ?? [];
         }
 
         return $questions;

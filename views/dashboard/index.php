@@ -146,10 +146,9 @@
                             </div>
                         </div>
 
-                        <div class="plate-data" style="margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.1);">
                             <div class="data-point">
                                 <span class="data-label">RECOMPENSA XP</span>
-                                <span class="data-value" style="color: var(--accent-green); font-size: 1.1rem;">+<?= $activity['xp'] ?? ($activity['xp_reward'] ?? 50) ?> <span style="font-size: 0.6rem; opacity: 0.6;">XP</span></span>
+                                <span class="data-value" style="color: var(--accent-green); font-size: 1.1rem;">+<?= $activity['xp'] ?? 50 ?> <span style="font-size: 0.6rem; opacity: 0.6;">XP</span></span>
                             </div>
                             <div class="data-point" style="align-items: flex-end;">
                                 <div class="hud-badge" style="color: var(--accent-cyan); border-radius: 4px; border-width: 2px;">ON-MISSION</div>

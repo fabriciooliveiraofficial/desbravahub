@@ -3,7 +3,7 @@
  * Handles badge polling and live updates across member/admin panels.
  */
 (function () {
-    const BADGE_POLL_INTERVAL = 30000; // 30 seconds
+    const BADGE_POLL_INTERVAL = 60000; // 60 seconds (was 30s — halved DB load)
     let apiEndpoint = null;
     let pollTimer = null;
 
@@ -21,13 +21,9 @@
                 wrapper.appendChild(badge);
             }
             badge.textContent = count > 9 ? '9+' : count;
-            // Force poll request to update counts
-            htmx.ajax('GET', location.pathname + '?poll=1', {
-                target: 'body',
-                swap: 'none'
-            });
+            badge.style.display = 'flex';
 
-            // If on Admin Dashboard, also refresh the notification board
+            // Refresh the notification board panel if visible on the page
             const board = document.getElementById('notification-board-container');
             if (board && typeof htmx !== 'undefined') {
                 htmx.ajax('GET', window.location.href, {
@@ -36,7 +32,6 @@
                     swap: 'outerHTML'
                 });
             }
-            badge.style.display = 'flex';
         } else if (badge) {
             badge.style.display = 'none';
         }
@@ -44,6 +39,8 @@
 
     async function pollBadge() {
         if (!apiEndpoint) return;
+        // Skip polling while the tab is hidden — saves DB load for background tabs
+        if (document.visibilityState === 'hidden') return;
         try {
             const res = await fetch(apiEndpoint, {
                 credentials: 'include',
@@ -63,9 +60,13 @@
         if (pollTimer) clearInterval(pollTimer);
         pollTimer = setInterval(pollBadge, BADGE_POLL_INTERVAL);
 
+        // Resume polling immediately when tab becomes visible again
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') pollBadge();
+        });
+
         // Listen for real-time updates from SW (via PushNotifications bridge)
         document.addEventListener('push-notification-received', () => {
-            // Delay slightly to allow DB update
             setTimeout(pollBadge, 1000);
         });
     };

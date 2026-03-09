@@ -82,22 +82,34 @@ class DashboardController
         // Unificar missões (Especialidades e Programas atribuídos)
         $missions = SpecialtyService::getUserAssignments($user['id'], $tenant['id']);
 
-        // Mark as "Read/Viewed" for God Mode lifecycle tracking
-        // We do this silently
+        // Mark as "Read/Viewed" for God Mode lifecycle tracking — batch to avoid N queries
         try {
+            $specialtyIdsToMark = [];
+            $programIdsToTouch  = [];
+
             foreach ($missions as $m) {
-                // If specialty is pending and not read, mark as read
                 if ($m['type_label'] === 'specialty' && empty($m['read_at'])) {
-                    db_update('specialty_assignments', ['read_at' => date('Y-m-d H:i:s')], 'id = ?', [$m['id']]);
+                    $specialtyIdsToMark[] = $m['id'];
                 }
-                
-                // If program is not started and updated_at equals created_at (not touched), touch it
-                // Logic: updated_at > created_at implies "Seen/Interacted"
                 if (($m['type_label'] === 'program' || ($m['is_program'] ?? false)) && $m['status'] === 'not_started') {
-                   // Only update if updated_at is null or same as created_at
-                   // Note: checking SQL side is safer but this is a quick touch
-                   db_query("UPDATE user_program_progress SET updated_at = NOW() WHERE id = ? AND (updated_at IS NULL OR updated_at = created_at)", [$m['id']]);
+                    $programIdsToTouch[] = $m['id'];
                 }
+            }
+
+            if (!empty($specialtyIdsToMark)) {
+                $p = implode(',', array_fill(0, count($specialtyIdsToMark), '?'));
+                db_query(
+                    "UPDATE specialty_assignments SET read_at = ? WHERE id IN ($p)",
+                    array_merge([date('Y-m-d H:i:s')], $specialtyIdsToMark)
+                );
+            }
+
+            if (!empty($programIdsToTouch)) {
+                $p = implode(',', array_fill(0, count($programIdsToTouch), '?'));
+                db_query(
+                    "UPDATE user_program_progress SET updated_at = NOW() WHERE id IN ($p) AND (updated_at IS NULL OR updated_at = created_at)",
+                    $programIdsToTouch
+                );
             }
         } catch (\Exception $e) {
             // Ignore errors (e.g. missing columns) to not break dashboard
@@ -115,15 +127,18 @@ class DashboardController
                 'id' => $m['id'],
                 'assignment_id' => $m['assignment_id'],
                 'title' => $specialty['name'],
-                'xp_reward' => $specialty['xp_reward'] ?? 0,
+                'xp' => $m['xp_earned'] ?? $specialty['xp_reward'] ?? 0,
                 'user_status' => $m['status'],
                 'icon' => $specialty['badge_icon'] ?? '🎯',
                 'is_mission' => true,
                 'type_label' => $m['type_label'],
-                'program_id' => str_replace('prog_', '', $m['specialty_id'] ?? '')
+                'program_id' => str_replace('prog_', '', $m['specialty_id'] ?? ''),
+                'total_steps' => $m['total_steps'] ?? 0,
+                'answered_steps' => $m['answered_steps'] ?? 0,
+                'progress_percent' => $m['progress_percent'] ?? 0
             ];
 
-            if ($m['status'] === 'in_progress' || $m['status'] === 'pending') {
+            if ($m['status'] === 'in_progress' || $m['status'] === 'pending' || $m['status'] === 'submitted' || $m['status'] === 'rejected') {
                 $inProgress[] = $missionActivity;
             } else {
                 $available[] = $missionActivity;
