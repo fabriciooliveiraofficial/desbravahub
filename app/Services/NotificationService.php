@@ -83,18 +83,26 @@ class NotificationService
     }
 
     /**
-     * Get user's unread notifications
+     * Get user's unread notifications.
+     *
+     * For user-specific rows (user_id IS NOT NULL): checks notifications.read_at.
+     * For broadcast rows (user_id IS NULL): checks notification_reads so each user
+     * gets their own independent read state.
      */
     public function getUnread(int $userId, int $limit = 20): array
     {
         $tenantId = App::tenantId();
 
         return db_fetch_all(
-            "SELECT * FROM notifications 
-             WHERE tenant_id = ? AND (user_id = ? OR user_id IS NULL) AND read_at IS NULL
-             ORDER BY created_at DESC
+            "SELECT n.* FROM notifications n
+             LEFT JOIN notification_reads nr ON nr.notification_id = n.id AND nr.user_id = ?
+             WHERE n.tenant_id = ?
+               AND (n.user_id = ? OR n.user_id IS NULL)
+               AND n.read_at IS NULL
+               AND nr.id IS NULL
+             ORDER BY n.created_at DESC
              LIMIT ?",
-            [$tenantId, $userId, $limit]
+            [$userId, $tenantId, $userId, $limit]
         );
     }
 
@@ -115,40 +123,69 @@ class NotificationService
     }
 
     /**
-     * Mark notification as read
+     * Mark notification as read.
+     *
+     * Broadcasts (user_id IS NULL) are tracked per-user via notification_reads.
+     * User-specific notifications update notifications.read_at directly.
      */
-    public function markAsRead(int $notificationId): void
+    public function markAsRead(int $notificationId, int $userId): void
     {
-        db_update('notifications', [
-            'read_at' => date('Y-m-d H:i:s'),
-        ], 'id = ?', [$notificationId]);
+        $notif = db_fetch_one("SELECT user_id FROM notifications WHERE id = ?", [$notificationId]);
+        if (!$notif) return;
+
+        if ($notif['user_id'] === null) {
+            db_query(
+                "INSERT IGNORE INTO notification_reads (notification_id, user_id) VALUES (?, ?)",
+                [$notificationId, $userId]
+            );
+        } else {
+            db_update('notifications', ['read_at' => date('Y-m-d H:i:s')], 'id = ?', [$notificationId]);
+        }
     }
 
     /**
-     * Mark all as read for user
+     * Mark all as read for user.
+     *
+     * User-specific notifications: update read_at on the row.
+     * Broadcast notifications: insert into notification_reads for this user.
      */
     public function markAllAsRead(int $userId): void
     {
         $tenantId = App::tenantId();
 
+        // User-specific notifications
         db_query(
-            "UPDATE notifications SET read_at = NOW() 
-             WHERE tenant_id = ? AND (user_id = ? OR user_id IS NULL) AND read_at IS NULL",
+            "UPDATE notifications SET read_at = NOW()
+             WHERE tenant_id = ? AND user_id = ? AND read_at IS NULL",
             [$tenantId, $userId]
+        );
+
+        // Broadcast notifications not yet read by this user
+        db_query(
+            "INSERT IGNORE INTO notification_reads (notification_id, user_id)
+             SELECT n.id, ? FROM notifications n
+             LEFT JOIN notification_reads nr ON nr.notification_id = n.id AND nr.user_id = ?
+             WHERE n.tenant_id = ? AND n.user_id IS NULL AND n.read_at IS NULL AND nr.id IS NULL",
+            [$userId, $userId, $tenantId]
         );
     }
 
     /**
-     * Get unread count
+     * Get unread count.
+     * Uses the same broadcast-aware logic as getUnread().
      */
     public function getUnreadCount(int $userId): int
     {
         $tenantId = App::tenantId();
 
         return (int) db_fetch_column(
-            "SELECT COUNT(*) FROM notifications 
-             WHERE tenant_id = ? AND (user_id = ? OR user_id IS NULL) AND read_at IS NULL",
-            [$tenantId, $userId]
+            "SELECT COUNT(*) FROM notifications n
+             LEFT JOIN notification_reads nr ON nr.notification_id = n.id AND nr.user_id = ?
+             WHERE n.tenant_id = ?
+               AND (n.user_id = ? OR n.user_id IS NULL)
+               AND n.read_at IS NULL
+               AND nr.id IS NULL",
+            [$userId, $tenantId, $userId]
         );
     }
 

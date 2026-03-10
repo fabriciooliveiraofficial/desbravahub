@@ -57,8 +57,9 @@ class NotificationController
      */
     public function markRead(array $params): void
     {
+        $user = App::user();
         $notificationId = (int) $params['id'];
-        $this->service->markAsRead($notificationId);
+        $this->service->markAsRead($notificationId, (int) $user['id']);
 
         $this->json(['success' => true]);
     }

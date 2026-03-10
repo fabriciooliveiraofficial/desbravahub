@@ -276,7 +276,7 @@ self.addEventListener('push', (event) => {
         icon: data.icon || '/assets/images/icon-192.png',
         badge: data.badge || '/assets/images/badge-72.png',
         vibrate: isSos ? SOS_VIBRATE : (isCritical ? [300, 100, 300, 100, 300] : [200, 100, 200]),
-        data: { url: data.url || '/', priority: data.priority, type: data.type },
+        data: { url: data.link || data.url || '/', priority: data.priority, type: data.type },
         actions: [
             { action: 'open', title: 'Abrir' },
             { action: 'close', title: 'Fechar' }

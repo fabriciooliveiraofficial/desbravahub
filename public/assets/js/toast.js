@@ -633,6 +633,18 @@ if (typeof window.ToastNotification !== 'undefined') {
 
             const type = typeMap[notification.type] || 'info';
             const data = notification.data ? JSON.parse(notification.data) : {};
+            const targetUrl = data.link || data.url || null;
+
+            // Mark as read before showing — sendBeacon guarantees delivery even if the
+            // user clicks the toast immediately and the page navigates away.
+            if (this.apiUrl && notification.id) {
+                const readUrl = `${this.apiUrl}/${notification.id}/read`;
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon(readUrl);
+                } else {
+                    fetch(readUrl, { method: 'POST', credentials: 'include' }).catch(() => {});
+                }
+            }
 
             this.show({
                 title: notification.title,
@@ -640,16 +652,8 @@ if (typeof window.ToastNotification !== 'undefined') {
                 type: type,
                 priority: notification.priority,
                 duration: notification.priority === 'critical' ? 0 : this.defaultDuration,
-                onClick: data.link ? () => { window.location.href = data.link; } : null,
+                onClick: targetUrl ? () => { window.location.href = targetUrl; } : null,
             });
-
-            // Mark as read
-            if (this.apiUrl && notification.id) {
-                fetch(`${this.apiUrl}/${notification.id}/read`, {
-                    method: 'POST',
-                    credentials: 'include',
-                }).catch(() => { });
-            }
         }
 
         /**
