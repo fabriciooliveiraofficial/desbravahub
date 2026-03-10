@@ -62,7 +62,10 @@ class NotificationService
     }
 
     /**
-     * Broadcast to all users in tenant
+     * Broadcast to all users in tenant.
+     *
+     * Uses deferred push flushing so all notifications are sent in a single
+     * batch instead of one HTTP round-trip per user.
      */
     public function broadcast(string $type, string $title, string $message, array $options = []): array
     {
@@ -75,8 +78,19 @@ class NotificationService
             [$tenantId]
         );
 
-        foreach ($users as $user) {
-            $ids[] = $this->send($user['id'], $type, $title, $message, $options);
+        // Enable deferred push mode so flush() happens once at the end
+        $webPush = WebPushService::getInstance();
+        $webPush->setDeferred(true);
+
+        try {
+            foreach ($users as $user) {
+                $ids[] = $this->send($user['id'], $type, $title, $message, $options);
+            }
+
+            // Flush all queued push notifications in one batch
+            $webPush->flushAll();
+        } finally {
+            $webPush->setDeferred(false);
         }
 
         return $ids;
