@@ -9,7 +9,7 @@
     <!-- HUD Header -->
     <header class="hud-header">
         <div>
-            <h1 class="hud-title">QG.COMMAND</h1>
+            <h1 class="hud-title">HOME</h1>
             <div class="hud-subtitle">Status Operacional: Online</div>
         </div>
     </header>
@@ -41,7 +41,7 @@
             <div class="plate-data" style="border:0; padding:0; margin-top:8px; grid-template-columns: 1fr 1fr;">
                 <div class="data-point">
                     <span class="data-label">Nível Atual</span>
-                    <span class="data-value" style="color: #fff;">NV. <?= is_array($progress['level'] ?? 1) ? 1 : ($progress['level'] ?? 1) ?></span>
+                    <span class="data-value" style="color: #fff;">NV. <?= is_array($progress['level'] ?? 1) ? ($progress['level']['number'] ?? 1) : ($progress['level'] ?? 1) ?></span>
                 </div>
                 <div class="data-point" style="align-items: flex-end">
                     <span class="data-label">Próximo Nível</span>
@@ -81,7 +81,7 @@
                 </div>
                 <div class="plate-data" style="border:0; padding:0; margin-top:0;">
                     <div class="data-point">
-                      <span class="data-label">Colação de Grau</span>
+                      <span class="data-label">Investidura</span>
                       <span class="data-value" style="font-size: 0.8rem; opacity: 0.7;">TOTAL CONQUISTADO</span>
                     </div>
                 </div>
@@ -102,7 +102,7 @@
             <div class="empty-state-hud stagger-4">
                 <span class="material-icons-round empty-icon-hud" style="font-size: 5rem;">radar</span>
                 <h3 class="hud-section-title">SEM ATIVIDADE NO RADAR</h3>
-                <p class="hud-subtitle">Nenhuma missão em curso. O QG aguarda suas ordens.</p>
+                <p class="hud-subtitle">Nenhuma missão em curso. O sistema aguarda suas ordens.</p>
                 <a href="<?= base_url($tenant['slug'] . '/atividades') ?>" class="hud-btn primary" style="margin-top: 24px;">
                     INICIAR NOVA INCURSÃO
                 </a>
@@ -146,9 +146,10 @@
                             </div>
                         </div>
 
+                        <div class="plate-data" style="border:0; padding:0; margin-top: 12px;">
                             <div class="data-point">
                                 <span class="data-label">RECOMPENSA XP</span>
-                                <span class="data-value" style="color: var(--accent-green); font-size: 1.1rem;">+<?= $activity['xp'] ?? 50 ?> <span style="font-size: 0.6rem; opacity: 0.6;">XP</span></span>
+                                <span class="data-value" style="color: var(--accent-green); font-size: 1.1rem;">+<?= $activity['xp'] ?? 0 ?> <span style="font-size: 0.6rem; opacity: 0.6;">XP</span></span>
                             </div>
                             <div class="data-point" style="align-items: flex-end;">
                                 <div class="hud-badge" style="color: var(--accent-cyan); border-radius: 4px; border-width: 2px;">ON-MISSION</div>

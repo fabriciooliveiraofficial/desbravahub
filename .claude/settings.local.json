@@ -10,7 +10,25 @@
       "Bash(docker exec desbravahub_db mysql -u root -proot desbravahub -e \"SELECT id, name, slug, status FROM tenants LIMIT 10;\")",
       "Bash(docker exec desbravahub_db mysql -u desbravahub -pdesbravahub desbravahub -e \"SELECT id, name, slug, status FROM tenants LIMIT 10;\")",
       "Bash(docker exec desbravahub_db env)",
-      "Bash(docker exec desbravahub_db mysql -uroot -proot u714643564_db_desbravahub -e \"SELECT id, name, slug, status FROM tenants LIMIT 10;\")"
+      "Bash(docker exec desbravahub_db mysql -uroot -proot u714643564_db_desbravahub -e \"SELECT id, name, slug, status FROM tenants LIMIT 10;\")",
+      "Bash(docker exec desbravahub_app bash -c \"find /var/www/html/public/assets/js -name ''session-guard.js'' 2>/dev/null; find /var/www/html -name ''_step_modal.php'' 2>/dev/null; find /var/www/html/views/pathfinder -name ''show.php'' 2>/dev/null\")",
+      "Bash(docker exec desbravahub_app bash -c \"grep -n ''submitStep\\\\|fetch\\\\|credentials\\\\|ENVIAR\\\\|program-submit\\\\|submitStepForm'' /var/www/html/views/pathfinder/programs/show.php | head -30\")",
+      "Bash(docker exec desbravahub_app bash -c \"php -l /var/www/html/views/pathfinder/programs/_step_modal.php && php -l /var/www/html/views/pathfinder/programs/show.php && php -l /var/www/html/views/layouts/member.php\")",
+      "Bash(docker exec desbravahub_db mysql -uroot -proot u714643564_db_desbravahub -e \"DESCRIBE user_step_responses;\")",
+      "Bash(docker exec desbravahub_app bash -c \"grep -n ''thumbnail_url\\\\|updateCuration'' /var/www/html/app/Controllers/ApprovalController.php | head -20\")",
+      "Bash(composer require dompdf/dompdf:^3.0 --no-interaction)",
+      "Bash(php -r \"echo phpversion\\(\\);\")",
+      "Read(//usr/local/**)",
+      "Read(//usr/**)",
+      "Read(//d//**)",
+      "Bash(cmd /c \"cd /d \"\"d:\\\\1. Clientes\\\\50. DesbravaHub\"\" && composer require dompdf/dompdf:^3.0 --no-interaction 2>&1\")",
+      "Bash(cmd /c \"composer --version 2>&1\")",
+      "Bash(where composer)",
+      "Bash(where php)",
+      "Bash(ls \"d:/1. Clientes/50. DesbravaHub/\"*.phar)",
+      "Bash(docker ps --format \"{{.Names}}\")",
+      "Bash(docker exec desbravahub_app composer require dompdf/dompdf:^3.0 --no-interaction)",
+      "Bash(docker exec desbravahub_app php /var/www/html/database/migrate_certificates.php)"
     ]
   }
 }

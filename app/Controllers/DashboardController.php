@@ -43,11 +43,30 @@ class DashboardController
         $streak = $this->progressionService->updateStreak($user['id']);
         $progressData['streak'] = $streak;
 
-        // Count Insignias (Achievements)
-        $insigniaCount = (int) db_fetch_column(
+        // Count Insignias = Achievements + Completed Specialties + Completed Programs
+        $achievementCount = (int) db_fetch_column(
             "SELECT COUNT(*) FROM user_achievements WHERE user_id = ? AND tenant_id = ?",
             [$user['id'], $tenant['id']]
         );
+
+        $completedSpecialties = 0;
+        try {
+            $completedSpecialties = (int) db_fetch_column(
+                "SELECT COUNT(*) FROM specialty_assignments WHERE user_id = ? AND tenant_id = ? AND status IN ('completed', 'approved')",
+                [$user['id'], $tenant['id']]
+            );
+        } catch (\Exception $e) { /* table may not exist */ }
+
+        $completedPrograms = 0;
+        try {
+            $completedPrograms = (int) db_fetch_column(
+                "SELECT COUNT(*) FROM user_program_progress
+                 WHERE user_id = ? AND tenant_id = ? AND status = 'completed'",
+                [$user['id'], $tenant['id']]
+            );
+        } catch (\Exception $e) { /* table may not exist */ }
+
+        $insigniaCount = $achievementCount + $completedSpecialties + $completedPrograms;
 
         // Get Next Event
         $nextEvent = db_fetch_one(
@@ -127,7 +146,7 @@ class DashboardController
                 'id' => $m['id'],
                 'assignment_id' => $m['assignment_id'],
                 'title' => $specialty['name'],
-                'xp' => $m['xp_earned'] ?? $specialty['xp_reward'] ?? 0,
+                'xp' => ($specialty['xp_reward'] ?? 0) ?: ($m['xp_earned'] ?? 0),
                 'user_status' => $m['status'],
                 'icon' => $specialty['badge_icon'] ?? '🎯',
                 'is_mission' => true,
@@ -363,14 +382,23 @@ class DashboardController
             $userProfile = [];
         }
 
+        $certificateCount = 0;
+        try {
+            $certificateCount = (int) db_fetch_column(
+                "SELECT COUNT(*) FROM issued_certificates WHERE user_id = ? AND tenant_id = ?",
+                [$user['id'], $tenant['id']]
+            );
+        } catch (\Exception $e) { /* table may not exist yet */ }
+
         View::render('dashboard/profile', [
-            'tenant' => $tenant,
-            'user' => $user,
-            'userProfile' => $userProfile,
-            'progress' => $progress,
-            'achievements' => $achievements,
-            'unreadCount' => $unreadCount,
-            'referralStats' => $referralStats
+            'tenant'           => $tenant,
+            'user'             => $user,
+            'userProfile'      => $userProfile,
+            'progress'         => $progress,
+            'achievements'     => $achievements,
+            'unreadCount'      => $unreadCount,
+            'referralStats'    => $referralStats,
+            'certificateCount' => $certificateCount,
         ], 'member');
     }
 

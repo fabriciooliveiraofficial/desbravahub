@@ -199,13 +199,24 @@ class LearningController
             ", [$step['id']]);
         }
 
+        // Check for an issued certificate when program is completed
+        $programCertificate = null;
+        if (($program['user_status'] ?? '') === 'completed' && $program['progress_id']) {
+            $programCertificate = db_fetch_one(
+                "SELECT id, certificate_hash FROM issued_certificates
+                 WHERE tenant_id = ? AND user_id = ? AND assignment_type = 'program' AND assignment_id = ?",
+                [$tenant['id'], $user['id'], $program['progress_id']]
+            );
+        }
+
         // Render within member layout (HUD Theme)
         View::render('pathfinder/programs/show', [
-            'tenant' => $tenant,
-            'user' => $user,
-            'program' => $program,
-            'steps' => $steps,
-            'versionId' => $versionId
+            'tenant'             => $tenant,
+            'user'               => $user,
+            'program'            => $program,
+            'steps'              => $steps,
+            'versionId'          => $versionId,
+            'programCertificate' => $programCertificate,
         ], 'member');
     }
 
@@ -370,6 +381,10 @@ class LearningController
                 $responseText = json_encode($answers, JSON_UNESCAPED_UNICODE);
             }
 
+            db_begin();
+            // Lock the progress row to serialize concurrent step submissions and prevent duplicates
+            db_fetch_one("SELECT id FROM user_program_progress WHERE id = ? FOR UPDATE", [$progress['id']]);
+
             // Check if response exists
             $existing = db_fetch_one("
                 SELECT id FROM user_step_responses 
@@ -436,6 +451,8 @@ class LearningController
                 }
             }
 
+            if (db_in_transaction()) db_commit();
+
             $message = $status === 'draft' ? 'Rascunho salvo com sucesso!' : 'Resposta enviada! Aguarde aprovação.';
 
             ob_end_clean();
@@ -445,6 +462,7 @@ class LearningController
             ]);
 
         } catch (\Throwable $e) {
+            if (db_in_transaction()) db_rollback();
             ob_end_clean();
             error_log("LearningController::submitStep - CRITICAL: " . $e->getMessage());
             error_log("Trace: " . $e->getTraceAsString());
@@ -495,6 +513,13 @@ class LearningController
                 if ($program && $program['xp_reward'] > 0) {
                     $progressionService = new \App\Services\ProgressionService();
                     $progressionService->addXp($progress['user_id'], $program['xp_reward'], 'program', $program['id']);
+                }
+
+                // Generate certificate automatically
+                try {
+                    \App\Services\CertificateService::generateForProgram($progressId, (int) $progress['tenant_id']);
+                } catch (\Throwable $e) {
+                    error_log("LearningController: Failed to generate certificate for progress #{$progressId}: " . $e->getMessage());
                 }
             }
         }

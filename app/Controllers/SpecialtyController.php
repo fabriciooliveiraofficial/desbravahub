@@ -10,6 +10,7 @@ namespace App\Controllers;
 use App\Core\App;
 use App\Services\SpecialtyService;
 use App\Services\NotificationService;
+use App\Services\CertificateService;
 use App\Core\View;
 
 class SpecialtyController
@@ -614,17 +615,27 @@ class SpecialtyController
             [$xpReward, $assignment['user_id']]
         );
 
-        // Notify user
+        // Issue certificate
+        $certId = CertificateService::generateForSpecialty((int) $assignmentId, $tenant['id']);
+
+        // Notify user (include certificate download link when available)
+        $notifData = ['specialty_id' => $assignment['specialty_id']];
+        $notifMessage = "Parabéns! Você completou '{$specialty['name']}' e ganhou {$xpReward} XP!";
+        if ($certId) {
+            $notifData['certificate_id'] = $certId;
+            $notifMessage .= ' 🎓 Seu certificado já está disponível em Meus Diplomas.';
+        }
+
         $notificationService = new NotificationService();
         $notificationService->send(
             (int) $assignment['user_id'],
             'specialty_completed',
             '🎉 Especialidade Concluída!',
-            "Parabéns! Você completou '{$specialty['name']}' e ganhou {$xpReward} XP!",
-            ['channels' => ['toast', 'push'], 'data' => ['specialty_id' => $assignment['specialty_id']]]
+            $notifMessage,
+            ['channels' => ['toast', 'push'], 'data' => $notifData]
         );
 
-        $this->json(['success' => true, 'message' => 'Especialidade concluída!', 'xp' => $xpReward]);
+        $this->json(['success' => true, 'message' => 'Especialidade concluída!', 'xp' => $xpReward, 'certificate_id' => $certId]);
     }
 
     /**
@@ -945,6 +956,16 @@ class SpecialtyController
         }
 
         $currentRequirement = $requirements[$currentIndex] ?? null;
+
+        // Check for an issued certificate (when specialty is completed)
+        $specialtyCertificate = null;
+        if (($assignment['status'] ?? '') === 'completed') {
+            $specialtyCertificate = db_fetch_one(
+                "SELECT id, certificate_hash FROM issued_certificates
+                 WHERE tenant_id = ? AND user_id = ? AND assignment_type = 'specialty' AND assignment_id = ?",
+                [$tenant['id'], $user['id'], $assignment['id']]
+            );
+        }
 
         require BASE_PATH . '/views/pathfinder/specialty/learn.php';
     }

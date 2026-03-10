@@ -442,6 +442,19 @@ $activeTab = $_GET['tab'] ?? (isset($_GET['incomplete']) ? 'registry' : 'overvie
                     <span class="menu-right"><?= date('d/m/Y', strtotime($user['created_at'])) ?></span>
                 </div>
 
+                <a href="<?= base_url($tenant['slug'] . '/meus-diplomas') ?>" class="menu-item-hud" hx-boost="false">
+                    <div class="menu-left">
+                        <span class="material-icons-round menu-icon" style="color: #f59e0b;">military_tech</span>
+                        <span class="menu-text">CERTIFICADOS</span>
+                    </div>
+                    <span style="display:flex;align-items:center;gap:8px;">
+                        <?php if (!empty($certificateCount)): ?>
+                        <span style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;font-size:0.7rem;font-weight:800;padding:2px 8px;border-radius:999px;"><?= $certificateCount ?></span>
+                        <?php endif; ?>
+                        <span class="material-icons-round" style="color: var(--hud-text-dim); font-size: 1.2rem;">chevron_right</span>
+                    </span>
+                </a>
+
                 <a href="<?= base_url($tenant['slug'] . '/suporte') ?>" class="menu-item-hud" hx-boost="false">
                     <div class="menu-left">
                         <span class="material-icons-round menu-icon" style="color: #14b8a6;">headset_mic</span>

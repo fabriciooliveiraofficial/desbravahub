@@ -100,8 +100,12 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
             </div>
         <?php endif; ?>
 
-        <form onsubmit="event.preventDefault(); submitStepForm(<?= $step['id'] ?>, this);" enctype="multipart/form-data" 
-              style="<?= ($status === 'approved' || $status === 'submitted') ? 'opacity: 0.7; pointer-events: none;' : '' ?>">
+        <form onsubmit="event.preventDefault(); submitStepForm(<?= $step['id'] ?>, this);" enctype="multipart/form-data"
+              data-saved="<?= ($status === 'draft') ? 'true' : 'false' ?>"
+              data-locked="<?= ($status === 'approved' || $status === 'submitted') ? 'true' : 'false' ?>">
+        
+        <!-- Fields wrapper: only this gets locked, NOT the footer -->
+        <div class="step-fields-wrapper" <?= ($status === 'approved' || $status === 'submitted') ? 'style="opacity:0.7;pointer-events:none;"' : '' ?>>
             
             <?php if (empty($questions)): ?>
                 <div style="margin-bottom: 24px;">
@@ -374,10 +378,12 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
                 <input type="hidden" name="is_multi_question" value="1">
             <?php endif; ?>
 
+        </div><!-- end .step-fields-wrapper -->
+
             <div class="modal-actions-footer">
                 <button type="button" class="hud-btn secondary modal-btn-cancel" onclick="closeModal()">CANCELAR</button>
                 <?php if ($status !== 'approved' && $status !== 'submitted'): ?>
-                    <button type="button" class="hud-btn secondary modal-btn-save" onclick="submitStepForm(<?= $step['id'] ?>, this.form, 'draft')">
+                    <button type="button" class="hud-btn secondary modal-btn-save" onclick="submitStepForm(<?= $step['id'] ?>, this.closest('form'), 'draft')">
                         <i class="material-icons-round">save</i> <span class="btn-text">SALVAR</span>
                     </button>
                     <button type="submit" class="hud-btn primary modal-btn-submit disabled" disabled>

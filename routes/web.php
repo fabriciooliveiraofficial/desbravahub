@@ -33,6 +33,7 @@ use App\Controllers\FixController;
 use App\Controllers\ClubProfileController;
 use App\Controllers\AdminEventController;
 use App\Controllers\PublicController;
+use App\Controllers\CertificateController;
 
 $router = new Router();
 
@@ -400,5 +401,13 @@ $router->post('/{tenant}/eventos/([A-Za-z0-9-]+)/checkout-asaas', [\App\Controll
 
 // Temporary fix route
 $router->get('/{tenant}/fix-xp', [FixController::class, 'run'], [TenantMiddleware::class, AuthMiddleware::class]);
+
+// Certificate routes
+// Public verification (no auth — anyone can validate a certificate hash)
+$router->get('/v/{hash}', [CertificateController::class, 'verify']);
+// Authenticated download
+$router->get('/{tenant}/certificados/{id}/download', [CertificateController::class, 'download'], [TenantMiddleware::class, AuthMiddleware::class]);
+// Member gallery
+$router->get('/{tenant}/meus-diplomas', [CertificateController::class, 'myDiplomas'], [TenantMiddleware::class, AuthMiddleware::class]);
 
 return $router;

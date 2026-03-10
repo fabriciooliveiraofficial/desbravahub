@@ -810,12 +810,78 @@ class SpecialtyService
      */
     public static function approveRequirement(int $requirementRowId, int $reviewerId, ?string $feedback = null): bool
     {
-        return db_query(
+        $result = db_query(
             "UPDATE user_requirement_progress 
              SET status = 'approved', reviewed_by = ?, reviewed_at = NOW(), feedback = ? 
              WHERE id = ?",
             [$reviewerId, $feedback, $requirementRowId]
-        ) !== false;
+        );
+
+        if ($result === false) {
+            return false;
+        }
+
+        // Check if this was the last requirement — auto-complete assignment if so
+        try {
+            $reqRow = db_fetch_one(
+                "SELECT assignment_id, tenant_id FROM user_requirement_progress WHERE id = ?",
+                [$requirementRowId]
+            );
+
+            if ($reqRow) {
+                $assignmentId = (int) $reqRow['assignment_id'];
+                $tenantId = (int) $reqRow['tenant_id'];
+
+                $assignment = db_fetch_one(
+                    "SELECT sa.*, s_spec.xp_reward as spec_xp_reward FROM specialty_assignments sa
+                     LEFT JOIN specialties s_spec ON sa.specialty_id = s_spec.id
+                     WHERE sa.id = ? AND sa.tenant_id = ? AND sa.status != 'completed'",
+                    [$assignmentId, $tenantId]
+                );
+
+                if ($assignment && self::areAllRequirementsApproved($assignmentId, $assignment['specialty_id'])) {
+                    // Get specialty data (handles both JSON-repo and DB specialties)
+                    $specialty = self::getSpecialty($assignment['specialty_id']);
+                    $xpReward = (int) ($specialty['xp_reward'] ?? $assignment['spec_xp_reward'] ?? 0);
+
+                    // 1. Mark assignment as completed
+                    self::completeAssignment($assignmentId, $xpReward);
+
+                    // 2. Award XP to user
+                    if ($xpReward > 0) {
+                        db_query("UPDATE users SET xp = xp + ? WHERE id = ?", [$xpReward, $assignment['user_id']]);
+                    }
+
+                    // 3. Generate certificate
+                    try {
+                        \App\Services\CertificateService::generateForSpecialty($assignmentId, $tenantId);
+                    } catch (\Throwable $e) {
+                        error_log("SpecialtyService: Auto-certificate failed for assignment #{$assignmentId}: " . $e->getMessage());
+                    }
+
+                    // 4. Notify user
+                    try {
+                        $specName = $specialty['name'] ?? 'Especialidade';
+                        $notifMessage = "Parabéns! Você completou '{$specName}' e ganhou {$xpReward} XP! 🎓 Seu certificado já está disponível em Meus Diplomas.";
+                        $notificationService = new \App\Services\NotificationService();
+                        $notificationService->send(
+                            (int) $assignment['user_id'],
+                            'specialty_completed',
+                            '🎉 Especialidade Concluída!',
+                            $notifMessage,
+                            ['channels' => ['toast', 'push'], 'data' => ['specialty_id' => $assignment['specialty_id']]]
+                        );
+                    } catch (\Throwable $e) {
+                        error_log("SpecialtyService: Auto-notification failed for assignment #{$assignmentId}: " . $e->getMessage());
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Log but don't fail the approval itself
+            error_log("SpecialtyService: Auto-complete check failed after approving requirement #{$requirementRowId}: " . $e->getMessage());
+        }
+
+        return true;
     }
 
     /**

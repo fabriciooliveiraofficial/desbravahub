@@ -87,7 +87,7 @@
                 }
             });
 
-            // --- Fetch wrapper: Inject Authorization header on fetch calls ---
+            // --- Fetch wrapper: Inject auth headers + AJAX identity on internal calls ---
             const originalFetch = window.fetch;
             window.fetch = function (url, options) {
                 options = options || {};
@@ -97,10 +97,24 @@
                 const urlString = (typeof url === 'string') ? url : (url.url || '');
                 const isInternal = !urlString.startsWith('http') || urlString.includes(window.location.host);
 
-                if (token && isInternal) {
+                if (isInternal) {
                     options.headers = options.headers || {};
-                    // Don't overwrite if already set
-                    if (!options.headers['Authorization']) {
+
+                    // 1. Always send session cookie so PHP $_SESSION stays in sync
+                    if (!options.credentials) {
+                        options.credentials = 'same-origin';
+                    }
+
+                    // 2. Identify as AJAX so backend returns JSON errors instead of redirects
+                    if (!options.headers['X-Requested-With']) {
+                        options.headers['X-Requested-With'] = 'XMLHttpRequest';
+                    }
+                    if (!options.headers['Accept']) {
+                        options.headers['Accept'] = 'application/json';
+                    }
+
+                    // 3. Bearer token (don't overwrite if already set)
+                    if (token && !options.headers['Authorization']) {
                         options.headers['Authorization'] = 'Bearer ' + token;
                     }
                 }

@@ -125,6 +125,43 @@
                 <i class="material-icons-round">send</i> ENVIAR AGORA
             </button>
         </div>
+    <?php elseif ($program['user_status'] === 'completed'): ?>
+        <!-- PROGRAMA CONCLUÍDO + CERTIFICADO -->
+        <div class="tech-plate stagger-4 mission-complete-card" style="margin-top: 24px; padding: 24px; background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(6,182,212,0.05)); border: 1px solid rgba(16,185,129,0.25); border-radius: 16px;">
+            <div class="status-line" style="background: var(--accent-green);"></div>
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <iconify-icon icon="solar:diploma-bold-duotone" style="color: #10b981; font-size: 2rem; filter: drop-shadow(0 0 8px #10b981);"></iconify-icon>
+                    </div>
+                    <div>
+                        <div class="hud-stat-value" style="font-size: 1.2rem; color: #10b981;">PROGRAMA CONCLUÍDO!</div>
+                        <div class="hud-stat-label">Parabéns! Você completou todos os requisitos deste programa.</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <?php if (!empty($programCertificate)): ?>
+                    <a href="/<?= htmlspecialchars($tenant['slug']) ?>/certificados/<?= $programCertificate['id'] ?>/download"
+                       style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;background:linear-gradient(135deg,#10b981,#06b6d4);color:white;font-weight:700;font-size:0.875rem;text-decoration:none;border:none;">
+                        <iconify-icon icon="solar:file-download-bold-duotone"></iconify-icon>
+                        Baixar Certificado
+                    </a>
+                    <a href="/v/<?= $programCertificate['certificate_hash'] ?>" target="_blank"
+                       style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:10px;background:transparent;border:1px solid rgba(16,185,129,0.3);color:#10b981;font-weight:600;font-size:0.8rem;text-decoration:none;">
+                        <iconify-icon icon="solar:shield-check-bold-duotone"></iconify-icon>
+                        Verificar
+                    </a>
+                    <?php else: ?>
+                    <a href="/<?= htmlspecialchars($tenant['slug']) ?>/meus-diplomas"
+                       style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;background:linear-gradient(135deg,#10b981,#06b6d4);color:white;font-weight:700;font-size:0.875rem;text-decoration:none;">
+                        <iconify-icon icon="solar:diploma-bold-duotone"></iconify-icon>
+                        Meus Diplomas
+                    </a>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
     <?php elseif ($isFullySubmitted && $program['user_status'] !== 'completed'): ?>
         <div class="tech-plate vibrant-cyan stagger-4 mission-complete-card" style="margin-top: 24px; padding: 24px; display: flex; justify-content: space-between; align-items: center;">
             <div class="status-line"></div>
@@ -155,19 +192,23 @@
                 $response = $step['response'];
                 $status = $response['status'] ?? 'pending';
                 
-                // Vibrant Selection
+                // Vibrant Selection — Status Color Map
+                // draft = user saved all answers (Concluído) → Blue/Cyan
+                // pending/not_started = not yet touched (Disponível) → Yellow
                 $vClass = match ($status) {
                     'submitted' => 'vibrant-orange',
                     'approved' => 'vibrant-green',
                     'rejected' => 'vibrant-red',
-                    default => 'vibrant-cyan'
+                    'draft' => 'vibrant-cyan',
+                    default => 'vibrant-yellow'
                 };
 
                 $config = match ($status) {
-                    'submitted' => ['color' => '#fbbf24', 'icon' => 'hourglass_empty', 'label' => 'EM ANÁLISE'],
+                    'submitted' => ['color' => '#f97316', 'icon' => 'hourglass_empty', 'label' => 'EM ANÁLISE'],
                     'approved' => ['color' => '#34d399', 'icon' => 'verified', 'label' => 'APROVADO'],
                     'rejected' => ['color' => '#f87171', 'icon' => 'error_outline', 'label' => 'REVISÃO'],
-                    default => ['color' => 'var(--accent-cyan)', 'icon' => 'radio_button_unchecked', 'label' => 'DISPONÍVEL']
+                    'draft' => ['color' => 'var(--accent-cyan)', 'icon' => 'task_alt', 'label' => 'CONCLUÍDO'],
+                    default => ['color' => '#eab308', 'icon' => 'radio_button_unchecked', 'label' => 'DISPONÍVEL']
                 };
                 ?>
                 <div class="tech-plate learning-card <?= $vClass ?> stagger-<?= ($index % 4) + 1 ?>" 
@@ -220,6 +261,9 @@
         .learning-card:active {
             transform: scale(0.98) !important;
         }
+        /* Yellow vibrant class for Disponível status */
+        .vibrant-yellow { border-color: rgba(234, 179, 8, 0.3) !important; }
+        .vibrant-yellow .status-line { background: linear-gradient(180deg, #eab308, transparent) !important; }
     </style>
 </div>
 
@@ -276,7 +320,10 @@
         document.getElementById('modalBody').innerHTML = '<div class="modal-loading">⏳ Acessando banco de dados...</div>';
 
         try {
-            const resp = await fetch(`/${tenantSlug}/aprendizado/step/${stepId}/modal`);
+            const resp = await fetch(`/${tenantSlug}/aprendizado/step/${stepId}/modal`, {
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+            });
             const data = await resp.json();
 
             if (data.success) {
@@ -293,8 +340,10 @@
     }
 
     /**
-     * Submission Guard: disables ENVIAR until all questions are answered.
-     * Called after modal HTML is injected via innerHTML.
+     * Submission Guard v2: disables ENVIAR until:
+     *   1) All questions are answered (isComplete)
+     *   2) User has clicked SALVAR at least once (isSaved)
+     * Any input change after save resets isSaved, forcing re-save.
      */
     function initSubmissionGuard() {
         const modalBody = document.getElementById('modalBody');
@@ -304,8 +353,11 @@
         const submitBtn = modalBody.querySelector('.modal-btn-submit');
         if (!form || !submitBtn) return;
 
-        // If form is disabled (approved/submitted), don't add guard
-        if (form.style.opacity === '0.7') return;
+        // If form is locked (approved/submitted), don't add guard
+        if (form.dataset.locked === 'true') return;
+
+        // Initialize saved state from data attribute (set by PHP if status=draft)
+        let isSaved = form.dataset.saved === 'true';
 
         function checkCompleteness() {
             let isComplete = true;
@@ -336,8 +388,6 @@
             // 3. Check file upload questions
             const fileInputs = form.querySelectorAll('input[type="file"][id^="file-"]');
             fileInputs.forEach(function(input) {
-                // The "Ver arquivo atual" link is a sibling of .file-upload-zone, not a child.
-                // So we need to search the broader question container (parentElement of the zone).
                 const zone = input.closest('.file-upload-zone');
                 const questionContainer = zone ? zone.parentElement : input.closest('.tech-plate');
                 const hasExisting = questionContainer && !!questionContainer.querySelector('a[target="_blank"]');
@@ -346,8 +396,8 @@
                 }
             });
 
-            // Update button state
-            if (isComplete) {
+            // GATE: Both conditions must be true
+            if (isComplete && isSaved) {
                 submitBtn.classList.remove('disabled');
                 submitBtn.removeAttribute('disabled');
             } else {
@@ -356,9 +406,26 @@
             }
         }
 
-        form.addEventListener('input', checkCompleteness);
-        form.addEventListener('change', checkCompleteness);
-        form.addEventListener('keyup', checkCompleteness);
+        // Reset isSaved on any user input change (forces re-save)
+        function onFormChange() {
+            isSaved = false;
+            form.dataset.saved = 'false';
+            checkCompleteness();
+        }
+
+        form.addEventListener('input', onFormChange);
+        form.addEventListener('change', onFormChange);
+        form.addEventListener('keyup', onFormChange);
+
+        // Expose a method to mark as saved (called by submitStepForm on draft success)
+        form._markSaved = function() {
+            isSaved = true;
+            form.dataset.saved = 'true';
+            checkCompleteness();
+        };
+
+        // Expose checkCompleteness for external calls
+        form._checkCompleteness = checkCompleteness;
 
         // Initial check
         checkCompleteness();
@@ -381,37 +448,61 @@
         const formData = new FormData(form);
         formData.append('status', status);
 
-        const btn = (event && event.submitter) || (event && event.target ? event.target.closest('button') : null) || form.querySelector('.btn-submit');
+        const isDraft = (status === 'draft');
+
+        // Find the correct button
+        const btn = isDraft
+            ? form.querySelector('.modal-btn-save')
+            : form.querySelector('.modal-btn-submit');
         if (!btn) {
-            console.error('Submit button not found');
+            console.error('Button not found for status:', status);
             return;
         }
         const originalText = btn.innerHTML;
         
-        // Disable all buttons in modal during submission
-        const allBtns = form.querySelectorAll('.btn-submit');
-        allBtns.forEach(b => b.disabled = true);
+        // Immediate UI lock to prevent duplicate submissions via rapid clicks
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-icons-round spin" style="font-size: 1rem;">sync</span> ' + (isDraft ? 'Salvando...' : 'Enviando...');
         
-        btn.innerHTML = '<span class="material-icons-round spin" style="font-size: 1rem;">sync</span> ' + (status === 'draft' ? 'Salvando...' : 'Enviando...');
+        // Disable point events on the whole step to block re-triggers
+        form.closest('.step-fields-wrapper, .modal-content-scroll').style.pointerEvents = 'none';
 
         try {
             const resp = await fetch(`/${tenantSlug}/aprendizado/step/${stepId}/submit`, {
                 method: 'POST',
-                body: formData
+                body: formData,
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
             });
             const data = await resp.json();
 
             if (data.success) {
-                // Use Toast from layout
-                if (typeof showToast !== 'undefined') {
-                    showToast(data.message, 'success');
-                } else if (typeof toast !== 'undefined' && toast.success) {
-                    toast.success('Sucesso', data.message);
+                if (isDraft) {
+                    // === SILENT SAVE: Don't close modal, don't reload ===
+                    if (typeof showToast !== 'undefined') {
+                        showToast(data.message || 'Progresso salvo!', 'success');
+                    } else if (typeof toast !== 'undefined' && toast.success) {
+                        toast.success('Salvo', data.message || 'Progresso salvo!');
+                    }
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+
+                    // Mark form as saved — this unlocks ENVIAR if all fields are complete
+                    if (form._markSaved) {
+                        form._markSaved();
+                    }
                 } else {
-                    swal(data.message, 'Sucesso');
+                    // === SUBMIT: Close modal + reload (existing behavior) ===
+                    if (typeof showToast !== 'undefined') {
+                        showToast(data.message, 'success');
+                    } else if (typeof toast !== 'undefined' && toast.success) {
+                        toast.success('Sucesso', data.message);
+                    } else {
+                        swal(data.message, 'Sucesso');
+                    }
+                    closeModal();
+                    setTimeout(() => location.reload(), 1500);
                 }
-                closeModal();
-                setTimeout(() => location.reload(), 1500);
             } else {
                 if (typeof showToast !== 'undefined') {
                     showToast(data.error || 'Erro ao realizar ação', 'error');
@@ -420,13 +511,15 @@
                 } else {
                     swal(data.error || 'Erro desconhecido', 'Erro');
                 }
-                allBtns.forEach(b => b.disabled = false);
+                btn.disabled = false;
                 btn.innerHTML = originalText;
+                form.closest('.step-fields-wrapper, .modal-content-scroll').style.pointerEvents = '';
             }
         } catch (err) {
             console.error(err);
-            allBtns.forEach(b => b.disabled = false);
+            btn.disabled = false;
             btn.innerHTML = originalText;
+            form.closest('.step-fields-wrapper, .modal-content-scroll').style.pointerEvents = '';
             if (typeof showToast !== 'undefined') {
                 showToast('Erro de conexão', 'error');
             } else if (typeof toast !== 'undefined' && toast.error) {

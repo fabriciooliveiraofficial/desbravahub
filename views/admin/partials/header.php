@@ -10,7 +10,7 @@
         <button class="mobile-sidebar-toggle" id="mobile-sidebar-toggle">
             <span class="material-icons-round">menu</span>
         </button>
-        <div class="header-icon-box">
+        <div class="header-icon-box" style="<?= isset($pageColor) ? "background: $pageColor;" : "" ?>">
             <span class="material-icons-outlined"><?= $pageIcon ?? 'dashboard' ?></span>
         </div>
         <h2 class="header-title"><?= $pageTitle ?? 'Painel' ?></h2>

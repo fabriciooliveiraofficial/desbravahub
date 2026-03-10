@@ -265,13 +265,35 @@ $pageTitle = htmlspecialchars($assignment['specialty']['name'] ?? 'Especialidade
         <?php if ($progress >= 100): ?>
             <div class="completion-hero">
                 <div style="font-size: 5rem; margin-bottom: 24px; filter: drop-shadow(0 0 20px var(--accent-green));">🏆</div>
-                <h1 style="font-size: 3rem; font-weight: 800; background: linear-gradient(90deg, #fff, var(--accent-green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">SINCRO CONCLUÍDA</h1>
-                <p style="color: var(--hud-text-dim); font-size: 1.2rem; margin-bottom: 40px;">Todos os dados neuronais foram carregados no QG com sucesso.</p>
-                <div class="tech-plate vibrant-green" style="padding: 20px; display: inline-block;">
-                    <a href="<?= base_url($tenant['slug'] . '/especialidades/' . $assignment['id']) ?>" class="hud-btn primary">
-                        EFETIVAR RECOMPENSA XP <i class="material-icons-round">auto_fix_high</i>
-                    </a>
-                </div>
+                <?php if (($assignment['status'] ?? '') === 'completed'): ?>
+                    <h1 style="font-size: 3rem; font-weight: 800; background: linear-gradient(90deg, #fff, var(--accent-green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">ESPECIALIDADE CONCLUÍDA!</h1>
+                    <p style="color: var(--hud-text-dim); font-size: 1.2rem; margin-bottom: 32px;">Certificado oficial emitido. Parabéns, Desbravador(a)! 🎓</p>
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;">
+                        <?php if (!empty($specialtyCertificate)): ?>
+                        <a href="/<?= htmlspecialchars($tenant['slug']) ?>/certificados/<?= $specialtyCertificate['id'] ?>/download"
+                           class="hud-btn primary" style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#10b981,#06b6d4);">
+                            <i class="material-icons-round">download</i> BAIXAR CERTIFICADO
+                        </a>
+                        <a href="/v/<?= $specialtyCertificate['certificate_hash'] ?>" target="_blank"
+                           class="hud-btn secondary" style="display:inline-flex;align-items:center;gap:8px;">
+                            <i class="material-icons-round">verified</i> VERIFICAR
+                        </a>
+                        <?php else: ?>
+                        <a href="/<?= htmlspecialchars($tenant['slug']) ?>/meus-diplomas"
+                           class="hud-btn primary" style="display:inline-flex;align-items:center;gap:8px;">
+                            <i class="material-icons-round">military_tech</i> MEUS DIPLOMAS
+                        </a>
+                        <?php endif; ?>
+                    </div>
+                <?php else: ?>
+                    <h1 style="font-size: 3rem; font-weight: 800; background: linear-gradient(90deg, #fff, var(--accent-green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">SINCRO CONCLUÍDA</h1>
+                    <p style="color: var(--hud-text-dim); font-size: 1.2rem; margin-bottom: 40px;">Todos os dados neuronais foram carregados no QG com sucesso.</p>
+                    <div class="tech-plate vibrant-green" style="padding: 20px; display: inline-block;">
+                        <a href="<?= base_url($tenant['slug'] . '/especialidades/' . $assignment['id']) ?>" class="hud-btn primary">
+                            EFETIVAR RECOMPENSA XP <i class="material-icons-round">auto_fix_high</i>
+                        </a>
+                    </div>
+                <?php endif; ?>
             </div>
         <?php elseif ($currentRequirement): ?>
             

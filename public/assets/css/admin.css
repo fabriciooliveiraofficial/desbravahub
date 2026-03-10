@@ -1118,12 +1118,17 @@ body {
     transition: var(--transition-fast);
 }
 
+/* Table row - removed relative to avoid pseudo-element issues */
 .data-table tbody tr {
     transition: var(--transition-bounce);
+}
+
+/* Primary cell highlight */
+.data-table tbody tr td:first-child {
     position: relative;
 }
 
-.data-table tbody tr::before {
+.data-table tbody tr td:first-child::before {
     content: '';
     position: absolute;
     left: 0;
@@ -1133,13 +1138,14 @@ body {
     background: var(--gradient-primary);
     transform: scaleY(0);
     transition: transform 0.2s ease;
+    z-index: 1;
 }
 
 .data-table tbody tr:hover {
     background-color: var(--item-hover);
 }
 
-.data-table tbody tr:hover::before {
+.data-table tbody tr:hover td:first-child::before {
     transform: scaleY(1);
 }
 

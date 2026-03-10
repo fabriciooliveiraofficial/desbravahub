@@ -229,10 +229,9 @@
     <!-- Sidebar Backdrop -->
     <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
     <!-- Main Content -->
-    <main class="admin-main">
-        <?php require BASE_PATH . '/views/admin/partials/header.php'; ?>
-
+    <main class="admin-main" id="admin-main">
         <div id="main-content" class="fade-me-in">
+            <?php require BASE_PATH . '/views/admin/partials/header.php'; ?>
             <?= $content ?>
         </div>
     </main>

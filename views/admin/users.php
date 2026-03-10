@@ -109,28 +109,57 @@
 
     <style>
         .catalog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .catalog-section { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
+        .catalog-section { 
+            background: #ffffff; 
+            padding: 24px; 
+            border-radius: 20px; 
+            border: 1px solid rgba(0, 0, 0, 0.05); 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        .catalog-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+            border-color: rgba(6, 182, 212, 0.15);
+        }
         .catalog-section h4 { 
             color: var(--accent-cyan); 
-            margin: 0 0 15px 0; 
-            border-bottom: 1px solid rgba(0, 217, 255, 0.2); 
-            padding-bottom: 10px;
+            margin: 0 0 20px 0; 
+            border-bottom: 1px solid rgba(6, 182, 212, 0.1); 
+            padding-bottom: 12px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
         }
-        .catalog-item { margin-bottom: 12px; }
-        .catalog-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: bold; margin-bottom: 4px; display: block; }
-        .catalog-value { font-size: 1rem; color: var(--text-light); }
+        .catalog-item { margin-bottom: 16px; }
+        .catalog-item:last-child { margin-bottom: 0; }
+        .catalog-label { 
+            font-size: 0.7rem; 
+            color: #64748b; 
+            text-transform: uppercase; 
+            letter-spacing: 0.07em; 
+            font-weight: 800; 
+            margin-bottom: 6px; 
+            display: block; 
+        }
+        .catalog-value { 
+            font-size: 0.95rem; 
+            color: #1e293b; 
+            font-weight: 500;
+            line-height: 1.5;
+        }
         @media (max-width: 768px) { .catalog-grid { grid-template-columns: 1fr; } }
 
-        /* Modal Styles */
+        /* Modal Styles - Overriding for Premium Light Theme */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             z-index: 1000;
             display: none;
             align-items: center;
@@ -138,7 +167,7 @@
             padding: 20px;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .modal-overlay.active {
             display: flex !important;
@@ -146,61 +175,74 @@
             visibility: visible !important;
         }
         .modal-content {
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
+            background: #f8fafc;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 28px;
             width: 100%;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            animation: slideUp 0.3s ease;
+            box-shadow: 0 40px 80px -20px rgba(15, 23, 42, 0.2);
+            animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+        }
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
         }
         .modal-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px 32px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: #ffffff;
         }
         .modal-header h3 {
-            color: #fff;
+            color: #0f172a;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.25rem;
         }
         .modal-body {
-            padding: 24px;
-            color: var(--text-main);
+            padding: 32px;
+            color: #334155;
+            background: #f8fafc;
         }
         .modal-footer {
-            padding: 16px 24px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 32px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
             display: flex;
             justify-content: flex-end;
             gap: 12px;
+            background: #ffffff;
         }
         .btn-close {
-            background: transparent;
+            background: #f1f5f9;
             border: none;
-            color: var(--text-muted);
+            color: #64748b;
             cursor: pointer;
-            padding: 4px;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
+            border-radius: 12px;
             transition: all 0.2s;
         }
         .btn-close:hover {
             color: #ef4444;
-            background: rgba(239, 68, 68, 0.1);
+            background: #fee2e2;
+            transform: rotate(90deg);
         }
         
         /* Print styles */
         @media print {
             body * { visibility: hidden; }
             #catalogModal, #catalogModal * { visibility: visible; }
-            #catalogModal { position: absolute; left: 0; top: 0; width: 100%; }
-            .modal-footer { display: none; }
-            .btn-close { display: none; }
-            .catalog-section { break-inside: avoid; border-color: #ccc; }
+            #catalogModal { position: absolute; left: 0; top: 0; width: 100%; background: white; }
+            .modal-footer, .btn-close { display: none; }
+            .modal-content { box-shadow: none; border: none; }
+            .catalog-section { break-inside: avoid; border: 1px solid #eee; margin-bottom: 20px; }
         }
     </style>
 
@@ -275,14 +317,18 @@
 
                 body.innerHTML = `
                     <div class="catalog-grid">
-                        <div class="catalog-section" style="grid-column: 1 / -1; background: linear-gradient(135deg, rgba(30,41,59,0.5), rgba(15,23,42,0.8)); border: 1px solid rgba(255,255,255,0.1);">
-                            <div style="display: flex; align-items: center; gap: 20px;">
-                                <div style="width: 60px; height: 60px; border-radius: 15px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; border: 2px solid var(--accent-cyan);">
-                                    <span class="material-icons-round" style="font-size: 30px; color: white;">person</span>
+                        <div class="catalog-section" style="grid-column: 1 / -1; background: linear-gradient(135deg, #ffffff, #f1f5f9); border: 1px solid rgba(6, 182, 212, 0.1); position: relative; overflow: hidden; box-shadow: 0 10px 30px -5px rgba(6, 182, 212, 0.1);">
+                            <!-- Subtle Highlight Glow -->
+                            <div style="position: absolute; left: -50px; top: -50px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, transparent 70%); pointer-events: none;"></div>
+                            
+                            <div style="display: flex; align-items: center; gap: 24px; position: relative; z-index: 1;">
+                                <div style="width: 80px; height: 80px; border-radius: 24px; background: #ffffff; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(6, 182, 212, 0.2); box-shadow: 0 8px 16px -4px rgba(6, 182, 212, 0.2); position: relative;">
+                                    <div style="position: absolute; inset: 0; border-radius: 24px; padding: 2px; background: linear-gradient(135deg, var(--accent-cyan), #3b82f6); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0.5;"></div>
+                                    <span class="material-icons-round" style="font-size: 40px; background: linear-gradient(135deg, var(--accent-cyan), #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">person</span>
                                 </div>
                                 <div>
-                                    <h4 style="margin: 0; color: white; display: block; border: none; padding: 0;">${u.name}</h4>
-                                    <div style="color: var(--accent-cyan); font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; gap: 6px; margin-top: 5px;">
+                                    <h4 style="margin: 0; color: #0f172a; font-size: 1.75rem; display: block; border: none; padding: 0; font-family: 'Outfit'; font-weight: 900; letter-spacing: -0.02em;">${u.name}</h4>
+                                    <div style="display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; padding: 4px 12px; background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.1); border-radius: 10px; color: var(--accent-cyan); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
                                         <span class="material-icons-round" style="font-size: 16px;">workspace_premium</span>
                                         ${u.role_name}
                                     </div>
@@ -307,31 +353,45 @@
 
                         <div class="catalog-section">
                             <h4><span class="material-icons-round">contact_phone</span> Contatos</h4>
-                            <div class="catalog-item"><span class="catalog-label">Email</span><span class="catalog-value">${u.email}</span></div>
+                            <div class="catalog-item"><span class="catalog-label">Email</span><span class="catalog-value" style="color: var(--accent-cyan); font-weight: 600;">${u.email}</span></div>
                             <div class="catalog-item"><span class="catalog-label">Telefone</span><span class="catalog-value">${u.phone || 'Não informado'}</span></div>
-                            <div class="catalog-item"><span class="catalog-label">Emergência</span><span class="catalog-value" style="color: var(--accent-warning); user-select: all; font-weight: bold;">${p.phone_emergency || 'Não informado'}</span></div>
+                            <div class="catalog-item"><span class="catalog-label">Emergência</span><span class="catalog-value" style="color: #ef4444; user-select: all; font-weight: 800;">${p.phone_emergency || 'Não informado'}</span></div>
                             <div class="catalog-item"><span class="catalog-label">Endereço</span><span class="catalog-value">${p.address || 'Não informado'}</span></div>
                         </div>
 
                         <div class="catalog-section">
                             <h4><span class="material-icons-round">medical_services</span> Informações Médicas</h4>
-                            <div class="catalog-grid" style="margin-bottom: 12px; gap: 10px;">
-                                <div class="catalog-item"><span class="catalog-label">Tipo Sanguíneo</span><span class="catalog-value" style="color: #ef4444; font-weight: 800; font-size: 1.2rem; background: rgba(239, 68, 68, 0.1); padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2); display: inline-block;">${p.blood_type || '?'}${p.rh_factor || ''}</span></div>
-                                <div class="catalog-item"><span class="catalog-label">Vacina Tétano</span><span class="catalog-value">${p.tetanus_vaccine || 'Não informado'}</span></div>
+                            <div class="catalog-grid" style="margin-bottom: 12px; gap: 15px;">
+                                <div class="catalog-item">
+                                    <span class="catalog-label">Tipo Sanguíneo</span>
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px;">
+                                        <span class="catalog-value" style="color: white; font-weight: 800; font-size: 1.1rem; background: #ef4444; padding: 6px 12px; border-radius: 10px; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); display: inline-flex; align-items: center; gap: 5px;">
+                                            <span class="material-icons-round" style="font-size: 16px;">water_drop</span>
+                                            ${p.blood_type || '?'}${p.rh_factor || ''}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="catalog-item">
+                                    <span class="catalog-label">Vacina Tétano</span>
+                                    <span class="catalog-value" style="display: flex; align-items: center; gap: 6px; font-weight: 600;">
+                                        <span class="material-icons-round" style="color: #10b981; font-size: 18px;">verified</span>
+                                        ${p.tetanus_vaccine || 'Não informado'}
+                                    </span>
+                                </div>
                             </div>
                             
-                            <div style="margin-top: 15px; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
-                                <h5 style="margin: 0 0 8px 0; color: #cbd5e1; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
-                                    <span class="material-icons-round" style="font-size: 16px; color: #ef4444;">warning</span> Condições Diagnósticadas
+                            <div style="margin-top: 20px; padding: 16px; border-radius: 14px; background: #f1f5f9; border: 1px solid rgba(0,0,0,0.03);">
+                                <h5 style="margin: 0 0 10px 0; color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
+                                    <span class="material-icons-round" style="font-size: 16px; color: #ef4444;">error</span> Condições Diagnósticadas
                                 </h5>
-                                <div class="catalog-value" style="line-height: 1.5;">${htmlConditions}</div>
+                                <div class="catalog-value" style="font-size: 0.9rem;">${htmlConditions}</div>
                             </div>
 
-                            <div style="margin-top: 15px; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
-                                <h5 style="margin: 0 0 8px 0; color: #cbd5e1; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
-                                    <span class="material-icons-round" style="font-size: 16px; color: #f59e0b;">coronavirus</span> Alergias Conhecidas
+                            <div style="margin-top: 15px; padding: 16px; border-radius: 14px; background: #fef2f2; border: 1px solid rgba(239, 68, 68, 0.1);">
+                                <h5 style="margin: 0 0 10px 0; color: #b91c1c; font-size: 0.75rem; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
+                                    <span class="material-icons-round" style="font-size: 16px; color: #ef4444;">no_food</span> Alergias Conhecidas
                                 </h5>
-                                <div class="catalog-value" style="line-height: 1.5; color: #fda4af;">${htmlAllergies}</div>
+                                <div class="catalog-value" style="font-size: 0.9rem; color: #b91c1c;">${htmlAllergies}</div>
                             </div>
                         </div>
                     </div>

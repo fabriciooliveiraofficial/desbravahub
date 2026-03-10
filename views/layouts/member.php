@@ -160,23 +160,36 @@
         document.body.addEventListener('click', async function(e) {
             const btn = e.target.closest('.program-submit-btn');
             if (!btn || btn.disabled || btn.classList.contains('disabled')) return;
-            
+
             e.preventDefault();
             e.stopPropagation();
-            
-            const progressId = btn.dataset.progressId;
-            if (!progressId) return;
-            
-            const confirmed = await sconfirm('Deseja enviar esta missão para avaliação? Certifique-se de que revisou tudo.', 'Enviar Missão');
-            if (!confirmed) return;
-            
-            const originalContent = btn.innerHTML;
+
+            // Lock immediately to prevent double-click before confirm dialog
             btn.disabled = true;
             btn.classList.add('disabled');
+
+            const progressId = btn.dataset.progressId;
+            if (!progressId) {
+                btn.disabled = false;
+                btn.classList.remove('disabled');
+                return;
+            }
+
+            const confirmed = await sconfirm('Deseja enviar esta missão para avaliação? Certifique-se de que revisou tudo.', 'Enviar Missão');
+            if (!confirmed) {
+                btn.disabled = false;
+                btn.classList.remove('disabled');
+                return;
+            }
+
+            const originalContent = btn.innerHTML;
             btn.innerHTML = '<span class="material-icons-round spin">sync</span> Enviando...';
-            
+            btn.style.pointerEvents = 'none';
+
             fetch(`/<?= $tenant['slug'] ?>/aprendizado/${progressId}/submit-all`, {
-                method: 'POST'
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
             })
             .then(r => r.json())
             .then(data => {
@@ -196,6 +209,7 @@
                     btn.disabled = false;
                     btn.classList.remove('disabled');
                     btn.innerHTML = originalContent;
+                    btn.style.pointerEvents = '';
                 }
             })
             .catch(err => {
@@ -204,6 +218,7 @@
                 btn.disabled = false;
                 btn.classList.remove('disabled');
                 btn.innerHTML = originalContent;
+                btn.style.pointerEvents = '';
             });
         });
 

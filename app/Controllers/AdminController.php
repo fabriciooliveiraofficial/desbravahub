@@ -67,10 +67,11 @@ class AdminController
 
         View::render('admin/activities', [
             'tenant' => $tenant,
-            'user' => $user,
+            'user' => auth(),
             'activities' => $activities,
-            'pageTitle' => 'Gerenciar Especialidades',
-            'pageIcon' => 'local_activity'
+            'pageTitle' => 'Atividades',
+            'pageIcon' => 'local_activity',
+            'pageColor' => '#6366f1'
         ]);
     }
 
@@ -141,8 +142,9 @@ class AdminController
             'user' => auth(),
             'users' => $users,
             'roles' => $roles,
-            'pageTitle' => 'Gerenciar Usuários',
-            'pageIcon' => 'people'
+            'pageTitle' => 'Usuários',
+            'pageIcon' => 'people',
+            'pageColor' => '#a855f7'
         ]);
     }
 
@@ -460,7 +462,8 @@ public function deleteUser(array $params): void
             'tenant' => $tenant,
             'user' => App::user(),
             'pageTitle' => 'Notificações',
-            'pageIcon' => 'campaign'
+            'pageIcon' => 'campaign',
+            'pageColor' => '#f97316'
         ]);
     }
 
@@ -807,7 +810,8 @@ public function deleteUser(array $params): void
             'categories' => $categories,
             'grouped' => $grouped,
             'pageTitle' => 'Classes',
-            'pageIcon' => 'school'
+            'pageIcon' => 'school',
+            'pageColor' => '#eab308'
         ]);
     }
 
@@ -996,7 +1000,8 @@ public function deleteUser(array $params): void
             'rolePermissions' => $rolePermissions,
             'groupedPermissions' => $groupedPermissions,
             'pageTitle' => 'Permissões',
-            'pageIcon' => 'lock'
+            'pageIcon' => 'lock',
+            'pageColor' => '#d97706'
         ]);
     }
 

@@ -10,7 +10,7 @@ $isClasses = strpos($currentPath, '/aprendizado') !== false;
 $isAgenda = strpos($currentPath, '/eventos') !== false;
 $isDesafios = strpos($currentPath, '/provas') !== false;
 $isRanking = strpos($currentPath, '/ranking') !== false;
-$isPerfil = strpos($currentPath, '/perfil') !== false;
+$isPerfil  = strpos($currentPath, '/perfil') !== false || strpos($currentPath, '/meus-diplomas') !== false;
 
 // Profile Completion Check
 $profileLocked = is_pathfinder() && !is_profile_complete();
@@ -21,7 +21,7 @@ $profileLocked = is_pathfinder() && !is_profile_complete();
         <!-- QG / Home -->
         <a href="<?= base_url($tenant['slug'] . '/dashboard') ?>" 
            class="dock-item <?= $isHome ? 'active' : '' ?> <?= ($profileLocked && !$isHome) ? 'locked-item' : '' ?>" 
-           data-tooltip="<?= ($profileLocked && !$isHome) ? 'Complete seu perfil para liberar' : 'Quartel General' ?>">
+           data-tooltip="<?= ($profileLocked && !$isHome) ? 'Complete seu perfil para liberar' : 'Home' ?>">
             <div class="dock-icon-wrap">
                 <span class="material-icons-round">rocket_launch</span>
                 <?php if ($profileLocked && !$isHome): ?>
@@ -29,7 +29,7 @@ $profileLocked = is_pathfinder() && !is_profile_complete();
                 <?php endif; ?>
                 <div class="icon-glow"></div>
             </div>
-            <span class="dock-label">QG</span>
+            <span class="dock-label">Home</span>
             <?php if ($isHome): ?><span class="active-dot"></span><?php endif; ?>
         </a>
 
@@ -97,8 +97,8 @@ $profileLocked = is_pathfinder() && !is_profile_complete();
         </a>
 
         <!-- Perfil -->
-        <a href="<?= base_url($tenant['slug'] . '/perfil') ?>" 
-           class="dock-item <?= $isPerfil ? 'active' : '' ?>" data-tooltip="Meu QG Pessoal">
+        <a href="<?= base_url($tenant['slug'] . '/perfil') ?>"
+           class="dock-item <?= $isPerfil ? 'active' : '' ?>" data-tooltip="Meu Perfil">
             <div class="dock-icon-wrap">
                 <span class="material-icons-round">shield</span>
                 <div class="icon-glow"></div>

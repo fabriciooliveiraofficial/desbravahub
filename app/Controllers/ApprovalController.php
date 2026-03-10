@@ -10,6 +10,7 @@ namespace App\Controllers;
 use App\Core\App;
 use App\Core\View;
 use App\Services\LearningNotificationService;
+use App\Services\CertificateService;
 
 class ApprovalController
 {
@@ -84,8 +85,9 @@ class ApprovalController
             'user' => $user,
             'pendingQueue' => $pendingQueue,
             'recentApprovals' => $recentApprovals,
-            'pageTitle' => 'Centro de Avaliação',
-            'pageIcon' => 'grading'
+            'pageTitle' => 'Avaliações',
+            'pageIcon' => 'fact_check',
+            'pageColor' => '#06b6d4'
         ]);
     }
 
@@ -542,6 +544,13 @@ class ApprovalController
             if ($program && $program['xp_reward'] > 0) {
                 $progressionService = new \App\Services\ProgressionService();
                 $progressionService->addXp($progress['user_id'], $program['xp_reward'], 'program', $program['id']);
+            }
+
+            // Issue certificate for program completion
+            try {
+                CertificateService::generateForProgram($progressId, $progress['tenant_id']);
+            } catch (\Throwable $e) {
+                error_log('[ApprovalController] Certificate generation failed: ' . $e->getMessage());
             }
 
             // Send completion notification
