@@ -41,7 +41,7 @@ class SpecialtyController
 
                 // Get programs in this category
                 $programs = db_fetch_all(
-                    "SELECT * FROM learning_programs WHERE tenant_id = ? AND category_id = ? AND status = 'published' ORDER BY name",
+                    "SELECT * FROM learning_programs WHERE tenant_id = ? AND category_id = ? AND status = 'published' ORDER BY sort_order ASC, name ASC",
                     [$tenant['id'], $lCat['id']]
                 );
 

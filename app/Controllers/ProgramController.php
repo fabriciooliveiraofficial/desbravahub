@@ -594,6 +594,46 @@ class ProgramController
     }
 
     /**
+     * Reorder programs
+     */
+    public function reorder(array $params): void
+    {
+        $this->requireAdmin();
+
+        $tenant = App::tenant();
+        $orders = $_POST['order'] ?? [];
+
+        if (empty($orders) || !is_array($orders)) {
+            $this->json(['error' => 'Dados inválidos'], 400);
+            return;
+        }
+
+        try {
+            db_begin();
+
+            foreach ($orders as $index => $id) {
+                db_update(
+                    'learning_programs',
+                    ['sort_order' => (int)$index + 1],
+                    'id = ? AND tenant_id = ?',
+                    [(int)$id, $tenant['id']]
+                );
+            }
+
+            db_commit();
+
+            $this->json([
+                'success' => true,
+                'message' => 'Ordem atualizada com sucesso!'
+            ]);
+
+        } catch (\Exception $e) {
+            db_rollback();
+            $this->json(['error' => 'Erro ao reordenar: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Assign program to users
      */
     public function assign(array $params): void

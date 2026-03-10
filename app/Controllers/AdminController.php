@@ -681,7 +681,7 @@ public function deleteUser(array $params): void
                 $programs = db_fetch_all(
                     "SELECT * FROM learning_programs 
                      WHERE tenant_id = ? AND category_id = ? AND status = 'published' 
-                     ORDER BY name",
+                     ORDER BY sort_order ASC, name ASC",
                     [$tenant['id'], $catId]
                 );
 
@@ -744,7 +744,7 @@ public function deleteUser(array $params): void
             $uncategorizedPrograms = db_fetch_all(
                 "SELECT * FROM learning_programs 
                  WHERE tenant_id = ? AND type = 'class' AND category_id IS NULL AND status = 'published'
-                 ORDER BY name",
+                 ORDER BY sort_order ASC, name ASC",
                 [$tenant['id']]
             );
             

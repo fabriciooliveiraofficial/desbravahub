@@ -223,6 +223,7 @@ $router->post('/{tenant}/admin/categorias/reorder', [CategoryController::class, 
 $router->get('/{tenant}/admin/programas', [ProgramController::class, 'index'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/programas/criar', [ProgramController::class, 'create'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/programas', [ProgramController::class, 'store'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/programas/reorder', [ProgramController::class, 'reorder'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/programas/{id}/editar', [ProgramController::class, 'edit'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/programas/{id}', [ProgramController::class, 'update'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/programas/{id}/steps', [ProgramController::class, 'saveSteps'], [TenantMiddleware::class, AuthMiddleware::class]);

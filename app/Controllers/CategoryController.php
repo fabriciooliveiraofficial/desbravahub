@@ -76,7 +76,7 @@ class CategoryController
 
         // Get programs in this category
         $programs = db_fetch_all(
-            "SELECT * FROM learning_programs WHERE category_id = ? AND tenant_id = ? ORDER BY name",
+            "SELECT * FROM learning_programs WHERE category_id = ? AND tenant_id = ? ORDER BY sort_order ASC, name ASC",
             [$categoryId, $tenant['id']]
         );
 
