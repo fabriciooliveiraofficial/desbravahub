@@ -210,6 +210,7 @@ class SosController
                     'priority' => 'critical',
                     'channels' => ['toast', 'push'],
                     'data' => [
+                        'type' => 'sos',
                         'link' => $mapLink ?: '/',
                         'url' => $mapLink ?: '/',
                         'sos' => true,

@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'desbravahub-v27';
+const CACHE_VERSION = 'desbravahub-v28';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const DYNAMIC_CACHE = CACHE_VERSION + '-dynamic';
 const OFFLINE_URL = '/offline.html';
@@ -265,22 +265,27 @@ self.addEventListener('push', (event) => {
     }
 
     const isCritical = data.priority === 'critical';
+    // SOS detection: top-level type OR nested data.sos flag (set by SosController)
+    const isSos = data.type === 'sos' || data.data?.sos === true;
+
+    // Morse SOS vibration: · · · — — — · · ·  (dots=100ms, dashes=200ms, gaps=30ms, letter-gaps=200ms)
+    const SOS_VIBRATE = [100, 30, 100, 30, 100, 200, 200, 30, 200, 30, 200, 200, 100, 30, 100, 30, 100];
 
     const options = {
         body: data.body,
         icon: data.icon || '/assets/images/icon-192.png',
         badge: data.badge || '/assets/images/badge-72.png',
-        vibrate: isCritical ? [300, 100, 300, 100, 300] : [200, 100, 200],
-        data: { url: data.url || '/', priority: data.priority },
+        vibrate: isSos ? SOS_VIBRATE : (isCritical ? [300, 100, 300, 100, 300] : [200, 100, 200]),
+        data: { url: data.url || '/', priority: data.priority, type: data.type },
         actions: [
             { action: 'open', title: 'Abrir' },
             { action: 'close', title: 'Fechar' }
         ],
-        // Critical: fixed tag so it replaces itself; always renotify for sound/vibration.
-        // Normal: timestamp tag so multiple notifications stack.
-        tag: isCritical ? 'desbravahub-critical' : 'desbravahub-' + Date.now(),
+        // SOS: dedicated tag so each new SOS replaces the previous one via renotify.
+        // Other critical: shared critical tag. Normal: unique timestamp tag so they stack.
+        tag: isSos ? 'sos_alert' : (isCritical ? 'desbravahub-critical' : 'desbravahub-' + Date.now()),
         renotify: true,
-        requireInteraction: isCritical,
+        requireInteraction: isCritical || isSos,
         silent: false
     };
 
@@ -359,14 +364,14 @@ self.addEventListener('notificationclick', (event) => {
     const targetUrl = event.notification.data?.url || '/';
 
     event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
             for (const client of windowClients) {
                 if (new URL(client.url).origin === new URL(targetUrl).origin) {
                     return client.focus().then(() => client.navigate(targetUrl))
-                        .catch(() => clients.openWindow ? clients.openWindow(targetUrl) : null);
+                        .catch(() => self.clients.openWindow ? self.clients.openWindow(targetUrl) : null);
                 }
             }
-            if (clients.openWindow) return clients.openWindow(targetUrl);
+            if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
         })
     );
 });

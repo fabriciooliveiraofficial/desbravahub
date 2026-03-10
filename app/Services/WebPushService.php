@@ -59,11 +59,12 @@ class WebPushService
         $deepLinkUrl = $data['url'] ?? $data['link'] ?? $defaultUrl;
 
         $payload = json_encode([
-            'title' => $title,
-            'body' => $message,
-            'url' => $deepLinkUrl,
-            'data' => $data,
-            'priority' => $data['priority'] ?? 'normal'
+            'title'    => $title,
+            'body'     => $message,
+            'url'      => $deepLinkUrl,
+            'type'     => $data['type'] ?? null,   // top-level: allows SW to detect 'sos' without nesting
+            'priority' => $data['priority'] ?? 'normal',
+            'data'     => $data,
         ]);
 
         foreach ($subscriptions as $sub) {
