@@ -44,3 +44,4 @@ Thumbs.db
 # Scripts temporários de manutenção
 public/export_schema.php
 tmp_migrate.php
+public/fix_env.php
