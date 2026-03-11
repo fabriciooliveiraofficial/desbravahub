@@ -45,3 +45,4 @@ Thumbs.db
 public/export_schema.php
 tmp_migrate.php
 public/fix_env.php
+public/dump_db.php
