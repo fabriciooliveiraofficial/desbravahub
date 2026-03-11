@@ -25,107 +25,100 @@ class SpecialtyController
         $tenant = App::tenant();
         $user = App::user();
 
-        // 1. Load Master Repository (JSON-based standard specialties)
+        // Learning Engine only — load categories and programs from DB
         $categories = [];
         $grouped = [];
 
-        $masterCategories = SpecialtyService::getCategories();
-        $allSpecialties = SpecialtyService::getSpecialties($tenant['id']);
+        // Detect which columns actually exist — each step fully isolated
+        $lcCols = [];
+        try { $lcCols = array_column(db_fetch_all("SHOW COLUMNS FROM learning_categories"), 'Field'); } catch (\Exception $e) {}
 
-        foreach ($masterCategories as $cat) {
-            $catId = $cat['id'];
-
-            // Get specialties belonging to this category
-            $catSpecs = array_values(array_filter($allSpecialties, function($s) use ($catId) {
-                return ($s['category_id'] ?? '') === $catId;
-            }));
-
-            $categories[] = [
-                'id' => $catId,
-                'name' => $cat['name'],
-                'icon' => $cat['icon'] ?? '📘',
-                'color' => $cat['color'] ?? '#00d9ff',
-                'description' => $cat['description'] ?? '',
-                'is_learning_category' => false
-            ];
-
-            $grouped[$catId] = [
-                'category' => [
-                    'id' => $catId,
-                    'name' => $cat['name'],
-                    'icon' => $cat['icon'] ?? '📘',
-                    'color' => $cat['color'] ?? '#00d9ff',
-                    'description' => $cat['description'] ?? '',
-                    'is_learning_category' => false
-                ],
-                'specialties' => $catSpecs
-            ];
+        if (!empty($lcCols) && !in_array('type', $lcCols)) {
+            try { db_query("ALTER TABLE learning_categories ADD COLUMN `type` ENUM('specialty','class','both') NOT NULL DEFAULT 'specialty'"); } catch (\Exception $e) {}
+            $lcCols[] = 'type';
+        }
+        if (!empty($lcCols) && !in_array('sort_order', $lcCols)) {
+            try { db_query("ALTER TABLE learning_categories ADD COLUMN `sort_order` INT NOT NULL DEFAULT 0"); } catch (\Exception $e) {}
+            $lcCols[] = 'sort_order';
         }
 
-        // 2. Merge Learning Engine categories and programs (DB-driven)
+        // Check sort_order in learning_programs too
+        $lpHasSort = false;
+        try {
+            $lpCols = array_column(db_fetch_all("SHOW COLUMNS FROM learning_programs LIKE 'sort_order'"), 'Field');
+            $lpHasSort = !empty($lpCols);
+            if (!$lpHasSort) {
+                db_query("ALTER TABLE learning_programs ADD COLUMN `sort_order` INT NOT NULL DEFAULT 0");
+                $lpHasSort = true;
+            }
+        } catch (\Exception $e) {}
+
+        // Build query dynamically based on confirmed columns
+        $hasType       = in_array('type', $lcCols);
+        $hasSort       = in_array('sort_order', $lcCols);
+        $typeFilter    = $hasType ? " AND type IN ('specialty', 'both')" : '';
+        $orderBy       = $hasSort ? 'sort_order, name' : 'name';
+        $progOrderBy   = $lpHasSort ? 'sort_order ASC, name ASC' : 'name ASC';
+
         try {
             $learningCategories = db_fetch_all(
-                "SELECT * FROM learning_categories WHERE tenant_id = ? AND status = 'active' AND type IN ('specialty', 'both') ORDER BY sort_order, name",
+                "SELECT * FROM learning_categories WHERE tenant_id = ? AND status = 'active'{$typeFilter} ORDER BY {$orderBy}",
                 [$tenant['id']]
             );
 
             foreach ($learningCategories as $lCat) {
                 $catId = 'lc_' . $lCat['id'];
 
-                // Get programs in this category
                 $programs = db_fetch_all(
-                    "SELECT * FROM learning_programs WHERE tenant_id = ? AND category_id = ? AND status = 'published' ORDER BY sort_order ASC, name ASC",
+                    "SELECT * FROM learning_programs WHERE tenant_id = ? AND category_id = ? AND status = 'published' ORDER BY {$progOrderBy}",
                     [$tenant['id'], $lCat['id']]
                 );
 
-                // Convert programs to specialty-like format
                 $specs = [];
                 foreach ($programs as $prog) {
                     $specs[] = [
-                        'id' => 'prog_' . $prog['id'],
-                        'name' => $prog['name'],
-                        'badge_icon' => $prog['icon'] ?? '📘',
-                        'type' => $prog['is_outdoor'] ? 'outdoor' : 'indoor',
-                        'duration_hours' => $prog['estimated_hours'] ?? 4,
-                        'difficulty' => $prog['difficulty'] ?? 2,
-                        'xp_reward' => $prog['xp_reward'] ?? 100,
-                        'description' => $prog['description'] ?? '',
-                        'requirements' => [],
-                        'category_id' => $catId,
+                        'id'               => 'prog_' . $prog['id'],
+                        'name'             => $prog['name'],
+                        'badge_icon'       => $prog['icon'] ?? '📘',
+                        'type'             => $prog['is_outdoor'] ? 'outdoor' : 'indoor',
+                        'duration_hours'   => $prog['estimated_hours'] ?? 4,
+                        'difficulty'       => $prog['difficulty'] ?? 2,
+                        'xp_reward'        => $prog['xp_reward'] ?? 100,
+                        'description'      => $prog['description'] ?? '',
+                        'requirements'     => [],
+                        'category_id'      => $catId,
                         'is_learning_program' => true,
-                        'program_id' => $prog['id']
+                        'program_id'       => $prog['id'],
                     ];
                 }
 
-                // Build category data
                 $categories[] = [
-                    'id' => $catId,
-                    'name' => $lCat['name'],
-                    'icon' => $lCat['icon'] ?? '📂',
-                    'color' => $lCat['color'] ?? '#00d9ff',
-                    'description' => $lCat['description'] ?? '',
-                    'is_learning_category' => true
+                    'id'                  => $catId,
+                    'name'                => $lCat['name'],
+                    'icon'                => $lCat['icon'] ?? '📂',
+                    'color'               => $lCat['color'] ?? '#00d9ff',
+                    'description'         => $lCat['description'] ?? '',
+                    'is_learning_category' => true,
                 ];
 
                 $grouped[$catId] = [
                     'category' => [
-                        'id' => $catId,
-                        'db_id' => $lCat['id'],
-                        'name' => $lCat['name'],
-                        'icon' => $lCat['icon'] ?? '📂',
-                        'color' => $lCat['color'] ?? '#00d9ff',
-                        'description' => $lCat['description'] ?? '',
-                        'is_learning_category' => true
+                        'id'                  => $catId,
+                        'db_id'               => $lCat['id'],
+                        'name'                => $lCat['name'],
+                        'icon'                => $lCat['icon'] ?? '📂',
+                        'color'               => $lCat['color'] ?? '#00d9ff',
+                        'description'         => $lCat['description'] ?? '',
+                        'is_learning_category' => true,
                     ],
-                    'specialties' => $specs
+                    'specialties' => $specs,
                 ];
             }
-        } catch (\Exception $e) {
-            // Learning Engine tables may not exist yet, silently continue
-        }
 
-        // Sort categories alphabetically by name (A-Z)
-        usort($categories, fn($a, $b) => strcasecmp($a['name'], $b['name']));
+            usort($categories, fn($a, $b) => strcasecmp($a['name'], $b['name']));
+        } catch (\Exception $e) {
+            // Learning Engine tables may not exist yet — render empty page
+        }
 
         View::render('admin/specialties/repository', [
             'tenant' => $tenant,

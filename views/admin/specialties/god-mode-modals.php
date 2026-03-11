@@ -7,10 +7,11 @@
  * - Class Creation (simple form)
  */
 
-use App\Services\SpecialtyService;
-
-// Get categories for dropdown from JSON repository
-$specialtyCategories = SpecialtyService::getCategories();
+// Filter DB categories for specialty-type dropdowns (type 'specialty' or 'both')
+$specialtyCategories = array_values(array_filter(
+    $categories ?? [],
+    fn($c) => in_array($c['type'] ?? 'specialty', ['specialty', 'both'])
+));
 ?>
 
 <!-- Program Type Selector Modal -->

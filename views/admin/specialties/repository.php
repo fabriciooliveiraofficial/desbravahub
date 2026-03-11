@@ -1132,9 +1132,25 @@ $pageIcon = 'school';
                             'description' => $spec['description'] ?? '',
                             'requirements' => $spec['requirements'] ?? [],
                             'category_name' => $data['category']['name'] ?? '',
-                            'category_icon' => $data['category']['icon'] ?? ''
+                            'category_icon' => $data['category']['icon'] ?? '',
+                            'is_learning_program' => $spec['is_learning_program'] ?? false,
+                            'program_id' => $spec['program_id'] ?? null,
                         ];
                         $specJson = htmlspecialchars(json_encode($specData, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+                        // Program data for the edit-details modal (used by learning programs only)
+                        $programJsonEscaped = '';
+                        if (!empty($spec['is_learning_program'])) {
+                            $programData = [
+                                'id'          => $spec['program_id'],
+                                'name'        => $spec['name'],
+                                'icon'        => $spec['badge_icon'],
+                                'description' => $spec['description'] ?? '',
+                                'difficulty'  => $spec['difficulty'] ?? 2,
+                                'is_outdoor'  => ($spec['type'] ?? 'indoor') === 'outdoor' ? 1 : 0,
+                                'category_id' => $data['category']['db_id'] ?? null,
+                            ];
+                            $programJsonEscaped = htmlspecialchars(json_encode($programData, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+                        }
                         ?>
                         <div class="specialty-card" data-name="<?= strtolower($spec['name']) ?>" data-specialty="<?= $specJson ?>"
                             onclick="openSpecialtyModal(this)">
@@ -1175,6 +1191,13 @@ $pageIcon = 'school';
                                     <?= $spec['xp_reward'] ?? 100 ?>
                                 </span>
                                 <div class="card-actions">
+                                    <?php if (!empty($spec['is_learning_program'])): ?>
+                                        <button class="btn-icon-action" title="Editar Informações"
+                                            onclick="event.stopPropagation(); openEditProgramModal(this.dataset.program)"
+                                            data-program="<?= $programJsonEscaped ?>">
+                                            <span class="material-icons-round" style="font-size:18px">settings</span>
+                                        </button>
+                                    <?php endif; ?>
                                     <a href="<?= base_url($tenant['slug'] . '/admin/especialidades/' . $spec['id'] . '/atribuir') ?>"
                                         class="btn-card-assign" onclick="event.stopPropagation();">
                                         <span class="material-icons-round" style="font-size:16px">group_add</span>
@@ -1197,7 +1220,11 @@ $pageIcon = 'school';
     <!-- End Content -->
 
     <?php require BASE_PATH . '/views/admin/partials/icon_picker.php'; ?>
-    <script>var tenantSlug = '<?= $tenant['slug'] ?>';</script>
+    <?php require BASE_PATH . '/views/admin/programs/partials/edit_details_modal.php'; ?>
+    <script>
+        var tenantSlug = '<?= $tenant['slug'] ?>';
+        window.programs_tenantSlug = '<?= $tenant['slug'] ?>';
+    </script>
 
 
 

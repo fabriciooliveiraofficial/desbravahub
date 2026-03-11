@@ -121,11 +121,28 @@ class CategoryController
             return;
         }
 
+        // Ensure schema columns exist before using them
+        try {
+            $cols = array_column(db_fetch_all("SHOW COLUMNS FROM learning_categories"), 'Field');
+            if (!in_array('type', $cols)) {
+                db_query("ALTER TABLE learning_categories ADD COLUMN `type` ENUM('specialty','class','both') NOT NULL DEFAULT 'specialty'");
+            }
+            if (!in_array('sort_order', $cols)) {
+                db_query("ALTER TABLE learning_categories ADD COLUMN `sort_order` INT NOT NULL DEFAULT 0");
+            }
+        } catch (\Exception $e) {
+            // Table structure check failed — continue anyway
+        }
+
         // Get max sort_order
-        $maxOrder = db_fetch_column(
-            "SELECT MAX(sort_order) FROM learning_categories WHERE tenant_id = ?",
-            [$tenant['id']]
-        ) ?? 0;
+        try {
+            $maxOrder = (int) (db_fetch_column(
+                "SELECT MAX(sort_order) FROM learning_categories WHERE tenant_id = ?",
+                [$tenant['id']]
+            ) ?? 0);
+        } catch (\Exception $e) {
+            $maxOrder = 0;
+        }
 
         try {
             $id = db_insert('learning_categories', [

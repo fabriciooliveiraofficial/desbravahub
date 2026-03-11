@@ -22,8 +22,8 @@ function base_url(string $path = ''): string
 
     $baseUrl = config('app.base_url');
 
-    // If config is missing or set to default local, try to detect from environment/request
-    if (empty($baseUrl) || $baseUrl === 'http://localhost:8080') {
+    // If config is missing, detect from environment or request
+    if (empty($baseUrl)) {
         if ($detectedBaseUrl === null) {
             // Priority 1: Environment variable
             $envUrl = env('APP_BASE_URL');
@@ -36,9 +36,9 @@ function base_url(string $path = ''): string
                 $host = $_SERVER['HTTP_HOST'];
                 $detectedBaseUrl = $protocol . '://' . $host;
             }
-            // Priority 3: Hardcoded fallback (only if everything else fails)
+            // Priority 3: No server context (CLI/cron) — use relative paths
             else {
-                $detectedBaseUrl = 'http://localhost:8080';
+                $detectedBaseUrl = '';
             }
         }
         $baseUrl = $detectedBaseUrl;

@@ -40,3 +40,7 @@ Thumbs.db
 *.rar
 *.pdf
 /DesbravaHub-v00001.zip
+
+# Scripts temporários de manutenção
+public/export_schema.php
+tmp_migrate.php

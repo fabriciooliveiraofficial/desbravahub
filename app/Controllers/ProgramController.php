@@ -34,12 +34,29 @@ class ProgramController
      */
     private function getCategories(int $tenantId): array
     {
-        $sql = "SELECT * FROM learning_categories WHERE tenant_id = ? AND status = 'active' ORDER BY name";
-        $categories = db_fetch_all($sql, [$tenantId]);
+        // Check if type column exists before filtering by it
+        $hasType = false;
+        try {
+            $cols = array_column(db_fetch_all("SHOW COLUMNS FROM learning_categories LIKE 'type'"), 'Field');
+            $hasType = !empty($cols);
+        } catch (\Exception $e) {}
+
+        $typeFilter = $hasType ? " AND type IN ('class', 'both')" : '';
+        $sql = "SELECT * FROM learning_categories WHERE tenant_id = ? AND status = 'active'{$typeFilter} ORDER BY name";
+
+        try {
+            $categories = db_fetch_all($sql, [$tenantId]);
+        } catch (\Exception $e) {
+            $categories = [];
+        }
 
         if (empty($categories)) {
             $this->seedCategories($tenantId);
-            $categories = db_fetch_all($sql, [$tenantId]);
+            try {
+                $categories = db_fetch_all($sql, [$tenantId]);
+            } catch (\Exception $e) {
+                $categories = [];
+            }
         }
 
         return $categories;

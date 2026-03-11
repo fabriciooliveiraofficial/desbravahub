@@ -30,7 +30,8 @@
       "Bash(docker exec desbravahub_app composer require dompdf/dompdf:^3.0 --no-interaction)",
       "Bash(docker exec desbravahub_app php /var/www/html/database/migrate_certificates.php)",
       "Bash(docker exec desbravahub_db mysql -u root -proot u714643564_db_desbravahub -e \"DESCRIBE notification_reads;\")",
-      "Bash(docker exec desbravahub_app php -r \":*)"
+      "Bash(docker exec desbravahub_app php -r \":*)",
+      "Bash(grep -n \"specialtyCategories\\\\|SpecialtyService::getCategories\\\\|categories\\\\.json\\\\|$categories\" views/admin/partials/god-mode-modals.php)"
     ]
   }
 }
