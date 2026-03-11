@@ -25,11 +25,44 @@ class SpecialtyController
         $tenant = App::tenant();
         $user = App::user();
 
-        // All categories are now user-managed via learning_categories table
+        // 1. Load Master Repository (JSON-based standard specialties)
         $categories = [];
         $grouped = [];
 
-        // Add Learning Engine categories and programs
+        $masterCategories = SpecialtyService::getCategories();
+        $allSpecialties = SpecialtyService::getSpecialties($tenant['id']);
+
+        foreach ($masterCategories as $cat) {
+            $catId = $cat['id'];
+
+            // Get specialties belonging to this category
+            $catSpecs = array_values(array_filter($allSpecialties, function($s) use ($catId) {
+                return ($s['category_id'] ?? '') === $catId;
+            }));
+
+            $categories[] = [
+                'id' => $catId,
+                'name' => $cat['name'],
+                'icon' => $cat['icon'] ?? '📘',
+                'color' => $cat['color'] ?? '#00d9ff',
+                'description' => $cat['description'] ?? '',
+                'is_learning_category' => false
+            ];
+
+            $grouped[$catId] = [
+                'category' => [
+                    'id' => $catId,
+                    'name' => $cat['name'],
+                    'icon' => $cat['icon'] ?? '📘',
+                    'color' => $cat['color'] ?? '#00d9ff',
+                    'description' => $cat['description'] ?? '',
+                    'is_learning_category' => false
+                ],
+                'specialties' => $catSpecs
+            ];
+        }
+
+        // 2. Merge Learning Engine categories and programs (DB-driven)
         try {
             $learningCategories = db_fetch_all(
                 "SELECT * FROM learning_categories WHERE tenant_id = ? AND status = 'active' AND type IN ('specialty', 'both') ORDER BY sort_order, name",
@@ -37,7 +70,7 @@ class SpecialtyController
             );
 
             foreach ($learningCategories as $lCat) {
-                $catId = $lCat['id'];
+                $catId = 'lc_' . $lCat['id'];
 
                 // Get programs in this category
                 $programs = db_fetch_all(
