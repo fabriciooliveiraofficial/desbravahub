@@ -114,6 +114,7 @@ class NotificationService
                AND (n.user_id = ? OR n.user_id IS NULL)
                AND n.read_at IS NULL
                AND nr.id IS NULL
+               AND n.channels LIKE '%\"toast\"%'
              ORDER BY n.created_at DESC
              LIMIT ?",
             [$userId, $tenantId, $userId, $limit]
@@ -130,6 +131,7 @@ class NotificationService
         return db_fetch_all(
             "SELECT * FROM notifications 
              WHERE tenant_id = ? AND (user_id = ? OR user_id IS NULL)
+               AND channels LIKE '%\"toast\"%'
              ORDER BY created_at DESC
              LIMIT ?",
             [$tenantId, $userId, $limit]
@@ -198,7 +200,8 @@ class NotificationService
              WHERE n.tenant_id = ?
                AND (n.user_id = ? OR n.user_id IS NULL)
                AND n.read_at IS NULL
-               AND nr.id IS NULL",
+               AND nr.id IS NULL
+               AND n.channels LIKE '%\"toast\"%'",
             [$userId, $tenantId, $userId]
         );
     }

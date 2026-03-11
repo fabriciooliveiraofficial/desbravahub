@@ -330,15 +330,21 @@ if (typeof window.ToastNotification !== 'undefined') {
             };
 
             if (icon) {
-                if (icon.startsWith('fa-')) {
-                    // Backwards compatibility for FA classes (try to map known ones)
-                    if (icon.includes('check')) iconHtml = icons.success;
-                    else if (icon.includes('xmark') || icon.includes('times')) iconHtml = icons.error;
-                    else if (icon.includes('exclamation') || icon.includes('warning')) iconHtml = icons.warning;
-                    else if (icon.includes('question')) iconHtml = icons.question;
-                    else iconHtml = `<i class="${icon} toast-icon"></i>`; // Fallback to class
-                } else if (icon.includes('<svg')) {
+                if (icon.includes('<svg')) {
                     iconHtml = icon; // Already SVG
+                } else if (icon.startsWith('http') || icon.startsWith('/') || icon.endsWith('.png') || icon.endsWith('.jpg') || icon.endsWith('.svg')) {
+                    iconHtml = `<img src="${icon}" class="toast-icon" alt="" style="object-fit: contain; border-radius: 4px;">`;
+                } else if (/^(fa-|fas |far |fal |fab |ti |ti-|ph-|la |bx |bx-|md-|material-icons)/i.test(icon) || (icon.length > 3 && icon.includes('-'))) {
+                    // It's likely an icon class
+                    if (icon.includes('fa-') && (icon.includes('check') || icon.includes('xmark') || icon.includes('times') || icon.includes('exclamation') || icon.includes('warning') || icon.includes('question'))) {
+                        // Backwards compatibility for known FA classes to use SVGs
+                        if (icon.includes('check')) iconHtml = icons.success;
+                        else if (icon.includes('xmark') || icon.includes('times')) iconHtml = icons.error;
+                        else if (icon.includes('exclamation') || icon.includes('warning')) iconHtml = icons.warning;
+                        else if (icon.includes('question')) iconHtml = icons.question;
+                    } else {
+                        iconHtml = `<i class="${icon} toast-icon"></i>`; // Fallback to class
+                    }
                 } else {
                     iconHtml = `<span class="toast-icon">${icon}</span>`; // Text/Emoji
                 }
