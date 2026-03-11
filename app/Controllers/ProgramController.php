@@ -34,15 +34,8 @@ class ProgramController
      */
     private function getCategories(int $tenantId): array
     {
-        // Check if type column exists before filtering by it
-        $hasType = false;
-        try {
-            $cols = array_column(db_fetch_all("SHOW COLUMNS FROM learning_categories LIKE 'type'"), 'Field');
-            $hasType = !empty($cols);
-        } catch (\Exception $e) {}
-
-        $typeFilter = $hasType ? " AND type IN ('class', 'both')" : '';
-        $sql = "SELECT * FROM learning_categories WHERE tenant_id = ? AND status = 'active'{$typeFilter} ORDER BY name";
+        // No type filter — program editor needs all categories (specialty, class, both)
+        $sql = "SELECT * FROM learning_categories WHERE tenant_id = ? AND status = 'active' ORDER BY name";
 
         try {
             $categories = db_fetch_all($sql, [$tenantId]);

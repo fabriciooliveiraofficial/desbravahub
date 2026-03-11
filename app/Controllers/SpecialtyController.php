@@ -1499,7 +1499,7 @@ class SpecialtyController
         $user = App::user();
         $role = $user['role_name'] ?? '';
 
-        if (!in_array($role, ['admin', 'director', 'counselor'])) {
+        if (!in_array($role, ['admin', 'director', 'associate_director', 'instructor', 'counselor'])) {
             error_log("SpecialtyController::requireLeadership - Access Denied: User " . ($user['id'] ?? 'unknown') . " with role $role tried to access leadership specialty features.");
 
             $isHtmx = !empty($_SERVER['HTTP_HX_REQUEST']);

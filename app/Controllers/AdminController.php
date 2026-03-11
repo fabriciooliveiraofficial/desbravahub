@@ -666,11 +666,29 @@ public function deleteUser(array $params): void
         $grouped = [];
 
         try {
+            // Detect columns — add missing ones if needed (mirrors SpecialtyController)
+            $lcCols = [];
+            try { $lcCols = array_column(db_fetch_all("SHOW COLUMNS FROM learning_categories"), 'Field'); } catch (\Exception $e) {}
+
+            if (!empty($lcCols) && !in_array('type', $lcCols)) {
+                try { db_query("ALTER TABLE learning_categories ADD COLUMN `type` ENUM('specialty','class','both') NOT NULL DEFAULT 'specialty'"); } catch (\Exception $e) {}
+                $lcCols[] = 'type';
+            }
+            if (!empty($lcCols) && !in_array('sort_order', $lcCols)) {
+                try { db_query("ALTER TABLE learning_categories ADD COLUMN `sort_order` INT NOT NULL DEFAULT 0"); } catch (\Exception $e) {}
+                $lcCols[] = 'sort_order';
+            }
+
+            $hasType = in_array('type', $lcCols);
+            $hasSort = in_array('sort_order', $lcCols);
+            $typeFilter = $hasType ? " AND type IN ('class', 'both')" : '';
+            $orderBy    = $hasSort ? 'sort_order, name' : 'name';
+
             // Get categories that are classes
             $learningCategories = db_fetch_all(
-                "SELECT * FROM learning_categories 
-                 WHERE tenant_id = ? AND status = 'active' AND type IN ('class', 'both') 
-                 ORDER BY sort_order, name",
+                "SELECT * FROM learning_categories
+                 WHERE tenant_id = ? AND status = 'active'{$typeFilter}
+                 ORDER BY {$orderBy}",
                 [$tenant['id']]
             );
 

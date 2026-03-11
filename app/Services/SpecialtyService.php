@@ -30,15 +30,38 @@ class SpecialtyService
     }
 
     /**
-     * Get category by ID
+     * Get category by ID — checks JSON repository first, then DB-created categories
      */
     public static function getCategory(string $id): ?array
     {
+        // 1. Search static JSON repository
         foreach (self::getCategories() as $cat) {
             if ($cat['id'] === $id) {
                 return $cat;
             }
         }
+
+        // 2. Search DB (supports categories created via Mission Control)
+        // Handles both raw numeric IDs and 'lc_<id>' prefixed IDs
+        $dbId = str_starts_with($id, 'lc_') ? substr($id, 3) : $id;
+        if (is_numeric($dbId)) {
+            try {
+                $row = db_fetch_one("SELECT * FROM learning_categories WHERE id = ?", [(int) $dbId]);
+                if ($row) {
+                    return [
+                        'id'          => 'lc_' . $row['id'],
+                        'name'        => $row['name'],
+                        'color'       => $row['color'] ?? '#00d9ff',
+                        'icon'        => $row['icon'] ?? '📂',
+                        'description' => $row['description'] ?? '',
+                        'is_learning_category' => true,
+                    ];
+                }
+            } catch (\Exception $e) {
+                // DB not available or table missing — fall through
+            }
+        }
+
         return null;
     }
 
