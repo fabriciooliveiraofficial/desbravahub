@@ -22,27 +22,34 @@ class ClubProfileController
         $tenant = App::tenant();
         $user = App::user();
 
+        // Auto-repair: ensure all profile columns exist
+        $this->repairProfileColumns();
+
         // Ensure club_profiles record exists
         $profile = db_fetch_one("SELECT * FROM club_profiles WHERE tenant_id = ?", [$tenant['id']]);
 
         // If not, pre-fill with tenant data
         if (!$profile) {
             $profile = [
-                'display_name' => $tenant['name'],
-                'slug' => $tenant['slug'],
-                'logo_url' => $tenant['logo_url'],
-                'cover_image_url' => '',
-                'meeting_address' => '',
-                'meeting_time' => '',
-                'social_instagram' => '',
+                'display_name'       => $tenant['name'],
+                'slug'               => $tenant['slug'],
+                'logo_url'           => $tenant['logo_url'],
+                'cover_image_url'    => '',
+                'meeting_address'    => '',
+                'meeting_time'       => '',
+                'social_instagram'   => '',
                 'social_whatsapp_group' => '',
-                'welcome_message' => 'Bem-vindo ao nosso clube!',
-                'leaders_json' => '[]',
+                'welcome_message'    => 'Bem-vindo ao nosso clube!',
+                'leaders_json'       => '[]',
                 'seo_meta_description' => '',
-                'club_motto' => '',
-                'club_vow' => '',
-                'club_law' => '',
-                'layout_vibe' => 'hybrid'
+                'club_motto'         => '',
+                'club_vow'           => '',
+                'club_law'           => '',
+                'layout_vibe'        => 'hybrid',
+                'hero_banner_type'   => 'image',
+                'hero_banner_url'    => '',
+                'hero_headline'      => '',
+                'hero_subheadline'   => '',
             ];
         }
 
@@ -67,24 +74,34 @@ class ClubProfileController
         $this->requireAdmin();
 
         $tenant = App::tenant();
-        
-        // Allowed fields
-        $data = [
-            'display_name' => $_POST['display_name'] ?? '',
-            'slug' => $_POST['slug'] ?? '',
-            'logo_url' => $_POST['logo_url'] ?? '',
-            'cover_image_url' => $_POST['cover_image_url'] ?? '',
-            'meeting_address' => $_POST['meeting_address'] ?? '',
-            'meeting_time' => $_POST['meeting_time'] ?? '',
-            'social_instagram' => $_POST['social_instagram'] ?? '',
+
+        // Repair any missing columns and get confirmed column list
+        $existingCols = $this->repairProfileColumns();
+
+        // Build full desired payload — all fields the form submits
+        $payload = [
+            'display_name'          => $_POST['display_name'] ?? '',
+            'slug'                  => $_POST['slug'] ?? '',
+            'logo_url'              => $_POST['logo_url'] ?? '',
+            'cover_image_url'       => $_POST['cover_image_url'] ?? '',
+            'meeting_address'       => $_POST['meeting_address'] ?? '',
+            'meeting_time'          => $_POST['meeting_time'] ?? '',
+            'social_instagram'      => $_POST['social_instagram'] ?? '',
             'social_whatsapp_group' => $_POST['social_whatsapp_group'] ?? '',
-            'welcome_message' => $_POST['welcome_message'] ?? '',
-            'seo_meta_description' => $_POST['seo_meta_description'] ?? '',
-            'club_motto' => $_POST['club_motto'] ?? '',
-            'club_vow' => $_POST['club_vow'] ?? '',
-            'club_law' => $_POST['club_law'] ?? '',
-            'layout_vibe' => $_POST['layout_vibe'] ?? 'hybrid'
+            'welcome_message'       => $_POST['welcome_message'] ?? '',
+            'seo_meta_description'  => $_POST['seo_meta_description'] ?? '',
+            'club_motto'            => $_POST['club_motto'] ?? '',
+            'club_vow'              => $_POST['club_vow'] ?? '',
+            'club_law'              => $_POST['club_law'] ?? '',
+            'layout_vibe'           => $_POST['layout_vibe'] ?? 'hybrid',
+            'hero_banner_type'      => in_array($_POST['hero_banner_type'] ?? '', ['image', 'youtube']) ? $_POST['hero_banner_type'] : 'image',
+            'hero_banner_url'       => trim($_POST['hero_banner_url'] ?? ''),
+            'hero_headline'         => mb_substr(trim($_POST['hero_headline'] ?? ''), 0, 255),
+            'hero_subheadline'      => mb_substr(trim($_POST['hero_subheadline'] ?? ''), 0, 500),
         ];
+
+        // Only send fields whose columns actually exist in the DB (safe against schema drift)
+        $data = array_intersect_key($payload, array_flip($existingCols));
 
         // Ensure slug is unique but ignoring own tenant
         $slugCheck = db_fetch_one("SELECT tenant_id FROM club_profiles WHERE slug = ? AND tenant_id != ?", [$data['slug'], $tenant['id']]);
@@ -107,17 +124,25 @@ class ClubProfileController
                 $data['tenant_id'] = $tenant['id'];
                 db_insert('club_profiles', $data);
             }
-            
-            // Generate QR Code if it doesn't exist
-            $this->generateOfflineCacheQrCode($tenant['id'], $data['slug']);
-
-            $this->json([
-                'success' => true,
-                'message' => 'Perfil atualizado com sucesso!'
-            ]);
         } catch (\Exception $e) {
             $this->jsonError('Erro ao atualizar perfil: ' . $e->getMessage());
+            return;
         }
+
+        // Invalidate public landing page cache so changes are visible immediately
+        clear_club_landing_cache($tenant['id']);
+
+        // QR Code generation is best-effort — never block the save response
+        try {
+            $this->generateOfflineCacheQrCode($tenant['id'], $data['slug']);
+        } catch (\Exception $e) {
+            error_log('QR Code generation failed (non-fatal): ' . $e->getMessage());
+        }
+
+        $this->json([
+            'success' => true,
+            'message' => 'Perfil atualizado com sucesso!'
+        ]);
     }
 
     /**
@@ -235,6 +260,46 @@ class ClubProfileController
         }
 
         return $dbPath;
+    }
+
+    /**
+     * Repair missing columns in club_profiles (auto-migration / zero-downtime).
+     * Returns the list of column names that exist after the repair attempt.
+     */
+    private function repairProfileColumns(): array
+    {
+        $needed = [
+            'cover_image_url'   => "ALTER TABLE `club_profiles` ADD COLUMN `cover_image_url` VARCHAR(255) NULL",
+            'seo_meta_description' => "ALTER TABLE `club_profiles` ADD COLUMN `seo_meta_description` VARCHAR(160) NULL",
+            'club_motto'        => "ALTER TABLE `club_profiles` ADD COLUMN `club_motto` VARCHAR(255) NULL",
+            'club_vow'          => "ALTER TABLE `club_profiles` ADD COLUMN `club_vow` TEXT NULL",
+            'club_law'          => "ALTER TABLE `club_profiles` ADD COLUMN `club_law` TEXT NULL",
+            'layout_vibe'       => "ALTER TABLE `club_profiles` ADD COLUMN `layout_vibe` VARCHAR(20) NOT NULL DEFAULT 'hybrid'",
+            'hero_banner_type'  => "ALTER TABLE `club_profiles` ADD COLUMN `hero_banner_type` ENUM('image','youtube') NOT NULL DEFAULT 'image'",
+            'hero_banner_url'   => "ALTER TABLE `club_profiles` ADD COLUMN `hero_banner_url` VARCHAR(255) NULL",
+            'hero_headline'     => "ALTER TABLE `club_profiles` ADD COLUMN `hero_headline` VARCHAR(255) NULL",
+            'hero_subheadline'  => "ALTER TABLE `club_profiles` ADD COLUMN `hero_subheadline` TEXT NULL",
+        ];
+        try {
+            $existing = db_fetch_all("SHOW COLUMNS FROM `club_profiles`");
+            $cols     = array_column($existing, 'Field');
+            foreach ($needed as $col => $sql) {
+                if (!in_array($col, $cols)) {
+                    try {
+                        db_query($sql);
+                        $cols[] = $col;
+                    } catch (\Exception $e) {
+                        error_log("repairProfileColumns: could not add '{$col}': " . $e->getMessage());
+                    }
+                }
+            }
+            return $cols;
+        } catch (\Exception $e) {
+            error_log('repairProfileColumns SHOW COLUMNS failed: ' . $e->getMessage());
+            // Return minimal safe set so the save still works for original columns
+            return ['display_name','slug','logo_url','meeting_address','meeting_time',
+                    'social_instagram','social_whatsapp_group','welcome_message','leaders_json'];
+        }
     }
 
     private function requireAdmin(): void

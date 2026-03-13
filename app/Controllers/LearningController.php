@@ -105,30 +105,36 @@ class LearningController
         $programId = (int) ($params['id'] ?? 0);
 
         // Get program with user progress
-        // Logic: ID can be Program ID (admin/direct) OR Assignment ID (dashboard link)
-        
+        // Logic: ID can be Program ID (admin/direct) OR Assignment ID (user_program_progress.id)
+        // Assignment IDs can collide with Program IDs numerically, so we must try both in order.
+
         // 1. Try to find by Program ID (Resource)
         $program = db_fetch_one("
             SELECT p.*, c.name as category_name, c.color as category_color, c.icon as category_icon,
-                   up.id as progress_id, up.status as user_status, up.progress_percent, 
+                   up.id as progress_id, up.status as user_status, up.progress_percent,
                    up.version_id, up.started_at
             FROM learning_programs p
             LEFT JOIN learning_categories c ON p.category_id = c.id
-            LEFT JOIN user_program_progress up ON up.program_id = p.id AND up.user_id = ?
+            LEFT JOIN user_program_progress up ON up.program_id = p.id AND up.user_id = ? AND up.tenant_id = ?
             WHERE p.id = ? AND p.tenant_id = ?
-        ", [$user['id'], $programId, $tenant['id']]);
+        ", [$user['id'], $tenant['id'], $programId, $tenant['id']]);
 
-        // 2. If not found, try to find by Assignment ID (up.id)
-        if (!$program) {
-             $program = db_fetch_one("
+        // 2. If not found by Program ID, OR found but user has no assignment (progress_id IS NULL),
+        //    try to find by Assignment ID (up.id) — handles notifications that use assignment IDs in URLs.
+        if (!$program || !$program['progress_id']) {
+            $byAssignment = db_fetch_one("
                 SELECT p.*, c.name as category_name, c.color as category_color, c.icon as category_icon,
-                       up.id as progress_id, up.status as user_status, up.progress_percent, 
+                       up.id as progress_id, up.status as user_status, up.progress_percent,
                        up.version_id, up.started_at
                 FROM user_program_progress up
                 JOIN learning_programs p ON up.program_id = p.id
                 LEFT JOIN learning_categories c ON p.category_id = c.id
                 WHERE up.id = ? AND up.user_id = ? AND up.tenant_id = ?
             ", [$programId, $user['id'], $tenant['id']]);
+
+            if ($byAssignment) {
+                $program = $byAssignment;
+            }
         }
 
         if (!$program) {
@@ -584,31 +590,6 @@ class LearningController
                 'submitted_at' => date('Y-m-d H:i:s')
             ], 'id = ?', [$progress['id']]);
 
-            // SELF-HEALING: Verify if 'submitted' was actually saved. 
-            // If not, it means the column is an ENUM that doesn't support it.
-            $verify = db_fetch_one("SELECT status FROM user_program_progress WHERE id = ?", [$progress['id']]);
-            if ($verify && $verify['status'] !== 'submitted') {
-                // Fix schema dynamically
-                try {
-                    // Force commit previous attempts
-                    db_commit(); 
-                    
-                    // ALTER requires no active transaction in some DBs, or causes implicit commit
-                    db_query("ALTER TABLE user_program_progress MODIFY COLUMN status VARCHAR(50) NOT NULL DEFAULT 'not_started'");
-                    
-                    // Start new transaction for the retry
-                    db_begin();
-                    
-                    // Retry update
-                    db_update('user_program_progress', [
-                        'status' => 'submitted',
-                        'submitted_at' => date('Y-m-d H:i:s')
-                    ], 'id = ?', [$progress['id']]);
-                } catch (\Throwable $ex) {
-                    error_log("Failed to auto-fix schema: " . $ex->getMessage());
-                }
-            }
-
             // 4. Log activity
             $anyResponse = db_fetch_one("SELECT id FROM user_step_responses WHERE progress_id = ? LIMIT 1", [$progress['id']]);
             if ($anyResponse) {
@@ -617,7 +598,7 @@ class LearningController
                     'response_id' => (int) $anyResponse['id'],
                     'action' => 'submitted',
                     'performed_by' => $user['id'],
-                    'notes' => "Enviou todas as respostas do programa #{$programId}"
+                    'notes' => "Enviou todas as respostas do programa #{$progress['program_id']}"
                 ]);
             }
 

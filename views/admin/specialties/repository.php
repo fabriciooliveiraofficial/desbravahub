@@ -492,16 +492,15 @@ $pageIcon = 'school';
     }
 
     .btn-card-assign {
-        display: inline-flex;
+        width: 32px;
+        height: 32px;
+        display: flex;
         align-items: center;
-        gap: 6px;
-        padding: 8px 16px;
+        justify-content: center;
         background: linear-gradient(135deg, var(--primary), var(--primary-hover));
         color: white;
         border: none;
         border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.85rem;
         text-decoration: none;
         cursor: pointer;
         transition: all 0.2s;
@@ -1199,9 +1198,8 @@ $pageIcon = 'school';
                                         </button>
                                     <?php endif; ?>
                                     <a href="<?= base_url($tenant['slug'] . '/admin/especialidades/' . $spec['id'] . '/atribuir') ?>"
-                                        class="btn-card-assign" onclick="event.stopPropagation();">
-                                        <span class="material-icons-round" style="font-size:16px">group_add</span>
-                                        Atribuir
+                                        class="btn-card-assign" title="Atribuir" onclick="event.stopPropagation();">
+                                        <span class="material-icons-round" style="font-size:18px">rocket_launch</span>
                                     </a>
                                     <button class="btn-icon-action" title="Editar" onclick="openEditModal(`<?= htmlspecialchars(json_encode($spec)) ?>`)">
                                         <span class="material-icons-round" style="font-size:18px">edit</span>

@@ -358,9 +358,8 @@ $pageIcon = 'school';
                         </span>
                         <div class="card-actions">
                             <a href="<?= base_url($tenant['slug'] . '/admin/especialidades/prog_' . $spec['id'] . '/atribuir') ?>"
-                                class="btn-card-assign" onclick="event.stopPropagation();">
-                                <span class="material-icons-round" style="font-size:16px">group_add</span>
-                                Atribuir
+                                class="btn-icon-action" title="Atribuir" onclick="event.stopPropagation();">
+                                <span class="material-icons-round" style="font-size:18px">rocket_launch</span>
                             </a>
                             <button class="btn-icon-action" title="Editar" onclick="openEditModal(`<?= htmlspecialchars(json_encode($spec)) ?>`)">
                                 <span class="material-icons-round" style="font-size:18px">edit</span>

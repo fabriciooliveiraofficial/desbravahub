@@ -56,7 +56,11 @@ class AuthMiddleware
             if ($isAjax) {
                 http_response_code(401);
                 header('Content-Type: application/json');
-                echo json_encode(['error' => 'Sessão inválida para este clube. Faça login novamente.', 'redirect' => base_url($tenant['slug'] . '/login')]);
+                $response = ['error' => 'Sessão inválida para este clube. Faça login novamente.'];
+                if (!$this->isBackgroundRequest()) {
+                    $response['redirect'] = base_url($tenant['slug'] . '/login');
+                }
+                echo json_encode($response);
                 return false;
             }
             
@@ -108,11 +112,15 @@ class AuthMiddleware
         if ($this->isAjaxRequest()) {
             http_response_code(401);
             header('Content-Type: application/json');
-            
+
             $tenant = App::tenant();
             $redirect = $tenant ? base_url($tenant['slug'] . '/login') : base_url('login');
-            
-            echo json_encode(['error' => $message, 'redirect' => $redirect]);
+
+            $response = ['error' => $message];
+            if (!$this->isBackgroundRequest()) {
+                $response['redirect'] = $redirect;
+            }
+            echo json_encode($response);
             exit;
         }
 
@@ -146,8 +154,25 @@ class AuthMiddleware
      */
     private function isAjaxRequest(): bool
     {
-        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) 
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
             || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
             || !empty($_SERVER['HTTP_HX_REQUEST']);
+    }
+
+    /**
+     * Determine if this is a background/fire-and-forget request (e.g. notification read receipts).
+     * Background requests should receive a 401 error WITHOUT a redirect URL so the client
+     * never performs a window-level navigation on a background failure.
+     */
+    private function isBackgroundRequest(): bool
+    {
+        if (!empty($_SERVER['HTTP_X_BACKGROUND_REQUEST'])) {
+            return true;
+        }
+        
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        return strpos($uri, '/api/notifications') !== false 
+            || strpos($uri, '/api/push') !== false 
+            || substr($uri, -7) === '/unread';
     }
 }

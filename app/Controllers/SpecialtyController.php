@@ -273,31 +273,33 @@ class SpecialtyController
 
                 // Build deep link URL for notification
                 $isProgram = str_starts_with($specialtyId, 'prog_');
-                $assignmentId = db_fetch_column(
-                    "SELECT id FROM specialty_assignments WHERE specialty_id = ? AND user_id = ? ORDER BY id DESC LIMIT 1",
-                    [$specialtyId, $userId]
-                );
-                $deepLinkUrl = $assignmentId 
-                    ? base_url($tenant['slug'] . '/especialidades/' . $assignmentId)
-                    : base_url($tenant['slug'] . '/especialidades');
-
-                // Send notification with deep link
                 $notificationService = new NotificationService();
                 if ($isProgram) {
+                    // Use Program ID in the URL — Assignment IDs can collide with Program IDs
+                    // in LearningController::show(), causing 403 errors for valid assignments.
+                    $programId = (int) str_replace('prog_', '', $specialtyId);
+                    $deepLinkUrl = base_url($tenant['slug'] . '/aprendizado/' . $programId);
                     $notificationService->send(
                         (int) $userId,
                         'program_assigned',
                         '📚 Novo Programa',
                         "Você recebeu o programa '{$specialty['name']}' para completar.",
-                        ['data' => ['program_id' => str_replace('prog_', '', $specialtyId), 'url' => $deepLinkUrl], 'channels' => ['toast', 'push']]
+                        ['data' => ['program_id' => $programId, 'link' => $deepLinkUrl], 'channels' => ['toast', 'push']]
                     );
                 } else {
+                    $assignmentId = db_fetch_column(
+                        "SELECT id FROM specialty_assignments WHERE specialty_id = ? AND user_id = ? ORDER BY id DESC LIMIT 1",
+                        [$specialtyId, $userId]
+                    );
+                    $deepLinkUrl = $assignmentId
+                        ? base_url($tenant['slug'] . '/especialidades/' . $assignmentId)
+                        : base_url($tenant['slug'] . '/especialidades');
                     $notificationService->send(
                         (int) $userId,
                         'specialty_assigned',
                         '🎯 Nova Especialidade',
                         "Você recebeu a especialidade '{$specialty['name']}' para completar.",
-                        ['data' => ['specialty_id' => $specialtyId, 'url' => $deepLinkUrl], 'channels' => ['toast', 'push']]
+                        ['data' => ['specialty_id' => $specialtyId, 'link' => $deepLinkUrl], 'channels' => ['toast', 'push']]
                     );
                 }
 
@@ -339,9 +341,26 @@ class SpecialtyController
         $permissionService = new \App\Services\PermissionService();
         $canForceDelete = $permissionService->can('specialties.delete_active');
 
+        // Capture assignment details before deletion so we can notify the pathfinder
+        $assignment = SpecialtyService::getUnifiedAssignment($assignmentId, $tenant['id']);
+        $assignedUserId = $assignment['user_id'] ?? null;
+        $missionName    = $assignment['specialty']['name'] ?? 'missão';
+
         $success = SpecialtyService::deleteAssignment($assignmentId, $tenant['id'], $canForceDelete);
 
         if ($success) {
+            // Notify the pathfinder that their assignment was removed
+            if ($assignedUserId) {
+                $notificationService = new NotificationService();
+                $notificationService->send(
+                    (int) $assignedUserId,
+                    'mission_removed',
+                    '⚠️ Missão Removida',
+                    "A missão '{$missionName}' foi removida e não está mais disponível.",
+                    ['channels' => ['toast', 'push'], 'data' => ['customSound' => true]]
+                );
+            }
+
             echo json_encode(['success' => true, 'message' => 'Missão removida com sucesso!']);
         } else {
             http_response_code(400);
@@ -1497,7 +1516,7 @@ class SpecialtyController
     private function requireLeadership(): void
     {
         $user = App::user();
-        $role = $user['role_name'] ?? '';
+        $role = strtolower($user['role_name'] ?? '');
 
         if (!in_array($role, ['admin', 'director', 'associate_director', 'instructor', 'counselor'])) {
             error_log("SpecialtyController::requireLeadership - Access Denied: User " . ($user['id'] ?? 'unknown') . " with role $role tried to access leadership specialty features.");

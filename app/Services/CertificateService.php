@@ -207,13 +207,24 @@ class CertificateService
      */
     public static function streamPdf(array $cert, array $certData): void
     {
-        // Regenerate file if missing or not yet created
         $path = self::getPdfPath($cert['certificate_hash'], (int) $cert['tenant_id']);
 
+        // Lazy-generate if the file is missing
         if (!file_exists($path)) {
-            self::writePdf($cert['certificate_hash'], (int) $cert['tenant_id'], $certData);
-            // Persist path in DB
-            db_update('issued_certificates', ['file_path' => self::relativePath($cert['certificate_hash'], (int) $cert['tenant_id'])], 'id = ?', [$cert['id']]);
+            try {
+                self::writePdf($cert['certificate_hash'], (int) $cert['tenant_id'], $certData);
+                db_update('issued_certificates', ['file_path' => self::relativePath($cert['certificate_hash'], (int) $cert['tenant_id'])], 'id = ?', [$cert['id']]);
+            } catch (\Throwable $e) {
+                error_log('[CertificateService] streamPdf: lazy generation failed: ' . $e->getMessage());
+                http_response_code(500);
+                echo 'Erro ao gerar certificado. Por favor, tente novamente.';
+                exit;
+            }
+        }
+
+        // Flush any accumulated output (warnings, whitespace) before sending the binary file
+        while (ob_get_level() > 0) {
+            ob_end_clean();
         }
 
         $filename = 'certificado-' . substr($cert['certificate_hash'], 0, 8) . '.pdf';
@@ -222,6 +233,7 @@ class CertificateService
         header('Content-Length: ' . filesize($path));
         header('Cache-Control: private, max-age=0, must-revalidate');
         readfile($path);
+        exit;
     }
 
     // ----------------------------------------------------------------
@@ -280,9 +292,19 @@ class CertificateService
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html, 'UTF-8');
         $dompdf->setPaper('A4', 'landscape');
-        $dompdf->render();
 
-        file_put_contents(self::getPdfPath($hash, $tenantId), $dompdf->output());
+        try {
+            $dompdf->render();
+        } catch (\Throwable $e) {
+            throw new \RuntimeException('Dompdf render failed: ' . $e->getMessage(), 0, $e);
+        }
+
+        $pdf = $dompdf->output();
+        if (empty($pdf)) {
+            throw new \RuntimeException('Dompdf returned empty output for hash ' . $hash);
+        }
+
+        file_put_contents(self::getPdfPath($hash, $tenantId), $pdf);
     }
 
     private static function getPdfPath(string $hash, int $tenantId): string

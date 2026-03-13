@@ -119,9 +119,9 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
                                 </a>
 
                                 <?php if ($program['status'] === 'published' || $program['status'] === 'active' || empty($program['status'])): ?>
-                                    <a href="<?= base_url($programs_tenantSlug . '/admin/especialidades/prog_' . $program['id'] . '/atribuir') ?>" 
-                                       class="btn-card-assign">
-                                        <span class="material-icons-round" style="font-size:16px">group_add</span> Atribuir
+                                    <a href="<?= base_url($programs_tenantSlug . '/admin/especialidades/prog_' . $program['id'] . '/atribuir') ?>"
+                                       class="btn-icon-action" title="Atribuir">
+                                        <span class="material-icons-round" style="font-size:18px">rocket_launch</span>
                                     </a>
                                 <?php elseif ($program['status'] === 'draft'): ?>
                                     <button class="btn-icon-action" title="Publicar" onclick="publishProgram(<?= $program['id'] ?>)">

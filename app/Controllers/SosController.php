@@ -41,9 +41,10 @@ class SosController
             }
 
             // Read JSON body
-            $input = json_decode(file_get_contents('php://input'), true);
-            $lat = $input['lat'] ?? null;
-            $lng = $input['lng'] ?? null;
+            $input    = json_decode(file_get_contents('php://input'), true);
+            $lat      = isset($input['lat'])      ? (float) $input['lat']      : null;
+            $lng      = isset($input['lng'])      ? (float) $input['lng']      : null;
+            $accuracy = isset($input['accuracy']) ? (float) $input['accuracy'] : null;
 
             $userName = $user['name'] ?? 'Desbravador';
 
@@ -51,12 +52,14 @@ class SosController
             $locationText = 'Localização não disponível';
             $mapLink = '';
             if ($lat !== null && $lng !== null) {
-                $mapLink = "https://www.google.com/maps?q={$lat},{$lng}";
-                $locationText = "📍 Lat: {$lat}, Lng: {$lng}";
+                // q=lat,lng is the most reliable format for exact pin placement
+                $mapLink      = "https://www.google.com/maps?q={$lat},{$lng}";
+                $precisionStr = $accuracy !== null ? ' (±' . round($accuracy) . 'm)' : '';
+                $locationText = "📍 Lat: {$lat}, Lng: {$lng}{$precisionStr}";
             }
 
             // --- 1. Log the SOS event (self-healing table) ---
-            $this->logSosAlert($user['id'], $tenant['id'], $lat, $lng);
+            $this->logSosAlert($user['id'], $tenant['id'], $lat, $lng, $accuracy);
 
             // --- 2. Get all active users in this tenant ---
             $allUsers = $this->getTenantUsers($tenant['id']);
@@ -129,35 +132,43 @@ class SosController
     }
 
     /**
-     * Log SOS alert to database (with self-healing table creation)
+     * Log SOS alert to database (with self-healing table + column creation)
      */
-    private function logSosAlert(int $userId, int $tenantId, ?float $lat, ?float $lng): void
+    private function logSosAlert(int $userId, int $tenantId, ?float $lat, ?float $lng, ?float $accuracy): void
     {
         try {
             db_query("
-                INSERT INTO sos_alerts (user_id, tenant_id, latitude, longitude, created_at)
-                VALUES (?, ?, ?, ?, NOW())
-            ", [$userId, $tenantId, $lat, $lng]);
+                INSERT INTO sos_alerts (user_id, tenant_id, latitude, longitude, accuracy, created_at)
+                VALUES (?, ?, ?, ?, ?, NOW())
+            ", [$userId, $tenantId, $lat, $lng, $accuracy]);
         } catch (\Throwable $e) {
-            // Table might not exist — create it
+            // Table might not exist, or accuracy column is missing — repair then retry
             try {
                 db_query("
                     CREATE TABLE IF NOT EXISTS sos_alerts (
-                        id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-                        user_id INT UNSIGNED NOT NULL,
-                        tenant_id INT UNSIGNED NOT NULL,
-                        latitude DECIMAL(10, 8) NULL,
-                        longitude DECIMAL(11, 8) NULL,
+                        id          INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+                        user_id     INT UNSIGNED NOT NULL,
+                        tenant_id   INT UNSIGNED NOT NULL,
+                        latitude    DECIMAL(10, 8) NULL,
+                        longitude   DECIMAL(11, 8) NULL,
+                        accuracy    DECIMAL(8, 2)  NULL,
                         resolved_at DATETIME NULL,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         INDEX idx_sos_tenant (tenant_id),
-                        INDEX idx_sos_user (user_id)
+                        INDEX idx_sos_user   (user_id)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
                 ");
+
+                // Add accuracy column if the table already existed without it
+                $cols = db_fetch_all("SHOW COLUMNS FROM sos_alerts");
+                if (!in_array('accuracy', array_column($cols, 'Field'), true)) {
+                    db_query("ALTER TABLE sos_alerts ADD COLUMN accuracy DECIMAL(8,2) NULL AFTER longitude");
+                }
+
                 db_query("
-                    INSERT INTO sos_alerts (user_id, tenant_id, latitude, longitude, created_at)
-                    VALUES (?, ?, ?, ?, NOW())
-                ", [$userId, $tenantId, $lat, $lng]);
+                    INSERT INTO sos_alerts (user_id, tenant_id, latitude, longitude, accuracy, created_at)
+                    VALUES (?, ?, ?, ?, ?, NOW())
+                ", [$userId, $tenantId, $lat, $lng, $accuracy]);
             } catch (\Throwable $e2) {
                 error_log('[SOS] DB Error (alert log): ' . $e2->getMessage());
                 // Continue — notification is more important than logging

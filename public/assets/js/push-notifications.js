@@ -10,7 +10,7 @@ class PushNotifications {
         this.registration = null;
         this.initialized = false;
         this.apiEndpoint = null;
-        this.debug = true;
+        this.debug = false;
     }
 
     log(...args) {
@@ -225,24 +225,21 @@ class PushNotifications {
             return;
         }
 
-        window.toast.show({
-            title: data.title,
-            message: data.body,
-            type: data.type || 'info',
-            priority: priority || data.priority || 'normal',
-            position: priority === 'critical' || data.priority === 'critical' ? 'center' : 'default',
-            icon: data.icon,
-            onClick: data.url ? () => { window.location.href = data.url; } : null,
-            customSound: true  // play "desbravador" mp3 — restricted to push notifications only
-        });
+        // Merge SW envelope priority into data so showOnce can read it
+        window.toast.showOnce({ ...data, priority: priority || data.priority || 'normal' });
 
-        // Mark notification as read in DB immediately to prevent duplicate toast from polling.
-        const notifId = data?.data?.notification_id;
+        // Mark notification as read in DB to prevent duplicate toast from polling.
+        // Uses X-Background-Request so a 401 (e.g. wrong tab's session) never triggers logout.
+        // Random delay prevents thundering-herd when multiple tabs fire at once.
+        const notifId = data?.notification_id;
         if (notifId && window.toast?.apiUrl) {
-            fetch(`${window.toast.apiUrl}/${notifId}/read`, {
-                method: 'POST',
-                credentials: 'include'
-            }).catch(() => {});
+            setTimeout(() => {
+                fetch(`${window.toast.apiUrl}/${notifId}/read`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'X-Background-Request': '1' },
+                }).catch(() => {});
+            }, Math.floor(Math.random() * 150));
         }
 
         // Notify other components (like badge poller)

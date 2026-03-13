@@ -6,7 +6,12 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libzip-dev \
     libicu-dev \
-    && docker-php-ext-install pdo_mysql zip intl
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    libonig-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql zip intl mbstring gd
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite

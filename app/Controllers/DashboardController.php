@@ -85,9 +85,96 @@ class DashboardController
         // Atividades disponíveis para iniciar
         $available = array_filter($activities, fn($a) => !isset($a['user_status']) || $a['user_status'] === null);
 
-        // Conquistas recentes
-        $achievements = $this->progressionService->getUserAchievements($user['id']);
-        $recentAchievements = array_slice($achievements, 0, 3);
+        // Conquistas recentes — achievements + especialidades + programas concluídos
+        $recentAchievements = $this->progressionService->getRecentAccomplishments($user['id'], 4);
+
+        // Radar Data: cada eixo = uma especialidade/classe real do desbravador
+        // Valor = progresso real (0–100%)
+        $radarItems = [];
+
+        try {
+            // 1. Programas do novo sistema (especialidades e classes via user_program_progress)
+            $progRows = db_fetch_all("
+                SELECT lp.name,
+                       COALESCE(up.progress_percent, 0) AS progress,
+                       up.status,
+                       COALESCE(lc.type, 'specialty') AS category_type
+                FROM user_program_progress up
+                JOIN learning_programs lp ON up.program_id = lp.id
+                LEFT JOIN learning_categories lc ON lp.category_id = lc.id
+                WHERE up.user_id = ? AND up.tenant_id = ? AND up.status != 'cancelled'
+                ORDER BY up.updated_at DESC
+                LIMIT 8
+            ", [$user['id'], $tenant['id']]);
+
+            foreach ($progRows as $row) {
+                $radarItems[] = [
+                    'name'     => $row['name'],
+                    'progress' => (int) $row['progress'],
+                    'type'     => $row['category_type'],
+                    'status'   => $row['status'],
+                ];
+            }
+
+            // 2. Especialidades legadas (specialty_assignments) — apenas se não cobertas pelo novo sistema
+            $legacyRows = db_fetch_all("
+                SELECT s.name, sa.status,
+                       COUNT(sr.id) AS total_reqs,
+                       COUNT(CASE WHEN urp.status IN ('completed','approved') THEN 1 END) AS done_reqs
+                FROM specialty_assignments sa
+                JOIN specialties s ON sa.specialty_id = s.id
+                LEFT JOIN specialty_requirements sr ON sr.specialty_id = s.id
+                LEFT JOIN user_requirement_progress urp
+                    ON urp.requirement_id = sr.id AND urp.user_id = sa.user_id
+                WHERE sa.user_id = ? AND sa.tenant_id = ? AND sa.status != 'cancelled'
+                GROUP BY sa.id, s.name, sa.status
+                ORDER BY sa.updated_at DESC
+                LIMIT 5
+            ", [$user['id'], $tenant['id']]);
+
+            // Nomes já presentes no novo sistema (para deduplicar)
+            $newNames = array_map(fn($i) => mb_strtolower($i['name'], 'UTF-8'), $radarItems);
+
+            foreach ($legacyRows as $row) {
+                if (in_array(mb_strtolower($row['name'], 'UTF-8'), $newNames)) continue;
+
+                $total = (int) $row['total_reqs'];
+                $done  = (int) $row['done_reqs'];
+                if ($total > 0) {
+                    $progress = (int) round(($done / $total) * 100);
+                } else {
+                    $progress = match($row['status']) {
+                        'completed', 'approved' => 100,
+                        'in_progress'            => 30,
+                        default                  => 5,
+                    };
+                }
+
+                $radarItems[] = [
+                    'name'     => $row['name'],
+                    'progress' => $progress,
+                    'type'     => 'specialty',
+                    'status'   => $row['status'],
+                ];
+            }
+
+            // Limite final de 8 eixos
+            $radarItems = array_slice($radarItems, 0, 8);
+
+        } catch (\Exception $e) {
+            // Silently fail to keep dashboard functional
+        }
+
+        // Activity Feed — unified feed via ActivityService
+        $activityFeed = [];
+        try {
+            $activityFeed = $this->activityService->getGlobalFeed(
+                (int) $tenant['id'],
+                5
+            );
+        } catch (\Exception $e) {
+            // Fallback: empty feed
+        }
 
         // Ranking
         $leaderboard = $this->progressionService->getLeaderboard(5);
@@ -175,7 +262,9 @@ class DashboardController
             'unreadCount' => $unreadCount,
             'newAchievements' => $newAchievements,
             'insigniaCount' => $insigniaCount,
-            'nextEvent' => $nextEvent
+            'nextEvent' => $nextEvent,
+            'radarItems' => $radarItems,
+            'activityFeed' => $activityFeed
         ], 'member');
     }
 
@@ -258,18 +347,53 @@ class DashboardController
         $user = App::user();
         $tenant = App::tenant();
 
-        $achievements = $this->progressionService->getUserAchievements($user['id']);
-        $progress = $this->progressionService->getUserProgress($user['id']);
+        $progress          = $this->progressionService->getUserProgress($user['id']);
+        $earned_items      = $this->progressionService->getAllEarnedItems($user['id']);
+        $total_available   = $this->progressionService->countAvailableItems((int) $tenant['id']);
+
+        // All possible items in this tenant
+        $all_achievements = db_fetch_all("SELECT * FROM achievements WHERE tenant_id = ?", [$tenant['id']]);
+        $all_specialties  = db_fetch_all("SELECT * FROM specialties WHERE tenant_id = ? AND status = 'active'", [$tenant['id']]);
+        $all_programs     = db_fetch_all("SELECT * FROM learning_programs WHERE tenant_id = ? AND status = 'published'", [$tenant['id']]);
+
+        // Identify IDs/Names already earned to exclude them from "Locked"
+        $earned_names = array_column($earned_items, 'name');
+
+        $locked_items = [];
+        
+        // Map Badges
+        foreach ($all_achievements as $ach) {
+            if (!in_array($ach['name'], $earned_names)) {
+                $locked_items[] = ['name' => $ach['name'], 'type' => 'achievement', 'icon' => $ach['icon'] ?? '🏆'];
+            }
+        }
+        // Map Specialties
+        foreach ($all_specialties as $spec) {
+            if (!in_array($spec['name'], $earned_names)) {
+                $locked_items[] = ['name' => $spec['name'], 'type' => 'specialty', 'icon' => '🔍'];
+            }
+        }
+        // Map Programs
+        foreach ($all_programs as $prog) {
+            if (!in_array($prog['name'], $earned_names)) {
+                $locked_items[] = ['name' => $prog['name'], 'type' => 'program', 'icon' => $prog['icon'] ?? '📖'];
+            }
+        }
+
+        // Sort locked items alphabetically
+        usort($locked_items, fn($a, $b) => strcmp($a['name'], $b['name']));
 
         // Notificações não lidas
         $unreadCount = $this->notificationService->getUnreadCount($user['id']);
 
         View::render('dashboard/achievements', [
-            'tenant' => $tenant,
-            'user' => $user,
-            'achievements' => $achievements,
-            'progress' => $progress,
-            'unreadCount' => $unreadCount
+            'tenant'              => $tenant,
+            'user'                => $user,
+            'earned_items'        => $earned_items,
+            'locked_items'        => $locked_items,
+            'total_available'     => $total_available,
+            'progress'            => $progress,
+            'unreadCount'         => $unreadCount
         ], 'member');
     }
 
@@ -400,6 +524,64 @@ class DashboardController
             'referralStats'    => $referralStats,
             'certificateCount' => $certificateCount,
         ], 'member');
+    }
+
+    /**
+     * Faz o upload da foto de perfil (Avatar)
+     */
+    public function uploadAvatar(): void
+    {
+        header('Content-Type: application/json');
+
+        $user = App::user();
+        if (!$user) {
+            echo json_encode(['success' => false, 'message' => 'Não autenticado']);
+            return;
+        }
+
+        if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode(['success' => false, 'message' => 'Nenhum arquivo enviado ou erro no upload.']);
+            return;
+        }
+
+        $file = $_FILES['avatar'];
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        
+        if (!in_array($file['type'], $allowedTypes)) {
+            echo json_encode(['success' => false, 'message' => 'Formato de imagem inválido. Use JPG, PNG ou WEBP.']);
+            return;
+        }
+
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'avatar_' . $user['id'] . '_' . time() . '.' . $ext;
+        
+        // Ensure directory exists
+        $uploadDir = BASE_PATH . '/public/uploads/avatars';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $destPath = $uploadDir . '/' . $filename;
+
+        if (move_uploaded_file($file['tmp_name'], $destPath)) {
+            // Build the public URL to save in database
+            // Note: adapt path depending on your routing, usually /uploads/...
+            $avatarUrl = base_url('uploads/avatars/' . $filename);
+            
+            // Delete old avatar if it exists and isn't a default fallback
+            if (!empty($user['avatar_url'])) {
+                $oldPath = str_replace(base_url(), BASE_PATH . '/public/', $user['avatar_url']);
+                if (file_exists($oldPath) && is_file($oldPath)) {
+                    @unlink($oldPath);
+                }
+            }
+
+            db_update('users', ['avatar_url' => $avatarUrl], 'id = ?', [$user['id']]);
+
+            echo json_encode(['success' => true, 'avatar_url' => $avatarUrl]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Falha ao processar o arquivo.']);
+        }
     }
 
     /**

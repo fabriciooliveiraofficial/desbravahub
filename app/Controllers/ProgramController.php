@@ -21,7 +21,7 @@ class ProgramController
         $user = App::user();
         $role = $user['role_name'] ?? '';
 
-        if (!in_array($role, ['admin', 'director', 'counselor'])) {
+        if (!in_array($role, ['admin', 'director', 'associate_director', 'counselor', 'instructor'])) {
             error_log("ProgramController::requireAdmin - Access Denied: User " . ($user['id'] ?? 'unknown') . " with role $role tried to access programs.");
             header('HTTP/1.0 403 Forbidden');
             echo 'Acesso negado';

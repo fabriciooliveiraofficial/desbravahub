@@ -291,7 +291,7 @@ $totalXp          = array_sum(array_column($certificates, 'xp_earned'));
                 <?php endif; ?>
             </div>
 
-            <a href="<?= $downloadUrl ?>" class="btn-download">
+            <a href="<?= $downloadUrl ?>" class="btn-download" hx-boost="false">
                 <iconify-icon icon="solar:file-download-bold-duotone"></iconify-icon>
                 Baixar Certificado PDF
             </a>

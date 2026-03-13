@@ -1,25 +1,53 @@
 <?php
 /**
- * Unified Notification Bell Partial
+ * Notification Bell — abre o Notification Center popover
  * Requires: $tenant (array), $unreadCount (int, optional)
  */
 $bellUnreadCount = $unreadCount ?? 0;
+
+// Rota de destino contextual (admin vs member)
+$currentUri  = $_SERVER['REQUEST_URI'] ?? '';
+$notifPath   = (strpos($currentUri, '/admin') !== false) ? '/admin/notificacoes' : '/notificacoes';
+$tenantSlug  = $tenant['slug'] ?? '';
+
+$ncApiUrl      = base_url($tenantSlug . '/api/notifications');
+$ncUnreadUrl   = base_url($tenantSlug . '/api/notifications/unread');
+$ncReadAllUrl  = base_url($tenantSlug . '/api/notifications/read-all');
+$ncAllNotifUrl = base_url($tenantSlug . $notifPath);
 ?>
-<?php
-// Context-aware routing for notifications (Admin vs Member)
-$currentUri = $_SERVER['REQUEST_URI'] ?? '';
-$notifPath = (strpos($currentUri, '/admin') !== false) ? '/admin/notificacoes' : '/notificacoes';
-?>
-<a href="<?= base_url($tenant['slug'] . $notifPath) ?>" class="hud-action-btn notification-bell-link" id="notificationBtn" title="Notificações">
-    <div class="bell-wrapper">
-        <span class="material-icons-round">notifications</span>
-        <?php if ($bellUnreadCount > 0): ?>
-            <span class="hud-notification-badge"><?= $bellUnreadCount > 9 ? '9+' : $bellUnreadCount ?></span>
-        <?php endif; ?>
-    </div>
-</a>
+
+<div class="bell-container" id="notif-bell-container">
+    <button
+        type="button"
+        id="notificationBtn"
+        class="hud-action-btn notification-bell-btn"
+        title="Notificações"
+        aria-label="Notificações"
+        aria-expanded="false"
+        aria-haspopup="true"
+    >
+        <div class="bell-wrapper">
+            <span class="material-icons-round">notifications</span>
+            <span
+                class="hud-notification-badge"
+                id="notif-badge"
+                <?= $bellUnreadCount > 0 ? '' : 'style="display:none"' ?>
+            ><?= $bellUnreadCount > 9 ? '9+' : ($bellUnreadCount ?: '') ?></span>
+        </div>
+    </button>
+    <!-- Popover injetado pelo NotificationCenter JS -->
+</div>
+
+<!-- Áudio de alerta — carregado de forma lazy -->
+<audio id="notif-sound" src="<?= base_url('assets/audio/notif.mp3') ?>" preload="none"></audio>
 
 <style>
+/* ── Bell Container ── */
+.bell-container {
+    position: relative;
+    display: inline-flex;
+}
+
 .bell-wrapper {
     position: relative;
     display: flex;
@@ -27,6 +55,7 @@ $notifPath = (strpos($currentUri, '/admin') !== false) ? '/admin/notificacoes' :
     justify-content: center;
 }
 
+/* ── Badge ── */
 .hud-notification-badge {
     position: absolute;
     top: -5px;
@@ -42,46 +71,91 @@ $notifPath = (strpos($currentUri, '/admin') !== false) ? '/admin/notificacoes' :
     align-items: center;
     justify-content: center;
     padding: 0 4px;
-    border: 2px solid rgba(0,0,0,0.2);
+    border: 2px solid rgba(0, 0, 0, 0.2);
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
     animation: badgePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
 }
 
 @keyframes badgePop {
     from { transform: scale(0); }
-    to { transform: scale(1); }
+    to   { transform: scale(1); }
 }
 
-/* Unified styling for both member HUD and Admin header */
-.hud-top-bar .notification-bell-link,
-.admin-header .notification-bell-link {
-    background: var(--bg-hover, rgba(255, 255, 255, 0.05));
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
+/* ── Bell Button — Member HUD ── */
+.hud-top-bar .notification-bell-btn,
+.hud-top-bar-v3 .notification-bell-btn,
+.admin-header .notification-bell-btn {
+    background: rgba(0, 217, 255, 0.07);
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-muted, rgba(255, 255, 255, 0.7));
+    color: var(--accent-cyan, #00d9ff);
     transition: all 0.2s;
+    border: 1px solid rgba(0, 217, 255, 0.25);
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+    cursor: pointer;
     text-decoration: none;
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+    padding: 0;
 }
 
-.hud-top-bar .notification-bell-link:hover,
-.admin-header .notification-bell-link:hover {
-    background: var(--item-hover, rgba(255, 255, 255, 0.1));
-    color: var(--primary, var(--accent-cyan, #00d9ff));
-    border-color: var(--primary, rgba(0, 217, 255, 0.3));
+.hud-top-bar .notification-bell-btn:hover,
+.hud-top-bar-v3 .notification-bell-btn:hover,
+.admin-header .notification-bell-btn:hover,
+.hud-top-bar .notification-bell-btn[aria-expanded="true"],
+.hud-top-bar-v3 .notification-bell-btn[aria-expanded="true"],
+.admin-header .notification-bell-btn[aria-expanded="true"] {
+    background: rgba(0, 217, 255, 0.15);
+    color: #00d9ff;
+    border-color: rgba(0, 217, 255, 0.5);
+    box-shadow: 0 0 18px rgba(0, 217, 255, 0.25), inset 0 1px 0 rgba(255,255,255,0.08);
+    transform: scale(1.05);
 }
 
-.admin-header .notification-bell-link {
+/* ── Admin header override ── */
+.admin-header .notification-bell-btn {
     width: 40px;
     height: 40px;
     margin-right: 8px;
 }
 
-.notification-bell-link .material-icons-round {
-    font-size: 24px;
-}
+.notification-bell-btn .material-icons-round { font-size: 24px; }
 </style>
+
+<script src="<?= asset_url('js/notification-center.js') ?>"></script>
+<script>
+(function () {
+    function initNotifCenter() {
+        if (typeof window.NotificationCenter === 'undefined') return;
+
+        // Destroy previous instance's polling timer before creating a new one
+        // (guards against HTMX re-injecting this partial without a full page reload)
+        if (window.notificationCenter && typeof window.notificationCenter._pollTimer !== 'undefined') {
+            clearInterval(window.notificationCenter._pollTimer);
+            window.notificationCenter._pollTimer = null;
+        }
+
+        window.notificationCenter = new window.NotificationCenter({
+            buttonId:     'notificationBtn',
+            badgeId:      'notif-badge',
+            soundId:      'notif-sound',
+            apiUrl:       '<?= $ncApiUrl ?>',
+            unreadUrl:    '<?= $ncUnreadUrl ?>',
+            readAllUrl:   '<?= $ncReadAllUrl ?>',
+            allNotifUrl:  '<?= $ncAllNotifUrl ?>',
+            pollInterval: 30000,
+            initialCount: <?= (int) $bellUnreadCount ?>,
+        });
+    }
+
+    // Works for both normal load and HTMX partial swaps
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initNotifCenter);
+    } else {
+        initNotifCenter();
+    }
+})();
+</script>

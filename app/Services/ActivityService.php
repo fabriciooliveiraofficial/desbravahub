@@ -237,6 +237,107 @@ class ActivityService
     }
 
     /**
+     * Get unified global activity feed for the tenant dashboard.
+     *
+     * Aggregates recent events from three sources via UNION:
+     *   - Achievements earned (user_achievements)
+     *   - Specialties completed/approved (specialty_assignments)
+     *   - Programs completed (user_program_progress)
+     *
+     * Returns array of [user, action, time] items ready for the view.
+     */
+    public function getGlobalFeed(int $tenantId, int $limit = 5): array
+    {
+        $rows = db_fetch_all("
+            SELECT user_name, action_type, item_name, event_at FROM (
+
+                SELECT u.name          AS user_name,
+                       'achievement'   AS action_type,
+                       a.name          AS item_name,
+                       ua.earned_at    AS event_at
+                FROM user_achievements ua
+                JOIN users u        ON ua.user_id        = u.id
+                JOIN achievements a ON ua.achievement_id = a.id
+                WHERE ua.tenant_id = ?
+
+                UNION ALL
+
+                SELECT u.name                                              AS user_name,
+                       CASE sa.status
+                           WHEN 'completed' THEN 'specialty_done'
+                           WHEN 'approved'  THEN 'specialty_done'
+                           ELSE 'specialty_started'
+                       END                                                 AS action_type,
+                       s.name                                              AS item_name,
+                       COALESCE(sa.completed_at, sa.updated_at, sa.created_at) AS event_at
+                FROM specialty_assignments sa
+                JOIN users u       ON sa.user_id      = u.id
+                JOIN specialties s ON sa.specialty_id = s.id
+                WHERE sa.tenant_id = ?
+                  AND sa.status IN ('in_progress', 'completed', 'approved')
+
+                UNION ALL
+
+                SELECT u.name   AS user_name,
+                       CASE upp.status
+                           WHEN 'completed'  THEN 'program_done'
+                           WHEN 'submitted'  THEN 'program_submitted'
+                           ELSE 'program_started'
+                       END      AS action_type,
+                       lp.name  AS item_name,
+                       COALESCE(upp.completed_at, upp.updated_at, upp.started_at) AS event_at
+                FROM user_program_progress upp
+                JOIN users u             ON upp.user_id    = u.id
+                JOIN learning_programs lp ON upp.program_id = lp.id
+                WHERE upp.tenant_id = ?
+                  AND upp.status IN ('in_progress', 'submitted', 'completed')
+
+            ) AS feed
+            ORDER BY event_at DESC
+            LIMIT ?
+        ", [$tenantId, $tenantId, $tenantId, $limit]);
+
+        $actions = [
+            'achievement'      => ' conquistou a insígnia <strong>%s</strong>',
+            'specialty_done'   => ' concluiu a especialidade <strong>%s</strong>',
+            'specialty_started'=> ' iniciou a especialidade <strong>%s</strong>',
+            'program_done'     => ' completou a missão <strong>%s</strong>',
+            'program_submitted'=> ' enviou a missão <strong>%s</strong> para avaliação',
+            'program_started'  => ' iniciou a missão <strong>%s</strong>',
+        ];
+
+        $feed = [];
+        foreach ($rows as $r) {
+            $nameParts = explode(' ', trim($r['user_name']));
+            $shortName = $nameParts[0] . (isset($nameParts[1]) ? ' ' . substr($nameParts[1], 0, 1) . '.' : '');
+            $item      = htmlspecialchars($r['item_name'] ?? '');
+            $tpl       = $actions[$r['action_type']] ?? ' realizou uma ação';
+
+            $feed[] = [
+                'user'   => $shortName,
+                'action' => sprintf($tpl, $item),
+                'time'   => self::humanTime($r['event_at']),
+            ];
+        }
+
+        return $feed;
+    }
+
+    /**
+     * Convert a datetime string to a short human-readable PT-BR string.
+     */
+    private static function humanTime(?string $datetime): string
+    {
+        if (!$datetime) return '—';
+        $diff = time() - strtotime($datetime);
+        if ($diff < 60)        return 'agora';
+        if ($diff < 3600)      return 'há ' . floor($diff / 60) . ' min';
+        if ($diff < 86400)     return 'há ' . floor($diff / 3600) . ' h';
+        if ($diff < 604800)    return 'há ' . floor($diff / 86400) . ' dias';
+        return date('d/m', strtotime($datetime));
+    }
+
+    /**
      * Update an activity
      */
     public function update(int $id, array $data): bool

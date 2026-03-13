@@ -24,7 +24,9 @@
             <h3>ALERTA DE EMERGÊNCIA</h3>
         </div>
         <p class="sos-modal-desc">Ao confirmar, todos os líderes do clube serão notificados imediatamente com sua localização.</p>
-        
+
+        <div id="sos-gps-status" class="sos-gps-status"></div>
+
         <div id="sos-countdown" class="sos-countdown" style="display:none;">
             <div class="sos-countdown-ring">
                 <svg viewBox="0 0 40 40">
@@ -311,6 +313,38 @@
     font-weight: 700;
 }
 
+/* GPS Status Indicator */
+.sos-gps-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: #64748b;
+    min-height: 20px;
+    margin-bottom: 16px;
+    transition: color 0.3s ease;
+}
+.sos-gps-status.searching { color: #64748b; }
+.sos-gps-status.improving { color: #f59e0b; }
+.sos-gps-status.gold      { color: #22c55e; }
+.sos-gps-status.error     { color: #ef4444; }
+
+.sos-gps-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+    background: currentColor;
+}
+.sos-gps-dot.searching { animation: gpsPulse 1s ease-in-out infinite; }
+
+@keyframes gpsPulse {
+    0%, 100% { opacity: 0.3; }
+    50%       { opacity: 1; }
+}
+
 /* Safe area for iOS */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
     .sos-wrapper {
@@ -321,36 +355,106 @@
 
 <script>
 // ============ SOS BUTTON LOGIC ============
-let sosCountdownTimer = null;
-let sosCountdownValue = 5;
+const SOS_GPS_GOLD_STANDARD = 30;  // metros — precisão considerada "excelente"
+const SOS_GPS_EXTRA_WAIT    = 10000; // ms máx de espera extra após o countdown
 
+let sosCountdownTimer  = null;
+let sosCountdownValue  = 5;
+let sosWatchId         = null;   // watchPosition handle
+let sosBestPosition    = null;   // melhor fix GPS até agora
+let sosGpsExtraResolve = null;   // resolve da promise de espera extra
+let sosGpsExtraTimer   = null;
+let sosCancelled       = false;
+
+// ---- Abrir modal: inicia warm-up de GPS imediatamente ----
 document.getElementById('sos-trigger')?.addEventListener('click', () => {
+    sosCancelled = false;
+    sosBestPosition = null;
+
     document.getElementById('sos-modal').style.display = 'flex';
     document.getElementById('sos-confirm-actions').style.display = 'flex';
     document.getElementById('sos-countdown').style.display = 'none';
     document.getElementById('sos-sending').style.display = 'none';
     document.getElementById('sos-result').style.display = 'none';
+
+    sosStartGpsWarmup();
 });
 
+// ---- GPS Warm-up: watchPosition para capturar o melhor fix ----
+function sosStartGpsWarmup() {
+    if (!navigator.geolocation) {
+        sosSetGpsStatus('error');
+        return;
+    }
+    sosSetGpsStatus('searching');
+
+    sosWatchId = navigator.geolocation.watchPosition(
+        (position) => {
+            const acc = position.coords.accuracy;
+            // Guarda apenas o fix mais preciso (menor accuracy = melhor)
+            if (!sosBestPosition || acc < sosBestPosition.coords.accuracy) {
+                sosBestPosition = position;
+                const state = acc <= SOS_GPS_GOLD_STANDARD ? 'gold' : 'improving';
+                sosSetGpsStatus(state, acc);
+            }
+            // Se atingiu padrão ouro durante a espera extra, resolve imediatamente
+            if (position.coords.accuracy <= SOS_GPS_GOLD_STANDARD && sosGpsExtraResolve) {
+                const res = sosGpsExtraResolve;
+                sosGpsExtraResolve = null;
+                clearTimeout(sosGpsExtraTimer);
+                res();
+            }
+        },
+        () => { if (!sosBestPosition) sosSetGpsStatus('error'); },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 }
+    );
+}
+
+function sosStopGpsWarmup() {
+    if (sosWatchId !== null) {
+        navigator.geolocation.clearWatch(sosWatchId);
+        sosWatchId = null;
+    }
+    if (sosGpsExtraTimer !== null) {
+        clearTimeout(sosGpsExtraTimer);
+        sosGpsExtraTimer = null;
+    }
+    sosGpsExtraResolve = null;
+}
+
+function sosSetGpsStatus(state, accuracy) {
+    const el = document.getElementById('sos-gps-status');
+    if (!el) return;
+    const labels = {
+        searching: '<span class="sos-gps-dot searching"></span> Capturando GPS...',
+        improving: `<span class="sos-gps-dot improving"></span> GPS: ±${Math.round(accuracy)}m`,
+        gold:      `<span class="sos-gps-dot gold"></span> GPS preciso ±${Math.round(accuracy)}m`,
+        error:     '<span class="sos-gps-dot error"></span> GPS indisponível',
+    };
+    el.innerHTML  = labels[state] ?? '';
+    el.className  = `sos-gps-status ${state}`;
+}
+
+// ---- Countdown ----
 function sosStartCountdown() {
     document.getElementById('sos-confirm-actions').style.display = 'none';
     document.getElementById('sos-countdown').style.display = 'flex';
     sosCountdownValue = 5;
-    
-    const numEl = document.getElementById('sos-countdown-num');
-    const textEl = document.getElementById('sos-countdown-text');
-    const ringFill = document.getElementById('sos-ring-fill');
-    const circumference = 113; // 2 * PI * 18
 
-    numEl.textContent = sosCountdownValue;
+    const numEl  = document.getElementById('sos-countdown-num');
+    const textEl = document.getElementById('sos-countdown-text');
+    const ring   = document.getElementById('sos-ring-fill');
+    const CIRC   = 113; // 2π × 18
+
+    numEl.textContent  = sosCountdownValue;
     textEl.textContent = sosCountdownValue;
-    ringFill.style.strokeDashoffset = 0;
+    ring.style.strokeDashoffset = 0;
 
     sosCountdownTimer = setInterval(() => {
         sosCountdownValue--;
-        numEl.textContent = sosCountdownValue;
+        numEl.textContent  = sosCountdownValue;
         textEl.textContent = sosCountdownValue;
-        ringFill.style.strokeDashoffset = circumference * ((5 - sosCountdownValue) / 5);
+        ring.style.strokeDashoffset = CIRC * ((5 - sosCountdownValue) / 5);
 
         if (sosCountdownValue <= 0) {
             clearInterval(sosCountdownTimer);
@@ -359,52 +463,58 @@ function sosStartCountdown() {
     }, 1000);
 }
 
+// ---- Cancelar ----
 function sosCancel() {
+    sosCancelled = true;
     clearInterval(sosCountdownTimer);
+    sosStopGpsWarmup();
     document.getElementById('sos-modal').style.display = 'none';
 }
 
+// ---- Enviar SOS ----
 async function sosSend() {
+    if (sosCancelled) return;
+
     document.getElementById('sos-countdown').style.display = 'none';
     document.getElementById('sos-sending').style.display = 'flex';
+    const sendingMsg = document.querySelector('.sos-sending p');
 
-    // Get geolocation
-    let lat = null, lng = null;
-    try {
-        const position = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            });
+    // Se ainda não atingiu padrão ouro, aguarda até SOS_GPS_EXTRA_WAIT ms
+    const hasGold = sosBestPosition && sosBestPosition.coords.accuracy <= SOS_GPS_GOLD_STANDARD;
+    if (!hasGold && sosWatchId !== null) {
+        if (sendingMsg) sendingMsg.textContent = 'Aguardando GPS de alta precisão...';
+        await new Promise((resolve) => {
+            sosGpsExtraResolve = resolve;
+            sosGpsExtraTimer   = setTimeout(() => {
+                sosGpsExtraResolve = null;
+                resolve();
+            }, SOS_GPS_EXTRA_WAIT);
         });
-        lat = position.coords.latitude;
-        lng = position.coords.longitude;
-    } catch (e) {
-        console.warn('[SOS] Geolocation failed:', e.message);
-        // Continue without location
     }
 
-    // Send SOS
+    if (sosCancelled) return;
+    sosStopGpsWarmup();
+
+    const lat      = sosBestPosition?.coords.latitude  ?? null;
+    const lng      = sosBestPosition?.coords.longitude ?? null;
+    const accuracy = sosBestPosition?.coords.accuracy  ?? null;
+
+    if (sendingMsg) sendingMsg.textContent = 'Enviando alerta de emergência...';
+
     try {
         const tenantSlug = '<?= $tenant['slug'] ?? '' ?>';
         const response = await fetch(`/${tenantSlug}/api/sos/trigger`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lat, lng })
+            body: JSON.stringify({ lat, lng, accuracy })
         });
 
-        // Try to parse JSON, handling non-JSON responses gracefully
         let data;
-        try {
-            data = await response.json();
-        } catch (parseError) {
-            // Server returned non-JSON (e.g., PHP error HTML)
-            data = { success: false, error: 'Erro no servidor (resposta inválida). Tente ligar para um líder.' };
-        }
+        try { data = await response.json(); }
+        catch (_) { data = { success: false, error: 'Erro no servidor (resposta inválida). Tente ligar para um líder.' }; }
 
         document.getElementById('sos-sending').style.display = 'none';
-        document.getElementById('sos-result').style.display = 'flex';
+        document.getElementById('sos-result').style.display  = 'flex';
 
         const resultIcon = document.querySelector('.sos-result-icon');
         const resultText = document.getElementById('sos-result-text');
@@ -421,11 +531,10 @@ async function sosSend() {
     } catch (err) {
         console.error('[SOS] Network error:', err);
         document.getElementById('sos-sending').style.display = 'none';
-        document.getElementById('sos-result').style.display = 'flex';
-        document.querySelector('.sos-result-icon').textContent = '⚠️';
-        document.getElementById('sos-result-text').textContent = 'Erro de conexão com o servidor. Tente ligar para um líder.';
-        document.getElementById('sos-result-text').style.color = '#f87171';
+        document.getElementById('sos-result').style.display  = 'flex';
+        document.querySelector('.sos-result-icon').textContent   = '⚠️';
+        document.getElementById('sos-result-text').textContent   = 'Erro de conexão com o servidor. Tente ligar para um líder.';
+        document.getElementById('sos-result-text').style.color   = '#f87171';
     }
 }
-
 </script>

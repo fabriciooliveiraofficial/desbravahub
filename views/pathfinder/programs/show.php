@@ -121,7 +121,7 @@
                     <div class="hud-stat-label">O QG aguarda o envio dos dados para avaliação final.</div>
                 </div>
             </div>
-            <button class="hud-btn primary program-submit-btn" data-program-id="<?= $program['id'] ?>" style="background: linear-gradient(135deg, #f97316, #fb923c); box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);">
+            <button class="hud-btn primary program-submit-btn" data-progress-id="<?= $program['progress_id'] ?>" style="background: linear-gradient(135deg, #f97316, #fb923c); box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);">
                 <i class="material-icons-round">send</i> ENVIAR AGORA
             </button>
         </div>
@@ -142,6 +142,7 @@
                 <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                     <?php if (!empty($programCertificate)): ?>
                     <a href="/<?= htmlspecialchars($tenant['slug']) ?>/certificados/<?= $programCertificate['id'] ?>/download"
+                       hx-boost="false"
                        style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;background:linear-gradient(135deg,#10b981,#06b6d4);color:white;font-weight:700;font-size:0.875rem;text-decoration:none;border:none;">
                         <iconify-icon icon="solar:file-download-bold-duotone"></iconify-icon>
                         Baixar Certificado
@@ -322,8 +323,19 @@
         try {
             const resp = await fetch(`/${tenantSlug}/aprendizado/step/${stepId}/modal`, {
                 credentials: 'same-origin',
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-Background-Request': '1' }
             });
+
+            // Handle auth errors gracefully — do NOT let SessionGuard see a bare 401
+            if (resp.status === 401) {
+                document.getElementById('modalBody').innerHTML = '<p style="color: var(--accent-red); padding: 24px;">Sessão expirada. <a href="" onclick="location.reload()">Recarregue a página</a> para continuar.</p>';
+                return;
+            }
+            if (resp.status === 403) {
+                document.getElementById('modalBody').innerHTML = '<p style="color: var(--accent-red); padding: 24px;">Acesso negado a este requisito.</p>';
+                return;
+            }
+
             const data = await resp.json();
 
             if (data.success) {
@@ -332,10 +344,10 @@
                 // Initialize submission guard after content is injected
                 initSubmissionGuard();
             } else {
-                document.getElementById('modalBody').innerHTML = '<p style="color: var(--accent-red);">Erro: ' + (data.error || 'Falha ao carregar') + '</p>';
+                document.getElementById('modalBody').innerHTML = '<p style="color: var(--accent-red); padding: 24px;">Erro: ' + (data.error || 'Falha ao carregar') + '</p>';
             }
         } catch (err) {
-            document.getElementById('modalBody').innerHTML = '<p style="color: var(--accent-red);">Erro de conexão com o servidor.</p>';
+            document.getElementById('modalBody').innerHTML = '<p style="color: var(--accent-red); padding: 24px;">Erro de conexão com o servidor.</p>';
         }
     }
 
@@ -486,6 +498,9 @@
                     }
                     btn.disabled = false;
                     btn.innerHTML = originalText;
+
+                    // RESTORE INTERACTIVITY: Allow clicking ENVIAR after save success
+                    form.closest('.step-fields-wrapper, .modal-content-scroll').style.pointerEvents = '';
 
                     // Mark form as saved — this unlocks ENVIAR if all fields are complete
                     if (form._markSaved) {

@@ -16,6 +16,22 @@
     const STORAGE_KEY_TOKEN = 'dh_auth_token';
     const STORAGE_KEY_USER_ID = 'dh_user_id';
 
+    /**
+     * URL patterns for background/fire-and-forget requests.
+     * A 401 on these must NEVER trigger a window redirect — they are not user-initiated.
+     */
+    const BACKGROUND_PATTERNS = [
+        /\/api\/notifications(\/|$|\?)/,
+        /\/api\/push(\/|$|\?)/,
+        /\/unread$/,
+        /\/api\/badges/,
+    ];
+
+    function isBackgroundRequest(url, options) {
+        if (options?.headers?.['X-Background-Request']) return true;
+        return BACKGROUND_PATTERNS.some(p => p.test(url));
+    }
+
     const SessionGuard = {
         /**
          * Store session credentials after login
@@ -118,7 +134,18 @@
                         options.headers['Authorization'] = 'Bearer ' + token;
                     }
                 }
-                return originalFetch.call(this, url, options);
+                // Intercept 401 responses on non-background requests and redirect to login
+                return originalFetch.call(this, url, options).then(response => {
+                    if (response.status === 401 && isInternal && !isBackgroundRequest(urlString, options)) {
+                        response.clone().json().then(json => {
+                            if (json.redirect) {
+                                SessionGuard.clearSession();
+                                window.location.href = json.redirect;
+                            }
+                        }).catch(() => { /* non-JSON 401, ignore */ });
+                    }
+                    return response;
+                });
             };
 
             // --- Session Mismatch Detection (for hard-refresh) ---
@@ -148,6 +175,10 @@
             // --- Handle HTMX 401 responses (session expired or invalid) ---
             document.body.addEventListener('htmx:responseError', function (event) {
                 if (event.detail.xhr && event.detail.xhr.status === 401) {
+                    // Ignore 401s from background/non-navigational HTMX requests
+                    const requestUrl = event.detail.requestConfig?.path || event.detail.pathInfo?.requestPath || '';
+                    if (isBackgroundRequest(requestUrl, {})) return;
+
                     console.warn('[SessionGuard] 401 received, clearing session.');
                     SessionGuard.clearSession();
 

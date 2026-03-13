@@ -66,6 +66,26 @@
             Perfil do Clube
         </a>
 
+        <!-- Communication Hub -->
+        <a href="<?= base_url($tenant['slug'] . '/admin/comunicacao') ?>"
+            class="nav-item <?= str_starts_with($currentPath, $adminBase . '/comunicacao') ? 'active' : '' ?>">
+            <span class="material-icons-round" style="color: #00ccff;">hub</span>
+            Hub de Comunicação
+            <?php
+            // Show badge if there are new leads or pending comments
+            try {
+                $hubBadgeCount = 0;
+                $hubBadgeCount += (int)(db_fetch_column("SELECT COUNT(*) FROM public_leads WHERE tenant_id = ? AND status = 'new'", [$tenant['id']]) ?? 0);
+                $hubBadgeCount += (int)(db_fetch_column("SELECT COUNT(*) FROM public_comments WHERE tenant_id = ? AND status = 'pending'", [$tenant['id']]) ?? 0);
+                if ($hubBadgeCount > 0): ?>
+                <span style="margin-left:auto; background:#ef4444; color:white; font-size:0.65rem; font-weight:800; padding:1px 6px; border-radius:10px;">
+                    <?= $hubBadgeCount ?>
+                </span>
+            <?php endif;
+            } catch (\Exception $e) { /* tables may not exist yet */ }
+            ?>
+        </a>
+
         <!-- Events Management -->
         <a href="<?= base_url($tenant['slug'] . '/admin/eventos') ?>"
             class="nav-item <?= str_starts_with($currentPath, $adminBase . '/eventos') ? 'active' : '' ?>">

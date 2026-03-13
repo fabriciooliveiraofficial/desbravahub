@@ -115,6 +115,41 @@ $activeTab = $_GET['tab'] ?? (isset($_GET['incomplete']) ? 'registry' : 'overvie
         box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
 
+    /* Avatar Upload Overlay */
+    .avatar-upload-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        cursor: pointer;
+        z-index: 10;
+        backdrop-filter: blur(2px);
+    }
+    .profile-avatar-hud:hover .avatar-upload-overlay {
+        opacity: 1;
+    }
+    .upload-icon-btn {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 8px;
+        border-radius: 50%;
+        display: flex;
+        font-size: 1.5rem;
+        transition: transform 0.2s;
+    }
+    .upload-icon-btn:hover {
+        transform: scale(1.1);
+        background: var(--accent-cyan);
+    }
+
     .profile-name-hud {
         font-size: 1.8rem;
         font-weight: 800;
@@ -384,11 +419,23 @@ $activeTab = $_GET['tab'] ?? (isset($_GET['incomplete']) ? 'registry' : 'overvie
         <!-- TAB: OVERVIEW (HUD) -->
         <div id="tab-overview" class="profile-tab-content <?= $activeTab === 'overview' ? 'active' : '' ?>">
             <div class="profile-avatar-hud">
-                <div class="avatar-img-hud">
-                    <?= strtoupper(substr($user['name'], 0, 1)) ?>
+                <div class="avatar-img-hud" id="avatarPreviewContainer" style="overflow: hidden;">
+                    <?php if (!empty($user['avatar_url'])): ?>
+                        <img src="<?= htmlspecialchars($user['avatar_url']) ?>" alt="Avatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
+                    <?php else: ?>
+                        <?= strtoupper(substr($user['name'], 0, 1)) ?>
+                    <?php endif; ?>
                 </div>
+                
+                <!-- Hover Overlay for Upload -->
+                <label for="avatarUploadInput" class="avatar-upload-overlay" title="Alterar Foto de Perfil">
+                    <span class="material-icons-round upload-icon-btn">photo_camera</span>
+                </label>
+                <!-- Hidden Input -->
+                <input type="file" id="avatarUploadInput" accept="image/*" style="display: none;" onchange="handleAvatarUpload(event)">
+
                 <div class="level-badge-hud">
-                    LVL <?= $progress['level']['number'] ?? 1 ?>
+                    LVL <?= is_array($progress['level'] ?? 1) ? ($progress['level']['number'] ?? 1) : ($progress['level'] ?? 1) ?>
                 </div>
             </div>
 
@@ -641,7 +688,10 @@ $activeTab = $_GET['tab'] ?? (isset($_GET['incomplete']) ? 'registry' : 'overvie
 function calculateAge() {
     const birthDateInput = document.getElementById('birth_date');
     const ageDisplay = document.getElementById('age_display');
-    
+
+    // Elements only exist on the profile/registry page — bail silently on other pages
+    if (!birthDateInput || !ageDisplay) return;
+
     if (!birthDateInput.value) {
         ageDisplay.value = '-';
         return;
@@ -649,10 +699,9 @@ function calculateAge() {
 
     const today = new Date();
     const birthDate = new Date(birthDateInput.value);
-    
+
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
         age--;
     }
@@ -660,10 +709,11 @@ function calculateAge() {
     ageDisplay.value = age + ' anos';
 }
 
-// Run calculation immediately and on DOM load/swap
-document.addEventListener('DOMContentLoaded', () => setTimeout(calculateAge, 100));
-document.body.addEventListener('htmx:afterSwap', () => setTimeout(calculateAge, 100));
-setTimeout(calculateAge, 100); // Immediate call for partial loads
+// Run once when this partial loads (covers both full-page and HTMX swap)
+setTimeout(calculateAge, 50);
+
+// Re-run on subsequent HTMX swaps — the null-guard above keeps this safe on other pages
+document.addEventListener('htmx:afterSwap', () => setTimeout(calculateAge, 50));
 
 function switchProfileTab(tab) {
     document.querySelectorAll('.profile-tab-btn').forEach(b => b.classList.remove('active'));
@@ -741,6 +791,56 @@ async function saveProfile(e) {
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
+    }
+}
+
+async function handleAvatarUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        alert('Por favor, selecione uma imagem válida.');
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        alert('A imagem deve ter no máximo 5MB.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const overlay = document.querySelector('.avatar-upload-overlay');
+    const originalIcon = overlay.innerHTML;
+    // Show loading spinner
+    overlay.innerHTML = '<span class="material-icons-round spin" style="color:#fff; font-size: 2rem;">loop</span>';
+    overlay.style.opacity = '1';
+
+    try {
+        const res = await fetch('<?= base_url($tenant['slug'] . '/perfil/avatar') ?>', {
+            method: 'POST',
+            body: formData
+            // Don't set Content-Type header; fetch handles it with boundaries automatically for FormData
+        });
+
+        const json = await res.json();
+
+        if (json.success) {
+            // Update UI preview
+            const container = document.getElementById('avatarPreviewContainer');
+            container.innerHTML = `<img src="${json.avatar_url}" alt="Avatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+            alert('Foto de perfil atualizada com sucesso!');
+        } else {
+            alert('Erro: ' + (json.message || 'Erro ao fazer upload da imagem.'));
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Erro de conexão durante o upload.');
+    } finally {
+        overlay.innerHTML = originalIcon;
+        overlay.style.opacity = '';
+        event.target.value = ''; // Reset input
     }
 }
 </script>

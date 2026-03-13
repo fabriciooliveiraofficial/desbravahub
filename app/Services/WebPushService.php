@@ -102,12 +102,13 @@ class WebPushService
         $deepLinkUrl = $data['url'] ?? $data['link'] ?? $defaultUrl;
 
         $payload = json_encode([
-            'title'    => $title,
-            'body'     => $message,
-            'url'      => $deepLinkUrl,
-            'type'     => $data['type'] ?? null,
-            'priority' => $data['priority'] ?? 'normal',
-            'data'     => $data,
+            'title'           => $title,
+            'body'            => $message,
+            'url'             => $deepLinkUrl,
+            'type'            => $data['type'] ?? null,
+            'priority'        => $data['priority'] ?? 'normal',
+            'notification_id' => $data['notification_id'] ?? null, // hoisted for client-side deduplication
+            'data'            => $data,
         ]);
 
         foreach ($subscriptions as $sub) {

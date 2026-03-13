@@ -17,6 +17,31 @@
 
 <head>
     <meta charset="UTF-8">
+    <!-- Sanity Guard: Handle external dev-tool noise (like refresh.js on 8081) and internal browser extension errors -->
+    <script>
+        (function() {
+            // 1. WebSocket Guard
+            const _WebSocket = window.WebSocket;
+            window.WebSocket = function(url, protocols) {
+                if (typeof url === 'string' && url.includes(':8081')) {
+                    return { close:()=>{}, send:()=>{}, addEventListener:()=>{}, removeEventListener:()=>{}, readyState: 3 };
+                }
+                return new _WebSocket(url, protocols);
+            };
+            window.WebSocket.prototype = _WebSocket.prototype;
+            window.WebSocket.CONNECTING = 0; window.WebSocket.OPEN = 1; window.WebSocket.CLOSING = 2; window.WebSocket.CLOSED = 3;
+
+            // 2. Message Channel Guard (Silences "message channel closed before a response was received")
+            window.addEventListener('unhandledrejection', function(event) {
+                if (event.reason && (
+                    event.reason.message?.includes('message channel closed') || 
+                    event.reason.message?.includes('Could not establish connection')
+                )) {
+                    event.preventDefault();
+                }
+            });
+        })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#1a1a2e">
@@ -43,6 +68,9 @@
     <link rel="stylesheet" href="<?= asset_url('css/app.css') ?>">
     <link rel="stylesheet" href="<?= asset_url('css/hud-theme.css') ?>">
     
+    <!-- Chart.js (global — required by dashboard radar, must survive HTMX swaps) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     

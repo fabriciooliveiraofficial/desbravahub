@@ -19,7 +19,7 @@ class ApprovalController
         $user = App::user();
         $role = $user['role_name'] ?? '';
 
-        if (!in_array($role, ['admin', 'director', 'counselor'])) {
+        if (!in_array($role, ['admin', 'director', 'associate_director', 'counselor', 'instructor'])) {
             error_log("ApprovalController::requireAdmin - Access Denied: User " . ($user['id'] ?? 'unknown') . " with role $role tried to access approvals.");
             header('HTTP/1.0 403 Forbidden');
             echo 'Acesso negado';
@@ -128,8 +128,21 @@ class ApprovalController
             ORDER BY ps.sort_order ASC
         ", [$progressId, $progress['version_id']]);
 
+        // Fetch highlights for each response to show correctly in UI
+        $responseIds = array_filter(array_map(fn($s) => $s['response_id'], $steps));
+        $highlightsMap = [];
+        if (!empty($responseIds)) {
+            \App\Services\CurationService::ensureTable();
+            $placeholders = implode(',', array_fill(0, count($responseIds), '?'));
+            $curated = db_fetch_all("SELECT source_id, media_url FROM curated_media WHERE source_type = 'step' AND source_id IN ($placeholders)", array_values($responseIds));
+            foreach ($curated as $item) {
+                $highlightsMap[$item['source_id']][] = trim($item['media_url']);
+            }
+        }
+
         // Enhance steps with question details to map numeric answers (e.g. "0" -> "First Option")
-    foreach ($steps as &$step) {
+        foreach ($steps as &$step) {
+            $step['highlighted_urls'] = $highlightsMap[$step['response_id']] ?? [];
         $questions = db_fetch_all("SELECT * FROM program_questions WHERE step_id = ? ORDER BY sort_order", [$step['id']]);
         $step['structured_content'] = []; // Always initialize for the view
         
@@ -573,49 +586,64 @@ class ApprovalController
         $input = json_decode(file_get_contents('php://input'), true);
         $showPublic = !empty($input['show_public']) ? 1 : 0;
         $preferredUrl = $input['preferred_url'] ?? null;
+        $action = $input['action'] ?? 'toggle'; // 'add', 'remove', or 'toggle'
 
         try {
             if ($showPublic) {
-                // If a preferred URL is provided, use it. Otherwise extract automatically if empty.
-                if ($preferredUrl) {
-                    db_update('user_step_responses', [
-                        'response_url' => $preferredUrl,
-                        'thumbnail_url' => fetch_media_thumbnail($preferredUrl)
-                    ], 'id = ?', [$responseId]);
-                } else {
+                // Determine final URL to highlight
+                $finalUrl = $preferredUrl;
+                if (empty($finalUrl)) {
                     $response = db_fetch_one("SELECT response_text, response_url FROM user_step_responses WHERE id = ?", [$responseId]);
-                    if ($response && empty($response['response_url']) && !empty($response['response_text'])) {
-                        $itemUrl = null;
+                    $finalUrl = $response['response_url'] ?? null;
+                    
+                    if (empty($finalUrl) && !empty($response['response_text'])) {
                         $decoded = json_decode($response['response_text'], true);
                         if (is_array($decoded)) {
                             foreach ($decoded as $val) {
-                                if (is_string($val) && filter_var($val, FILTER_VALIDATE_URL)) { $itemUrl = $val; break; }
+                                if (is_string($val) && filter_var($val, FILTER_VALIDATE_URL)) { $finalUrl = $val; break; }
                                 if (is_array($val)) {
                                     foreach ($val as $subVal) {
-                                        if (is_string($subVal) && filter_var($subVal, FILTER_VALIDATE_URL)) { $itemUrl = $subVal; break 2; }
+                                        if (is_string($subVal) && filter_var($subVal, FILTER_VALIDATE_URL)) { $finalUrl = $subVal; break 2; }
                                     }
                                 }
                             }
                         }
-                        if ($itemUrl) {
-                            db_update('user_step_responses', [
-                                'response_url' => $itemUrl,
-                                'thumbnail_url' => fetch_media_thumbnail($itemUrl)
-                            ], 'id = ?', [$responseId]);
-                        }
                     }
                 }
 
-                // If we have a URL now, ensure we have a thumbnail
-                $final = db_fetch_one("SELECT response_url, thumbnail_url FROM user_step_responses WHERE id = ?", [$responseId]);
-                if (!empty($final['response_url']) && empty($final['thumbnail_url'])) {
-                    db_update('user_step_responses', ['thumbnail_url' => fetch_media_thumbnail($final['response_url'])], 'id = ?', [$responseId]);
+                if ($finalUrl) {
+                    $thumbnailUrl = fetch_media_thumbnail($finalUrl);
+                    
+                    // Check if already exists
+                    $existing = db_fetch_one("SELECT id FROM curated_media WHERE source_type = 'step' AND source_id = ? AND media_url = ?", [$responseId, $finalUrl]);
+                    
+                    if ($action === 'remove' && $existing) {
+                        db_query("DELETE FROM curated_media WHERE id = ?", [$existing['id']]);
+                    } elseif (($action === 'add' || $action === 'toggle') && !$existing) {
+                        db_insert('curated_media', [
+                            'tenant_id' => App::tenantId(),
+                            'source_type' => 'step',
+                            'source_id' => $responseId,
+                            'media_url' => $finalUrl,
+                            'thumbnail_url' => $thumbnailUrl,
+                            'created_at' => date('Y-m-d H:i:s')
+                        ]);
+                    }
+                    
+                    // Update legacy field for backward compatibility 
+                    // (show_public = 1 if at least one highlight exists)
+                    $total = (int)db_fetch_column("SELECT COUNT(*) FROM curated_media WHERE source_type = 'step' AND source_id = ?", [$responseId]);
+                    db_update('user_step_responses', [
+                        'show_public' => $total > 0 ? 1 : 0,
+                        'response_url' => $finalUrl, // Keep last highlighted URL here for legacy views
+                        'thumbnail_url' => $thumbnailUrl
+                    ], 'id = ?', [$responseId]);
                 }
+            } else {
+                // Unhighlight ALL if show_public is explicitly false (legacy toggle)
+                db_query("DELETE FROM curated_media WHERE source_type = 'step' AND source_id = ?", [$responseId]);
+                db_update('user_step_responses', ['show_public' => 0], 'id = ?', [$responseId]);
             }
-
-            db_update('user_step_responses', [
-                'show_public' => $showPublic
-            ], 'id = ?', [$responseId]);
 
             $this->json(['success' => true, 'message' => 'Configurações de destaque atualizadas!']);
         } catch (\Exception $e) {

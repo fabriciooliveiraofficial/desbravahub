@@ -183,14 +183,13 @@ $pageTitle = $category['name'] . ' - Especialidades';
     }
 
     .btn-card {
-        display: inline-flex;
+        width: 32px;
+        height: 32px;
+        display: flex;
         align-items: center;
-        gap: 6px;
-        padding: 8px 14px;
+        justify-content: center;
         border: 1px solid var(--border-light);
         border-radius: 8px;
-        font-weight: 500;
-        font-size: 0.85rem;
         text-decoration: none;
         cursor: pointer;
         transition: all 0.2s;
@@ -206,7 +205,6 @@ $pageTitle = $category['name'] . ' - Especialidades';
         background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
         border-color: transparent;
         color: #0a0a14;
-        font-weight: 600;
     }
 
     .btn-card-assign:hover {
@@ -604,16 +602,16 @@ $pageTitle = $category['name'] . ' - Especialidades';
                         <span class="xp-reward">🌟 <?= $spec['xp_reward'] ?? 100 ?> XP</span>
                         <div class="card-actions">
                             <a href="<?= base_url($tenant['slug'] . '/admin/especialidades/' . $spec['id'] . '/requisitos') ?>"
-                                class="btn-card" onclick="event.stopPropagation();">
-                                ✏️ Editar
+                                class="btn-card" title="Editar Requisitos" onclick="event.stopPropagation();">
+                                <iconify-icon icon="lucide:edit-3" style="font-size: 18px;"></iconify-icon>
                             </a>
                             <a href="<?= base_url($tenant['slug'] . '/admin/especialidades/' . $spec['id'] . '/atribuir') ?>"
-                                class="btn-card btn-card-assign" onclick="event.stopPropagation();">
-                                👥 Atribuir
+                                class="btn-card btn-card-assign" title="Atribuir" onclick="event.stopPropagation();">
+                                <iconify-icon icon="lucide:rocket" style="font-size: 18px;"></iconify-icon>
                             </a>
-                            <button type="button" class="btn-card btn-card-danger"
+                            <button type="button" class="btn-card btn-card-danger" title="Excluir"
                                 onclick="event.stopPropagation(); deleteSpecialty('<?= $spec['id'] ?>', '<?= htmlspecialchars(addslashes($spec['name'])) ?>');">
-                                🗑️
+                                <iconify-icon icon="lucide:trash-2" style="font-size: 18px;"></iconify-icon>
                             </button>
                         </div>
                     </div>

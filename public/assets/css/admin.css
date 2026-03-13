@@ -1663,10 +1663,6 @@ textarea.form-control {
         flex-wrap: wrap;
     }
 
-    .btn-card-assign {
-        flex: 1;
-        justify-content: center;
-    }
 }
 
 /* ============ Page Toolbar & Filters ============ */

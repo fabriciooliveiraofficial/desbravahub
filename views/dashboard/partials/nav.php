@@ -1,635 +1,285 @@
 <?php
 /**
- * Premium Bottom Navigation - macOS Dock Style
- * Senior UI/UX Design with micro-interactions
+ * Sidebar Navigation
+ * DESIGN: Pixel-Perfect Reference (Vertical Sidebar)
  */
-$currentPath = $_SERVER['REQUEST_URI'];
-$isHome = strpos($currentPath, '/dashboard') !== false && strpos($currentPath, '/atividades') === false;
-$isTrilhas = strpos($currentPath, '/trilhas') !== false;
-$isClasses = strpos($currentPath, '/aprendizado') !== false;
-$isAgenda = strpos($currentPath, '/eventos') !== false;
-$isDesafios = strpos($currentPath, '/provas') !== false;
-$isRanking = strpos($currentPath, '/ranking') !== false;
-$isPerfil  = strpos($currentPath, '/perfil') !== false || strpos($currentPath, '/meus-diplomas') !== false;
+$currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$pathSegments = array_values(array_filter(explode('/', trim($currentPath, '/'))));
 
-// Profile Completion Check
-$profileLocked = is_pathfinder() && !is_profile_complete();
+// The pattern is [optional_prefixes...]/tenant_slug/page_name/...
+$tenantSlug = $tenant['slug'] ?? '';
+$pageSegment = '';
+
+// Find the tenant slug in the URL segments
+$tenantIndex = array_search($tenantSlug, $pathSegments);
+
+if ($tenantIndex !== false && isset($pathSegments[$tenantIndex + 1])) {
+    // The page name is the segment immediately following the tenant slug
+    $pageSegment = $pathSegments[$tenantIndex + 1];
+} elseif ($tenantIndex === false && !empty($pathSegments)) {
+    // Fallback: If tenant slug isn't found (e.g., custom domains, though rare here), 
+    // try to guess based on known routes or default to the last segment
+    $pageSegment = end($pathSegments); 
+}
+
+$isHome       = ($pageSegment === 'dashboard');
+$isTrilhas    = ($pageSegment === 'trilhas');
+$isClasses    = ($pageSegment === 'aprendizado');
+$isAgenda     = ($pageSegment === 'eventos');
+$isConquistas = ($pageSegment === 'conquistas');
+$isRanking    = (strpos($pageSegment, 'ranking') === 0);
+$isPerfil     = ($pageSegment === 'perfil');
 ?>
 
-<nav class="dock-premium" id="dockNav">
-    <div class="dock-inner">
-        <!-- QG / Home -->
-        <a href="<?= base_url($tenant['slug'] . '/dashboard') ?>" 
-           class="dock-item <?= $isHome ? 'active' : '' ?> <?= ($profileLocked && !$isHome) ? 'locked-item' : '' ?>" 
-           data-tooltip="<?= ($profileLocked && !$isHome) ? 'Complete seu perfil para liberar' : 'Home' ?>">
-            <div class="dock-icon-wrap">
-                <span class="material-icons-round">rocket_launch</span>
-                <?php if ($profileLocked && !$isHome): ?>
-                    <span class="material-icons-round lock-overlay">lock</span>
-                <?php endif; ?>
-                <div class="icon-glow"></div>
-            </div>
-            <span class="dock-label">Home</span>
-            <?php if ($isHome): ?><span class="active-dot"></span><?php endif; ?>
+<aside class="sidebar-v3">
+    <div class="sidebar-logo">
+        <div class="brand-icon">
+            <i class="fas fa-compass"></i>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <!-- Dashboard / Home -->
+        <a href="<?= base_url($tenant['slug'] . '/dashboard') ?>"
+           class="nav-item <?= $isHome ? 'active' : '' ?>" data-nav="home">
+            <span class="material-icons-round">grid_view</span>
+            <span class="nav-label">Home</span>
         </a>
 
-        <!-- Trilhas (Mapa de Nodos) -->
-        <a href="<?= base_url($tenant['slug'] . '/trilhas') ?>" 
-           class="dock-item <?= $isTrilhas ? 'active' : '' ?> <?= ($profileLocked && !$isTrilhas) ? 'locked-item' : '' ?>" 
-           data-tooltip="<?= ($profileLocked && !$isTrilhas) ? 'Complete seu perfil para liberar' : 'Mapa de Trilhas' ?>"
-           hx-boost="false">
-            <div class="dock-icon-wrap">
-                <span class="material-icons-round">route</span>
-                <?php if ($profileLocked && !$isTrilhas): ?>
-                    <span class="material-icons-round lock-overlay">lock</span>
-                <?php endif; ?>
-                <div class="icon-glow"></div>
-            </div>
-            <span class="dock-label">Trilhas</span>
-            <?php if ($isTrilhas): ?><span class="active-dot"></span><?php endif; ?>
+        <!-- Skills -> Trilhas -->
+        <a href="<?= base_url($tenant['slug'] . '/trilhas') ?>"
+           class="nav-item <?= $isTrilhas ? 'active' : '' ?>" data-nav="trilhas" hx-boost="false">
+            <span class="material-icons-round">layers</span>
+            <span class="nav-label">Trilhas</span>
         </a>
 
-        <!-- Agenda -->
-        <a href="<?= base_url($tenant['slug'] . '/eventos') ?>" 
-           class="dock-item <?= $isAgenda ? 'active' : '' ?> <?= ($profileLocked && !$isAgenda) ? 'locked-item' : '' ?>" 
-           data-tooltip="<?= ($profileLocked && !$isAgenda) ? 'Complete seu perfil para liberar' : 'Agenda do Clube' ?>">
-            <div class="dock-icon-wrap">
-                <span class="material-icons-round">calendar_month</span>
-                <?php if ($profileLocked && !$isAgenda): ?>
-                    <span class="material-icons-round lock-overlay">lock</span>
-                <?php endif; ?>
-                <div class="icon-glow"></div>
-            </div>
-            <span class="dock-label">Agenda</span>
-            <?php if ($isAgenda): ?><span class="active-dot"></span><?php endif; ?>
+        <!-- Events -> Agenda -->
+        <a href="<?= base_url($tenant['slug'] . '/eventos') ?>"
+           class="nav-item <?= $isAgenda ? 'active' : '' ?>" data-nav="agenda">
+            <span class="material-icons-round">calendar_today</span>
+            <span class="nav-label">Agenda</span>
         </a>
 
-        <!-- Desafios -->
-        <a href="<?= base_url($tenant['slug'] . '/provas') ?>" 
-           class="dock-item <?= $isDesafios ? 'active' : '' ?> <?= ($profileLocked && !$isDesafios) ? 'locked-item' : '' ?>" 
-           data-tooltip="<?= ($profileLocked && !$isDesafios) ? 'Complete seu perfil para liberar' : 'Desafios & Missões' ?>">
-            <div class="dock-icon-wrap">
-                <span class="material-icons-round">emoji_events</span>
-                <?php if ($profileLocked && !$isDesafios): ?>
-                    <span class="material-icons-round lock-overlay">lock</span>
-                <?php endif; ?>
-                <div class="icon-glow"></div>
-            </div>
-            <span class="dock-label">Desafios</span>
-            <?php if ($isDesafios): ?><span class="active-dot"></span><?php endif; ?>
+        <!-- Badges / Desafios -->
+        <a href="<?= base_url($tenant['slug'] . '/conquistas') ?>"
+           class="nav-item <?= $isConquistas ? 'active' : '' ?>" data-nav="conquistas">
+            <span class="material-icons-round">emoji_events</span>
+            <span class="nav-label">Desafios</span>
         </a>
 
         <!-- Ranking -->
-        <a href="<?= base_url($tenant['slug'] . '/ranking') ?>" 
-           class="dock-item <?= $isRanking ? 'active' : '' ?> <?= ($profileLocked && !$isRanking) ? 'locked-item' : '' ?>" 
-           data-tooltip="<?= ($profileLocked && !$isRanking) ? 'Complete seu perfil para liberar' : 'Ranking Geral' ?>">
-            <div class="dock-icon-wrap">
-                <span class="material-icons-round">leaderboard</span>
-                <?php if ($profileLocked && !$isRanking): ?>
-                    <span class="material-icons-round lock-overlay">lock</span>
-                <?php endif; ?>
-                <div class="icon-glow"></div>
-            </div>
-            <span class="dock-label">Ranking</span>
-            <?php if ($isRanking): ?><span class="active-dot"></span><?php endif; ?>
+        <a href="<?= base_url($tenant['slug'] . '/ranking') ?>"
+           class="nav-item <?= $isRanking ? 'active' : '' ?>" data-nav="ranking">
+            <span class="material-icons-round">leaderboard</span>
+            <span class="nav-label">Ranking</span>
         </a>
 
-        </a>
-
-        <!-- Perfil -->
+        <!-- Profile / Perfil -->
         <a href="<?= base_url($tenant['slug'] . '/perfil') ?>"
-           class="dock-item <?= $isPerfil ? 'active' : '' ?>" data-tooltip="Meu Perfil">
-            <div class="dock-icon-wrap">
-                <span class="material-icons-round">shield</span>
-                <div class="icon-glow"></div>
-            </div>
-            <span class="dock-label">Perfil</span>
-            <?php if ($isPerfil): ?><span class="active-dot"></span><?php endif; ?>
+           class="nav-item <?= $isPerfil ? 'active' : '' ?>" data-nav="perfil">
+            <span class="material-icons-round">person_outline</span>
+            <span class="nav-label">Perfil</span>
         </a>
+    </nav>
 
-        <?php 
-        $permissionService = new \App\Services\PermissionService();
-        if ($permissionService->can('admin.access')): 
-        ?>
-        <a href="<?= base_url($tenant['slug'] . '/admin/dashboard') ?>" 
-           class="dock-item" data-tooltip="Painel Administrativo"
-           hx-boost="false">
-            <div class="dock-icon-wrap">
-                <span class="material-icons-round">admin_panel_settings</span>
-                <div class="icon-glow"></div>
-            </div>
-            <span class="dock-label">Painel Adm</span>
+    <div class="sidebar-bottom">
+        <a href="<?= base_url('auth/logout') ?>" class="nav-item" title="Sair">
+            <span class="material-icons-round">logout</span>
         </a>
-        <?php endif; ?>
     </div>
-</nav>
+</aside>
 
 <style>
-/* ============ PREMIUM DOCK NAVIGATION ============ */
-.dock-premium {
+/* Variable Defaults */
+:root {
+    --sidebar-width: 100px;
+    --neon-green: #34d399; /* Vibrant green from image */
+    --neon-green-glow: rgba(52, 211, 153, 0.4);
+    --dark-bg: #0B1121; /* Deep space blue */
+    --panel-bg: rgba(20, 30, 48, 0.6);
+}
+
+.sidebar-v3 {
     position: fixed;
-    bottom: 0;
+    top: 0;
     left: 0;
-    right: 0;
-    z-index: 1000;
-    padding: 0; /* App style, full width */
-    display: flex;
-    justify-content: center;
-    pointer-events: none;
-}
-
-.dock-inner {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-around; /* Distribute items evenly */
-    gap: 4px;
-    padding: 10px 16px 12px;
-    /* Dark Glass Aesthetic */
-    background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(22, 33, 62, 0.95));
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 16px 16px 0 0; /* Top rounded corners only */
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 
-        0 -10px 40px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    pointer-events: auto;
-    animation: dockSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-    width: 100%;
-}
-
-@keyframes dockSlideIn {
-    from { transform: translateY(100%) scale(0.9); opacity: 0; }
-    to { transform: translateY(0) scale(1); opacity: 1; }
-}
-
-/* Locked Item Styles */
-.dock-item.locked-item {
-    opacity: 0.4;
-    filter: grayscale(1);
-    cursor: not-allowed !important;
-    pointer-events: none !important;
-}
-
-.lock-overlay {
-    position: absolute;
-    font-size: 14px !important;
-    color: var(--danger) !important;
-    background: rgba(0,0,0,0.8);
-    border-radius: 50%;
-    padding: 2px;
-    top: -5px;
-    right: -5px;
-    z-index: 10;
-    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
-}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    // Persistent Alert for Incomplete Profile
-    <?php if ($profileLocked && !$isPerfil): ?>
-    if (typeof window.toast !== 'undefined') {
-        const title = 'Ação Necessária';
-        const msg = 'Termine de preencher o seu Livro de Registro (Dados Gerais e Ficha Médica) para liberar todos os recursos da plataforma.';
-        
-        window.toast.confirm(title, msg, {
-            type: 'warning',
-            icon: 'fa-solid fa-clipboard-user',
-            confirmText: 'Preencher Agora',
-            cancelText: 'Mais tarde',
-            confirmBg: '#f59e0b'
-        }).then((confirmed) => {
-            if (confirmed) {
-                window.location.href = '<?= base_url($tenant['slug'] . '/perfil?tab=livro-registro') ?>';
-            }
-        });
-    }
-    <?php endif; ?>
-});
-</script>
-
-<style>
-
-/* Dock Item */
-.dock-item {
-    position: relative;
+    bottom: 0;
+    width: var(--sidebar-width);
+    background: var(--dark-bg);
+    border-right: 1px solid rgba(255,255,255,0.05);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    padding: 8px 12px;
-    text-decoration: none;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    border-radius: 16px;
+    padding: 24px 0;
+    z-index: 1000;
 }
 
-.dock-item:hover {
-    transform: translateY(-8px) scale(1.15);
+.sidebar-logo {
+    margin-bottom: 40px;
 }
 
-/* Icon Wrapper with Gradient Background */
-.dock-icon-wrap {
-    position: relative;
+.brand-icon {
     width: 48px;
     height: 48px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 14px;
-    /* Darker button background */
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.3s ease;
+    color: var(--accent-cyan, #06b6d4);
+    font-size: 28px;
+    text-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
 }
 
-.dock-icon-wrap .material-icons-round {
-    font-size: 26px;
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    padding: 0 12px;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 4px;
     color: #64748b;
+    text-decoration: none;
+    border-radius: 12px;
     transition: all 0.3s ease;
-    position: relative;
-    z-index: 2;
 }
 
-.icon-glow {
-    position: absolute;
-    inset: 0;
-    border-radius: 14px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+.nav-item .material-icons-round {
+    font-size: 26px;
+    transition: all 0.3s ease;
 }
 
-/* Hover Effects */
-.dock-item:hover .dock-icon-wrap {
-    background: linear-gradient(135deg, #6366f1, #818cf8);
-    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
-    transform: rotate(-5deg);
-}
-
-.dock-item:hover .dock-icon-wrap .material-icons-round {
-    color: #fff;
-    transform: scale(1.1);
-}
-
-.dock-item:hover .icon-glow {
-    opacity: 1;
-    background: radial-gradient(circle at center, rgba(99, 102, 241, 0.3), transparent 70%);
-}
-
-/* Label */
-.dock-label {
+.nav-item .nav-label {
     font-size: 0.65rem;
-    font-weight: 800;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.5px;
     transition: all 0.3s ease;
-    font-family: 'Nunito', sans-serif;
 }
 
-.dock-item:hover .dock-label {
-    color: #6366f1;
-    transform: scale(1.1);
+.nav-item:hover {
+    color: #cbd5e1;
+    background: rgba(255,255,255,0.03);
 }
 
-/* Active State */
-.dock-item.active .dock-icon-wrap {
-    background: linear-gradient(135deg, #6366f1, #4f46e5);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+.nav-item.active {
+    color: var(--neon-green);
+    position: relative;
 }
 
-.dock-item.active .dock-icon-wrap .material-icons-round {
-    color: #fff;
+.nav-item.active .material-icons-round {
+    filter: drop-shadow(0 0 8px var(--neon-green-glow));
 }
 
-.dock-item.active .dock-label {
-    color: #6366f1;
-    font-weight: 900;
-}
-
-.dock-item.active:hover {
-    transform: translateY(-8px) scale(1.1);
-}
-
-.dock-item.active:hover .dock-icon-wrap {
-    transform: rotate(0deg);
-}
-
-/* Active Indicator Dot */
-.active-dot {
+.nav-item.active::before {
+    content: '';
     position: absolute;
-    bottom: -2px;
-    width: 6px;
-    height: 6px;
-    background: linear-gradient(135deg, #6366f1, #4f46e5);
-    border-radius: 50%;
-    box-shadow: 0 0 10px rgba(99, 102, 241, 0.8);
-    animation: dotPulse 2s ease-in-out infinite;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 24px;
+    background: var(--neon-green);
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 10px var(--neon-green-glow);
 }
 
-@keyframes dotPulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.5); opacity: 0.7; }
+.sidebar-bottom {
+    margin-top: auto;
+    width: 100%;
+    padding: 0 12px;
 }
 
-/* Tooltip (optional enhancement) */
-.dock-item::before {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%) translateY(10px);
-    padding: 6px 12px;
-    background: rgba(30, 27, 75, 0.95);
-    color: #fff;
-    font-size: 0.75rem;
-    font-weight: 700;
-    border-radius: 8px;
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-    pointer-events: none;
-    z-index: 100;
+/* Base Body Adjustments for Sidebar */
+body.hud-body {
+    padding-left: var(--sidebar-width) !important;
+    padding-bottom: 0 !important;
+    background: var(--dark-bg);
 }
 
-.dock-item:hover::before {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(-8px);
-}
-
-/* Color variations for each icon on hover (optional flair) */
-.dock-item:nth-child(1):hover .dock-icon-wrap { background: linear-gradient(135deg, #06b6d4, #22d3ee); } /* QG - Cyan */
-.dock-item:nth-child(2):hover .dock-icon-wrap { background: linear-gradient(135deg, #8b5cf6, #a78bfa); } /* Trilhas - Purple */
-.dock-item:nth-child(3):hover .dock-icon-wrap { background: linear-gradient(135deg, #f472b6, #ec4899); } /* Agenda - Pink */
-.dock-item:nth-child(4):hover .dock-icon-wrap { background: linear-gradient(135deg, #f97316, #fb923c); } /* Desafios - Orange */
-.dock-item:nth-child(5):hover .dock-icon-wrap { background: linear-gradient(135deg, #eab308, #fbbf24); } /* Ranking - Gold */
-.dock-item:nth-child(6):hover .dock-icon-wrap { background: linear-gradient(135deg, #22c55e, #4ade80); } /* Perfil - Green */
-
-/* Keep active gradients consistent */
-.dock-item.active .dock-icon-wrap,
-.dock-item.active:hover .dock-icon-wrap {
-    background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
-}
-
-/* Safe Area for iOS */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-    .dock-inner {
-        padding-bottom: calc(12px + env(safe-area-inset-bottom));
+/* Mobile Responsiveness (Hides sidebar, turns to simple bottom nav or drawer) */
+@media (max-width: 1024px) {
+    .sidebar-v3 {
+        width: 80px;
     }
+    body.hud-body { padding-left: 80px !important; }
 }
 
-/* Mobile only - hide tooltips (touch devices) */
 @media (max-width: 768px) {
-    .dock-item::before {
-        display: none;
-    }
-}
-
-/* Mobile screens (prevent overflow with 6+ items) */
-@media (max-width: 480px) {
-    .dock-inner {
-        gap: 2px;
-        padding: 8px 10px 10px;
-        border-radius: 16px 16px 0 0;
-    }
-    
-    .dock-item {
-        padding: 6px 4px;
-        flex: 1; /* Allow items to flex and fill space equally */
-        min-width: 0;
-    }
-    
-    .dock-icon-wrap {
-        width: 42px;
-        height: 42px;
-    }
-    
-    .dock-icon-wrap .material-icons-round {
-        font-size: 20px;
-    }
-    
-    .dock-label {
-        font-size: 0.55rem;
-        letter-spacing: -0.02em;
-        white-space: nowrap;
-    }
-}
-
-/* Vertical phones (≤360px) */
-@media (max-width: 360px) {
-    .dock-inner {
-        gap: 0;
-        padding: 6px 4px 8px;
-    }
-    
-    .dock-item {
-        padding: 4px 2px;
-    }
-    
-    .dock-icon-wrap {
-        width: 38px;
-        height: 38px;
-    }
-}
-</style>
-
-<style>
-/* ... existing styles ... */
-
-/* Mobile Safety Padding - Main Body */
-body {
-    padding-bottom: 120px !important; 
-    transition: padding-left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-/* Modal Content Safety Padding */
-.modal-body {
-    padding-bottom: 100px !important;
-}
-
-/* Dynamic State */
-.dock-premium {
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
-}
-
-/* ==========================================
-   DESKTOP SIDEBAR OVERRIDES (App Navigation)
-   ========================================== */
-@media (min-width: 1024px) {
-    .dock-premium {
-        top: 0;
+    .sidebar-v3 {
+        top: auto;
         bottom: 0;
-        left: 0;
-        right: auto;
-        padding: 24px 16px;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        width: 100px;
-    }
-
-    .dock-inner {
-        flex-direction: column;
-        justify-content: center;
-        height: auto;
         width: 100%;
-        padding: 24px 10px;
-        gap: 16px;
-        /* Sidebar slide-in from left */
-        animation: dockSlideInLeft 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        height: 70px;
+        flex-direction: row;
+        border-right: none;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        padding: 0;
     }
-    
-    @keyframes dockSlideInLeft {
-        from { transform: translateX(-100%) scale(0.9); opacity: 0; }
-        to { transform: translateX(0) scale(1); opacity: 1; }
+    .sidebar-logo, .sidebar-bottom { display: none; }
+    .sidebar-nav {
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 0;
+        margin: 0;
     }
-
-    .dock-item {
-        width: 100%;
-        padding: 10px 8px;
+    .nav-item { padding: 8px 4px; }
+    .nav-item.active::before {
+        left: 50%; /* Top indicator */
+        top: 0;
+        transform: translateX(-50%);
+        width: 24px;
+        height: 3px;
+        border-radius: 0 0 4px 4px;
     }
-
-    /* Undo horizontal magnification and apply vertical subtle scale */
-    .dock-item:hover, .dock-item.active:hover {
-        transform: translateY(-4px) scale(1.05);
-    }
-    
-    .dock-item.active .dock-icon-wrap,
-    .dock-item:hover .dock-icon-wrap {
-        transform: rotate(0deg);
-    }
-    
-    .dock-icon-wrap {
-        width: 50px;
-        height: 50px;
-    }
-
-    /* Move tooltips to the right */
-    .dock-item::before {
-        bottom: 50%;
-        left: 100%;
-        transform: translateX(10px) translateY(50%);
-    }
-
-    .dock-item:hover::before {
-        transform: translateX(16px) translateY(50%);
-    }
-    
-    /* Active dot on right instead of bottom */
-    .active-dot {
-        bottom: auto;
-        right: -6px;
-        top: 50%;
-        transform: translateY(-50%);
-        animation: dotPulseVertical 2s ease-in-out infinite;
-    }
-
-    @keyframes dotPulseVertical {
-        0%, 100% { transform: translateY(-50%) scale(1); opacity: 1; }
-        50% { transform: translateY(-50%) scale(1.5); opacity: 0.7; }
-    }
-
-    /* Desktop layout adjustment - leave space for sidebar */
-    body {
-        padding-bottom: 20px !important; 
-        padding-left: 100px !important; 
-    }
-    
-    /* Fix HUD Top Bar offset */
-    .hud-top-bar {
-        padding-left: calc(20px + 10px);
+    body.hud-body {
+        padding-left: 0 !important;
+        padding-bottom: 70px !important;
     }
 }
 </style>
 
-
 <script>
-// macOS Dock-style magnification effect (Mobile/Tablet only)
-document.addEventListener('DOMContentLoaded', () => {
-    const dock = document.querySelector('.dock-inner');
-    const items = document.querySelectorAll('.dock-item');
-    
-    if (!dock || items.length === 0) return;
-    
-    dock.addEventListener('mousemove', (e) => {
-        // Disable on desktop (sidebar mode)
-        if (window.innerWidth >= 1024) return;
-        
-        const dockRect = dock.getBoundingClientRect();
-        const mouseX = e.clientX - dockRect.left;
-        
-        items.forEach((item) => {
-            const itemRect = item.getBoundingClientRect();
-            const itemCenterX = itemRect.left + itemRect.width / 2 - dockRect.left;
-            const distance = Math.abs(mouseX - itemCenterX);
-            const maxDistance = 150;
-            
-            if (distance < maxDistance) {
-                const scale = 1 + (1 - distance / maxDistance) * 0.2;
-                const translateY = (1 - distance / maxDistance) * -8;
-                item.style.transform = `translateY(${translateY}px) scale(${scale})`;
-            } else {
-                item.style.transform = '';
-            }
-        });
-    });
-    
-    dock.addEventListener('mouseleave', () => {
-        items.forEach((item) => {
-            item.style.transform = '';
-        });
-    });
-});
+(function () {
+    // Map of URL page segment → nav item selector
+    const NAV_MAP = {
+        'dashboard':   '[data-nav="home"]',
+        'trilhas':     '[data-nav="trilhas"]',
+        'aprendizado': '[data-nav="aprendizado"]',
+        'eventos':     '[data-nav="agenda"]',
+        'conquistas':  '[data-nav="conquistas"]',
+        'ranking':     '[data-nav="ranking"]',
+        'perfil':      '[data-nav="perfil"]',
+    };
 
-</script>
-<script>
-    // ... active state logic ...
-    // Handle active state on HTMX navigation
-    document.body.addEventListener('htmx:pushedIntoHistory', () => updateActiveDock());
-    document.body.addEventListener('htmx:historyRestore', () => updateActiveDock());
-    
-    // Also update on swap in case URL changed
-    document.body.addEventListener('htmx:afterSwap', (evt) => {
-        updateActiveDock();
-    });
+    const tenantSlug = <?= json_encode($tenantSlug) ?>;
 
-    function updateActiveDock() {
-        const path = window.location.pathname;
-        const items = document.querySelectorAll('.dock-item');
-        
-        items.forEach(item => {
-            const href = item.getAttribute('href');
-            
-            // Remove active class
-            item.classList.remove('active');
-            
-            // Remove active-dot if exists
-            const dot = item.querySelector('.active-dot');
-            if (dot) dot.remove();
-            
-            // Add active class if match
-            const isDashboard = href.includes('/dashboard');
-            const isCurrentDashboard = path.includes('/dashboard') && !path.includes('/atividades');
-            
-            if (isDashboard && isCurrentDashboard) {
-                setActive(item);
-                return;
-            }
-            
-            if (!isDashboard && path.includes(href.split('/').pop())) {
-                setActive(item);
-            }
-        });
-    }
-    
-    function setActive(item) {
-        item.classList.add('active');
-        if (!item.querySelector('.active-dot')) {
-            const dot = document.createElement('span');
-            dot.className = 'active-dot';
-            item.appendChild(dot);
+    function updateActiveNav() {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const tenantIndex = segments.indexOf(tenantSlug);
+        const pageSegment = tenantIndex !== -1 ? (segments[tenantIndex + 1] || '') : '';
+
+        document.querySelectorAll('.sidebar-nav .nav-item').forEach(el => el.classList.remove('active'));
+
+        const selector = NAV_MAP[pageSegment];
+        if (selector) {
+            const el = document.querySelector(selector);
+            if (el) el.classList.add('active');
         }
     }
+
+    // Run on HTMX navigation events
+    document.addEventListener('htmx:pushedIntoHistory', updateActiveNav);
+    document.addEventListener('htmx:replacedInHistory', updateActiveNav);
+
+    // Run on initial load (covers hard-refresh)
+    updateActiveNav();
+})();
 </script>

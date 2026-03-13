@@ -162,15 +162,19 @@ class ProofService
             return ['success' => false, 'error' => 'Proof not found'];
         }
 
-        // Update proof status
-        $thumbnailUrl = ($action === 'approved' && $showPublic) ? fetch_media_thumbnail($proof['content']) : null;
+        // Update curated media first if approved
+        if ($action === 'approved') {
+            $this->updateCuration($proofId, $showPublic);
+        } else {
+            // If rejected/changes, always remove from curation
+            $this->updateCuration($proofId, false);
+        }
 
         db_update('activity_proofs', [
             'status' => $action === 'requested_changes' ? 'pending' : $action,
             'reviewed_at' => date('Y-m-d H:i:s'),
             'reviewed_by' => $reviewer['id'],
-            'show_public' => ($action === 'approved' && $showPublic) ? 1 : 0,
-            'thumbnail_url' => $thumbnailUrl
+            'comment' => $comment // Ensure comment is saved if table has it
         ], 'id = ?', [$proofId]);
 
         // Create review record
@@ -185,6 +189,47 @@ class ProofService
         if ($action === 'approved') {
             $this->checkAllProofsApproved($proof['user_activity_id']);
         }
+
+        return ['success' => true];
+    }
+
+    /**
+     * Update curation state for an activity proof
+     */
+    public function updateCuration(int $proofId, bool $showPublic): array
+    {
+        $tenantId = App::tenantId();
+        
+        $proof = db_fetch_one(
+            "SELECT * FROM activity_proofs WHERE id = ? AND tenant_id = ?",
+            [$proofId, $tenantId]
+        );
+
+        if (!$proof) return ['success' => false, 'error' => 'Proof not found'];
+
+        $thumbnailUrl = $showPublic ? fetch_media_thumbnail($proof['content']) : null;
+
+        if ($showPublic) {
+            \App\Services\CurationService::ensureTable();
+            $exists = db_fetch_one("SELECT id FROM curated_media WHERE source_type = 'activity' AND source_id = ? AND media_url = ?", [$proofId, $proof['content']]);
+            if (!$exists) {
+                db_insert('curated_media', [
+                    'tenant_id' => $tenantId,
+                    'source_type' => 'activity',
+                    'source_id' => $proofId,
+                    'media_url' => $proof['content'],
+                    'thumbnail_url' => $thumbnailUrl,
+                    'created_at' => date('Y-m-d H:i:s')
+                ]);
+            }
+        } else {
+            db_query("DELETE FROM curated_media WHERE source_type = 'activity' AND source_id = ?", [$proofId]);
+        }
+
+        db_update('activity_proofs', [
+            'show_public' => $showPublic ? 1 : 0,
+            'thumbnail_url' => $thumbnailUrl
+        ], 'id = ?', [$proofId]);
 
         return ['success' => true];
     }

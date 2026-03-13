@@ -244,7 +244,7 @@ class ProgressionService
     }
 
     /**
-     * Get user's achievements
+     * Get user's achievements (legacy — kept for compatibility)
      */
     public function getUserAchievements(int $userId): array
     {
@@ -258,6 +258,157 @@ class ProgressionService
              ORDER BY ua.earned_at DESC",
             [$userId, $tenantId]
         );
+    }
+
+    /**
+     * Get recent accomplishments unified: achievements + specialties + programs.
+     * Returns [{name, date, type, icon, style}] ordered by date DESC.
+     */
+    public function getRecentAccomplishments(int $userId, int $limit = 4): array
+    {
+        $tenantId = App::tenantId();
+
+        $rows = db_fetch_all("
+            SELECT name, date, type FROM (
+
+                SELECT a.name        AS name,
+                       ua.earned_at  AS date,
+                       'achievement' AS type
+                FROM user_achievements ua
+                JOIN achievements a ON ua.achievement_id = a.id
+                WHERE ua.user_id = ? AND ua.tenant_id = ?
+
+                UNION ALL
+
+                SELECT s.name AS name,
+                       COALESCE(sa.completed_at, sa.updated_at, sa.created_at) AS date,
+                       'specialty' AS type
+                FROM specialty_assignments sa
+                JOIN specialties s ON sa.specialty_id = s.id
+                WHERE sa.user_id = ? AND sa.tenant_id = ?
+                  AND sa.status IN ('completed', 'approved')
+
+                UNION ALL
+
+                SELECT lp.name AS name,
+                       COALESCE(upp.completed_at, upp.updated_at, upp.started_at) AS date,
+                       CASE WHEN lc.type = 'class' THEN 'class' ELSE 'program' END AS type
+                FROM user_program_progress upp
+                JOIN learning_programs lp ON upp.program_id = lp.id
+                LEFT JOIN learning_categories lc ON lp.category_id = lc.id
+                WHERE upp.user_id = ? AND upp.tenant_id = ?
+                  AND upp.status = 'completed'
+
+            ) AS all_accomplishments
+            ORDER BY date DESC
+            LIMIT ?
+        ", [$userId, $tenantId,
+            $userId, $tenantId,
+            $userId, $tenantId,
+            $limit]);
+
+        $iconMap  = [
+            'achievement' => 'military_tech',
+            'specialty'   => 'explore',
+            'program'     => 'auto_stories',
+            'class'       => 'school',
+        ];
+        $styleMap = [
+            'achievement' => 'cyan',
+            'specialty'   => 'green',
+            'program'     => 'green',
+            'class'       => 'purple',
+        ];
+
+        return array_map(fn($r) => [
+            'name'  => $r['name'],
+            'date'  => $r['date'],
+            'type'  => $r['type'],
+            'icon'  => $iconMap[$r['type']]  ?? 'star',
+            'style' => $styleMap[$r['type']] ?? 'cyan',
+        ], $rows);
+    }
+
+    /**
+     * Get ALL earned items for the achievements gallery (no limit).
+     * Combines: system achievements + completed specialties + completed programs/classes.
+     * Returns [{name, date, type, icon, style}] ordered by date DESC.
+     */
+    public function getAllEarnedItems(int $userId): array
+    {
+        $tenantId = App::tenantId();
+
+        // Fallback emoji per type when DB has no icon stored
+        $fallbackIcon = ['achievement' => '🏆', 'specialty' => '🔍', 'program' => '📖', 'class' => '🎓'];
+        $styleMap     = ['achievement' => 'cyan', 'specialty' => 'green', 'program' => 'green', 'class' => 'purple'];
+
+        $rows = db_fetch_all("
+            SELECT name, date, type, db_icon FROM (
+
+                SELECT a.name                        AS name,
+                       ua.earned_at                  AS date,
+                       'achievement'                 AS type,
+                       COALESCE(a.badge_url, '')     AS db_icon
+                FROM user_achievements ua
+                JOIN achievements a ON ua.achievement_id = a.id
+                WHERE ua.user_id = ? AND ua.tenant_id = ?
+
+                UNION ALL
+
+                SELECT s.name                                                   AS name,
+                       COALESCE(sa.completed_at, sa.updated_at, sa.created_at) AS date,
+                       'specialty'                                              AS type,
+                       COALESCE(s.badge_icon, '')                              AS db_icon
+                FROM specialty_assignments sa
+                JOIN specialties s ON sa.specialty_id = s.id
+                WHERE sa.user_id = ? AND sa.tenant_id = ?
+                  AND sa.status IN ('completed', 'approved')
+
+                UNION ALL
+
+                SELECT lp.name                                                      AS name,
+                       COALESCE(upp.completed_at, upp.updated_at, upp.started_at)  AS date,
+                       CASE WHEN lc.type = 'class' THEN 'class' ELSE 'program' END AS type,
+                       COALESCE(lp.icon, '')                                        AS db_icon
+                FROM user_program_progress upp
+                JOIN learning_programs lp ON upp.program_id = lp.id
+                LEFT JOIN learning_categories lc ON lp.category_id = lc.id
+                WHERE upp.user_id = ? AND upp.tenant_id = ?
+                  AND upp.status = 'completed'
+
+            ) AS all_earned
+            ORDER BY date DESC
+        ", [$userId, $tenantId,
+            $userId, $tenantId,
+            $userId, $tenantId]);
+
+        return array_map(function ($r) use ($fallbackIcon, $styleMap) {
+            $type = $r['type'];
+            $icon = ($r['db_icon'] !== '') ? $r['db_icon'] : ($fallbackIcon[$type] ?? '🏆');
+            return [
+                'name'  => $r['name'],
+                'date'  => $r['date'],
+                'type'  => $type,
+                'icon'  => $icon,
+                'style' => $styleMap[$type] ?? 'cyan',
+            ];
+        }, $rows);
+    }
+
+    /**
+     * Count total goals available across achievements + specialties + programs for this tenant.
+     */
+    public function countAvailableItems(int $tenantId): int
+    {
+        $counts = db_fetch_one("
+            SELECT
+                (SELECT COUNT(*) FROM achievements        WHERE tenant_id = ?) +
+                (SELECT COUNT(*) FROM specialties         WHERE tenant_id = ? AND status = 'active') +
+                (SELECT COUNT(*) FROM learning_programs   WHERE tenant_id = ? AND status IN ('active', 'published'))
+            AS total
+        ", [$tenantId, $tenantId, $tenantId]);
+
+        return (int) ($counts['total'] ?? 0);
     }
 
     /**

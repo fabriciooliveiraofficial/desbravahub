@@ -600,7 +600,7 @@ public function deleteUser(array $params): void
     private function requireAdmin(): void
     {
         $user = App::user();
-        $roleName = $user['role_name'] ?? '';
+        $roleName = strtolower($user['role_name'] ?? '');
 
         if (!in_array($roleName, ['admin', 'director', 'associate_director', 'counselor', 'instructor'])) {
             $this->deny('Acesso negado ao painel administrativo');
@@ -1112,19 +1112,20 @@ public function deleteUser(array $params): void
 
         $id = (int) ($params['id'] ?? 0);
         $input = json_decode(file_get_contents('php://input'), true);
-        $showPublic = ($input['show_public'] ?? false) ? 1 : 0;
+        $showPublic = ($input['show_public'] ?? false) ? true : false;
 
         try {
-            db_update('activity_proofs', [
-                'show_public' => $showPublic,
-                'reviewed_at' => date('Y-m-d H:i:s'),
-                'reviewed_by' => App::userId()
-            ], 'id = ?', [$id]);
+            $proofService = new \App\Services\ProofService();
+            $result = $proofService->updateCuration($id, $showPublic);
 
-            $this->json([
-                'success' => true,
-                'message' => 'Destaque atualizado com sucesso!'
-            ]);
+            if ($result['success']) {
+                $this->json([
+                    'success' => true,
+                    'message' => 'Destaque atualizado com sucesso!'
+                ]);
+            } else {
+                $this->jsonError($result['error'] ?? 'Erro ao atualizar');
+            }
         } catch (\Exception $e) {
             $this->jsonError('Erro ao atualizar: ' . $e->getMessage());
         }
@@ -1185,5 +1186,95 @@ public function deleteUser(array $params): void
             'success' => true,
             'history' => array_slice($history, 0, 50)
         ]);
+    }
+
+    /**
+     * Public Hub comment moderation list
+     * GET /{tenant}/admin/comentarios-publicos
+     */
+    public function publicComments(): void
+    {
+        $this->requireAdmin();
+        $tenant   = App::tenant();
+        $user     = App::user();
+        $tenantId = $tenant['id'];
+
+        // Ensure table exists
+        try {
+            db_query("
+                CREATE TABLE IF NOT EXISTS public_comments (
+                    id           INT AUTO_INCREMENT PRIMARY KEY,
+                    tenant_id    INT NOT NULL,
+                    source_type  VARCHAR(50) NOT NULL,
+                    source_id    INT NOT NULL,
+                    author_name  VARCHAR(100) NOT NULL,
+                    content      TEXT NOT NULL,
+                    session_hash VARCHAR(64) DEFAULT NULL,
+                    status       ENUM('pending','approved','rejected') DEFAULT 'pending',
+                    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_pc_tenant_source (tenant_id, source_type, source_id),
+                    INDEX idx_pc_status (status)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
+        } catch (\Exception $e) { /* already exists */ }
+
+        $statusFilter = $_GET['status'] ?? 'pending';
+        $allowed      = ['pending', 'approved', 'rejected'];
+        if (!in_array($statusFilter, $allowed)) $statusFilter = 'pending';
+
+        $comments = db_fetch_all(
+            "SELECT * FROM public_comments
+             WHERE tenant_id = ? AND status = ?
+             ORDER BY created_at DESC LIMIT 100",
+            [$tenantId, $statusFilter]
+        );
+
+        $counts = [];
+        foreach ($allowed as $s) {
+            $counts[$s] = (int)db_fetch_column(
+                "SELECT COUNT(*) FROM public_comments WHERE tenant_id = ? AND status = ?",
+                [$tenantId, $s]
+            );
+        }
+
+        View::render('admin/public-comments/index', [
+            'tenant'        => $tenant,
+            'user'          => $user,
+            'comments'      => $comments,
+            'statusFilter'  => $statusFilter,
+            'counts'        => $counts,
+        ]);
+    }
+
+    /**
+     * Approve or reject a public comment
+     * POST /{tenant}/admin/comentarios-publicos/{id}/update
+     */
+    public function updatePublicComment(array $params): void
+    {
+        $this->requireAdmin();
+        $tenant    = App::tenant();
+        $commentId = (int)$params['id'];
+        $action    = $_POST['action'] ?? '';
+
+        $allowed = ['approved', 'rejected'];
+        if (!in_array($action, $allowed)) {
+            $this->json(['error' => 'Ação inválida'], 400);
+            return;
+        }
+
+        $comment = db_fetch_one(
+            "SELECT id FROM public_comments WHERE id = ? AND tenant_id = ?",
+            [$commentId, $tenant['id']]
+        );
+
+        if (!$comment) {
+            $this->json(['error' => 'Comentário não encontrado'], 404);
+            return;
+        }
+
+        db_query("UPDATE public_comments SET status = ? WHERE id = ?", [$action, $commentId]);
+
+        $this->json(['success' => true, 'status' => $action]);
     }
 }

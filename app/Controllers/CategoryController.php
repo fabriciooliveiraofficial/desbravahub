@@ -21,7 +21,7 @@ class CategoryController
         $user = App::user();
         $role = $user['role_name'] ?? '';
 
-        if (!in_array($role, ['admin', 'director'])) {
+        if (!in_array($role, ['admin', 'director', 'associate_director', 'counselor', 'instructor'])) {
             error_log("CategoryController::requireAdmin - Access Denied: User " . ($user['id'] ?? 'unknown') . " with role $role tried to access categories.");
             header('HTTP/1.0 403 Forbidden');
             echo 'Acesso negado';

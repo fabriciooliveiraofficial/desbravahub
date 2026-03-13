@@ -9,6 +9,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Sanity Guard: Handle external dev-tool noise (like refresh.js on 8081) -->
+    <script>
+        (function() {
+            const _WebSocket = window.WebSocket;
+            window.WebSocket = function(url, protocols) {
+                if (typeof url === 'string' && url.includes(':8081')) {
+                    return { close:()=>{}, send:()=>{}, addEventListener:()=>{}, removeEventListener:()=>{}, readyState: 3 };
+                }
+                return new _WebSocket(url, protocols);
+            };
+            window.WebSocket.prototype = _WebSocket.prototype;
+            window.WebSocket.CONNECTING = 0; window.WebSocket.OPEN = 1; window.WebSocket.CLOSING = 2; window.WebSocket.CLOSED = 3;
+        })();
+    </script>
     <title><?= htmlspecialchars($pageTitle ?? 'DesbravaHub') ?></title>
     
     <meta name="description" content="<?= htmlspecialchars($metaDescription ?? 'Plataforma oficial do clube. Acompanhe nossas especialidades, eventos e conquistas!') ?>">

@@ -596,10 +596,20 @@ if ($isProgram) {
                                                     ?>
                                                         <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%;">
                                                             <div style="width: 100%; max-width: 600px;"><?= embed_media($subAns) ?></div>
-                                                            <button class="action-btn btn-amber highlight-action-btn" onclick="highlightMedia(this, <?= $currentStep['response_id'] ?>, '<?= addslashes($subAns) ?>')" 
+                                                            <?php 
+                                                                $highlightedUrls = $currentStep['highlighted_urls'] ?? [];
+                                                                $isHighlighted = in_array(trim($subAns), $highlightedUrls);
+                                                                $btnClass = $isHighlighted ? 'btn-highlighted' : 'btn-amber';
+                                                                $labelText = $isHighlighted ? 'MÍDIA DESTACADA' : 'DESTACAR ESTE LINK';
+                                                                $icon = $isHighlighted ? 'solar:verified-check-bold-duotone' : 'solar:stars-line-duotone';
+                                                            ?>
+
+                                                            <button class="action-btn <?= $btnClass ?> highlight-action-btn" 
+                                                                    onclick="highlightMedia(this, <?= $currentStep['response_id'] ?>, '<?= addslashes($subAns) ?>')" 
+                                                                    data-highlighted="<?= $isHighlighted ? 'true' : 'false' ?>"
                                                                     style="font-size: 0.7rem; min-width: 200px;">
-                                                                <iconify-icon icon="solar:stars-line-duotone"></iconify-icon>
-                                                                <span class="btn-text">DESTACAR ESTE LINK</span>
+                                                                <iconify-icon icon="<?= $icon ?>"></iconify-icon>
+                                                                <span class="btn-text"><?= $labelText ?></span>
                                                             </button>
                                                         </div>
                                                     <?php else: ?>
@@ -620,10 +630,20 @@ if ($isProgram) {
                                             ?>
                                         </div>
                                         <?php if (filter_var($qa['answer'], FILTER_VALIDATE_URL)): ?>
-                                            <button class="action-btn btn-amber highlight-action-btn" onclick="highlightMedia(this, <?= $currentStep['response_id'] ?>, '<?= addslashes($qa['answer']) ?>')" 
+                                            <?php 
+                                                $highlightedUrls = $currentStep['highlighted_urls'] ?? [];
+                                                $isHighlighted = in_array(trim($qa['answer']), $highlightedUrls);
+                                                $btnClass = $isHighlighted ? 'btn-highlighted' : 'btn-amber';
+                                                $labelText = $isHighlighted ? 'MÍDIA DESTACADA' : 'DESTACAR ESTE LINK';
+                                                $icon = $isHighlighted ? 'solar:verified-check-bold-duotone' : 'solar:stars-line-duotone';
+                                            ?>
+
+                                            <button class="action-btn <?= $btnClass ?> highlight-action-btn" 
+                                                    onclick="highlightMedia(this, <?= $currentStep['response_id'] ?>, '<?= addslashes($qa['answer']) ?>')" 
+                                                    data-highlighted="<?= $isHighlighted ? 'true' : 'false' ?>"
                                                     style="font-size: 0.7rem; min-width: 200px;">
-                                                <iconify-icon icon="solar:stars-line-duotone"></iconify-icon>
-                                                <span class="btn-text">DESTACAR ESTE LINK</span>
+                                                <iconify-icon icon="<?= $icon ?>"></iconify-icon>
+                                                <span class="btn-text"><?= $labelText ?></span>
                                             </button>
                                         <?php endif; ?>
                                     </div>
@@ -660,13 +680,22 @@ if ($isProgram) {
                                         echo embed_media($currentStep['response_text']); 
                                         ?>
                                     </div>
-                                    <?php if (filter_var($currentStep['response_text'], FILTER_VALIDATE_URL)): ?>
-                                        <button class="action-btn btn-amber highlight-action-btn" onclick="highlightMedia(this, <?= $currentStep['response_id'] ?>, '<?= addslashes($currentStep['response_text']) ?>')" 
+                                     <?php if (filter_var($currentStep['response_text'], FILTER_VALIDATE_URL)): 
+                                            $highlightedUrls = $currentStep['highlighted_urls'] ?? [];
+                                            $isHighlighted = in_array(trim($currentStep['response_text']), $highlightedUrls);
+                                            $btnClass = $isHighlighted ? 'btn-highlighted' : 'btn-amber';
+                                            $labelText = $isHighlighted ? 'MÍDIA DESTACADA' : 'DESTACAR ESTE LINK';
+                                            $icon = $isHighlighted ? 'solar:verified-check-bold-duotone' : 'solar:stars-line-duotone';
+                                        ?>
+                                        <button class="action-btn <?= $btnClass ?> highlight-action-btn" 
+                                                onclick="highlightMedia(this, <?= $currentStep['response_id'] ?>, '<?= addslashes($currentStep['response_text']) ?>')" 
+                                                data-highlighted="<?= $isHighlighted ? 'true' : 'false' ?>"
                                                 style="font-size: 0.7rem; min-width: 200px;">
-                                            <iconify-icon icon="solar:stars-line-duotone"></iconify-icon>
-                                            <span class="btn-text">DESTACAR ESTE LINK</span>
+                                            <iconify-icon icon="<?= $icon ?>"></iconify-icon>
+                                            <span class="btn-text"><?= $labelText ?></span>
                                         </button>
                                     <?php endif; ?>
+
                                 </div>
                             </div>
 
@@ -779,7 +808,7 @@ if ($isProgram) {
                         </label>
                     </div>
 
-                    <button class="action-btn btn-amber" onclick="updateCuration(<?= $currentStep['response_id'] ?>)">
+                    <button class="action-btn btn-amber" onclick="saveCuration(<?= $currentStep['response_id'] ?>)">
                         <iconify-icon icon="solar:diskette-bold-duotone" style="font-size: 1.2rem;"></iconify-icon>
                         SALVAR CONFIGURAÇÃO
                     </button>
@@ -976,43 +1005,52 @@ if ($isProgram) {
     }
 
     async function highlightMedia(buttonElement, responseId, preferredUrl) {
-        // Find the wrapper and specifically reset all highlighted buttons inside this review card
-        const allHighlightBtns = document.querySelectorAll('.highlight-action-btn');
+        const isCurrentlyHighlighted = buttonElement.getAttribute('data-highlighted') === 'true';
+        const newHighlightedState = !isCurrentlyHighlighted;
+        const action = newHighlightedState ? 'add' : 'remove';
         
         try {
-            await updateCuration(responseId, preferredUrl);
+            buttonElement.style.pointerEvents = 'none';
+            buttonElement.style.opacity = '0.7';
+
+            const res = await updateCuration(responseId, preferredUrl, newHighlightedState, action);
             
-            // On success, reset all buttons back to amber/stars
-            allHighlightBtns.forEach(btn => {
-                btn.classList.remove('btn-highlighted');
-                btn.innerHTML = `<iconify-icon icon="solar:stars-line-duotone"></iconify-icon><span class="btn-text">DESTACAR ESTE LINK</span>`;
-                btn.style.pointerEvents = 'auto';
-                btn.style.opacity = '1';
-            });
-            
-            // Set THIS button to highlighted state
-            buttonElement.classList.add('btn-highlighted');
-            buttonElement.innerHTML = `<iconify-icon icon="solar:verified-check-bold-duotone"></iconify-icon><span class="btn-text">MÍDIA DESTACADA</span>`;
-            
+            if (res && res.success) {
+                if (newHighlightedState) {
+                    buttonElement.classList.add('btn-highlighted');
+                    buttonElement.classList.remove('btn-amber');
+                    buttonElement.setAttribute('data-highlighted', 'true');
+                    buttonElement.innerHTML = `<iconify-icon icon="solar:verified-check-bold-duotone"></iconify-icon><span class="btn-text">MÍDIA DESTACADA</span>`;
+                } else {
+                    buttonElement.classList.remove('btn-highlighted');
+                    buttonElement.classList.add('btn-amber');
+                    buttonElement.setAttribute('data-highlighted', 'false');
+                    buttonElement.innerHTML = `<iconify-icon icon="solar:stars-line-duotone"></iconify-icon><span class="btn-text">DESTACAR ESTE LINK</span>`;
+                }
+            }
         } catch (e) {
             console.error('Highlight error:', e);
-            // Swal error is already handled inside updateCuration
+            Swal.fire('Erro', 'Não foi possível atualizar o destaque.', 'error');
+        } finally {
+            buttonElement.style.pointerEvents = 'auto';
+            buttonElement.style.opacity = '1';
         }
     }
 
-    async function updateCuration(responseId, preferredUrl = null) {
+
+    async function updateCuration(responseId, preferredUrl = null, forceState = null, action = 'toggle') {
         const isPublicBox = document.getElementById(`public_lms_${responseId}`);
         
         // If a specific link is chosen, force the visibility to TRUE
-        if (preferredUrl && isPublicBox) {
+        if (preferredUrl && isPublicBox && forceState !== false && action === 'add') {
             isPublicBox.checked = true;
         }
 
-        const showPublic = isPublicBox && isPublicBox.checked;
+        const showPublic = (forceState !== null) ? (forceState ? 1 : 0) : (isPublicBox && isPublicBox.checked ? 1 : 0);
         const tenantSlug = '<?= $tenant['slug'] ?>';
 
         try {
-            const body = { show_public: showPublic ? 1 : 0 };
+            const body = { show_public: showPublic, action: action };
             if (preferredUrl) body.preferred_url = preferredUrl;
 
             const response = await fetch(`/${tenantSlug}/admin/aprovacoes/${responseId}/curation`, {
@@ -1020,13 +1058,19 @@ if ($isProgram) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
+            return await response.json();
+        } catch (e) {
+            console.error('Curation API Error:', e);
+            return { success: false, error: e.message };
+        }
+    }
 
-            if (!response.ok) throw new Error('Falha ao atualizar destaque');
-
-            const data = await response.json();
+    async function saveCuration(responseId) {
+        try {
+            const data = await updateCuration(responseId);
             if (data.success) {
                 Swal.fire({
-                    title: 'Destaque Atualizado!',
+                    title: 'Configurações Salvas!',
                     text: data.message,
                     icon: 'success',
                     toast: true,
@@ -1035,7 +1079,7 @@ if ($isProgram) {
                     timer: 3000
                 });
             } else {
-                throw new Error(data.error || 'Erro desconhecido');
+                throw new Error(data.error || 'Erro ao salvar');
             }
         } catch (e) {
             Swal.fire('Erro', e.message, 'error');
@@ -1043,5 +1087,6 @@ if ($isProgram) {
     }
 </script>
 
+<?= embed_media_sdk_scripts() ?>
 </body>
 </html>

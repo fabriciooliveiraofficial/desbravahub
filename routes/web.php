@@ -34,6 +34,7 @@ use App\Controllers\ClubProfileController;
 use App\Controllers\AdminEventController;
 use App\Controllers\PublicController;
 use App\Controllers\CertificateController;
+use App\Controllers\CommunicationController;
 
 $router = new Router();
 
@@ -90,6 +91,11 @@ $router->get('/c/{slug}', [PublicController::class, 'clubProfile']);
 $router->get('/c/{club_slug}/evento/{event_slug}', [PublicController::class, 'eventDetails']);
 $router->post('/c/{club_slug}/evento/{id}/inscrever', [PublicController::class, 'registerEvent']);
 $router->post('/c/{club_slug}/like', [PublicController::class, 'toggleLike']);
+$router->get('/c/{club_slug}/media', [PublicController::class, 'getMediaPage']);
+$router->get('/c/{club_slug}/media/{source_type}/{source_id}/comments', [PublicController::class, 'getComments']);
+$router->post('/c/{club_slug}/media/{source_type}/{source_id}/comment', [PublicController::class, 'postComment']);
+$router->post('/c/{club_slug}/media/{source_type}/{source_id}/view', [PublicController::class, 'trackView']);
+$router->post('/c/{club_slug}/lead', [PublicController::class, 'postLead']);
 
 // Support Ticket Management (merged into Super Admin)
 $router->get('/super-admin/suporte', [SuperAdminController::class, 'supportDashboard'], [SuperAdminMiddleware::class]);
@@ -182,6 +188,13 @@ $router->get('/{tenant}/admin/perfil-clube', [ClubProfileController::class, 'edi
 $router->post('/{tenant}/admin/perfil-clube', [ClubProfileController::class, 'update'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/perfil-clube/qrcode', [ClubProfileController::class, 'generateQRCode'], [TenantMiddleware::class, AuthMiddleware::class]);
 
+// Communication Hub
+$router->get('/{tenant}/admin/comunicacao', [CommunicationController::class, 'index'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/comunicacao/leads/{id}/update', [CommunicationController::class, 'updateLead'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/comunicacao/comentarios/{id}/update', [CommunicationController::class, 'updateComment'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/comunicacao/campanhas/enviar', [CommunicationController::class, 'sendCampaign'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/comunicacao/galeria/{id}/unhighlight', [CommunicationController::class, 'unhighlightMedia'], [TenantMiddleware::class, AuthMiddleware::class]);
+
 // Events Management
 $router->get('/{tenant}/admin/eventos', [AdminEventController::class, 'index'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/eventos/novo', [AdminEventController::class, 'create'], [TenantMiddleware::class, AuthMiddleware::class]);
@@ -248,6 +261,10 @@ $router->get('/{tenant}/admin/analytics', [AnalyticsController::class, 'index'],
 $router->get('/{tenant}/admin/permissoes', [AdminController::class, 'permissions'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/permissoes', [AdminController::class, 'savePermissions'], [TenantMiddleware::class, AuthMiddleware::class]);
 
+// Public Hub comment moderation
+$router->get('/{tenant}/admin/comentarios-publicos', [AdminController::class, 'publicComments'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/comentarios-publicos/{id}/update', [AdminController::class, 'updatePublicComment'], [TenantMiddleware::class, AuthMiddleware::class]);
+
 // Dashboard routes (Pathfinder App)
 $router->get('/{tenant}/dashboard', [DashboardController::class, 'index'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/trilhas', [DashboardController::class, 'learningPaths'], [TenantMiddleware::class, AuthMiddleware::class]);
@@ -260,6 +277,7 @@ $router->get('/{tenant}/ranking-unidades', [DashboardController::class, 'unitLea
 $router->get('/{tenant}/ranking-recrutamento', [DashboardController::class, 'recruitmentLeaderboard'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/perfil', [DashboardController::class, 'profile'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/perfil/salvar', [DashboardController::class, 'saveProfile'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/perfil/avatar', [DashboardController::class, 'uploadAvatar'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/convite/enviar', [DashboardController::class, 'sendReferralInvite'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/convite/{token}', [DashboardController::class, 'handleInviteClick'], [TenantMiddleware::class]);
 

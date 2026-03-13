@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'desbravahub-v28';
+const CACHE_VERSION = 'desbravahub-v30';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const DYNAMIC_CACHE = CACHE_VERSION + '-dynamic';
 const OFFLINE_URL = '/offline.html';
@@ -20,14 +20,10 @@ const PRECACHE_ASSETS = [
 // INSTALL - Pre-cache core shell
 // ==========================================
 self.addEventListener('install', (event) => {
-    console.log('[SW v23] Installing...');
     event.waitUntil(
         caches.open(STATIC_CACHE)
-            .then(cache => {
-                console.log('[SW v23] Pre-caching core assets');
-                return cache.addAll(PRECACHE_ASSETS);
-            })
-            .catch(err => console.warn('[SW v23] Pre-cache failed (non-critical):', err))
+            .then(cache => cache.addAll(PRECACHE_ASSETS))
+            .catch(err => console.warn('[SW] Pre-cache failed (non-critical):', err))
     );
     self.skipWaiting();
 });
@@ -36,18 +32,14 @@ self.addEventListener('install', (event) => {
 // ACTIVATE - Clean old caches
 // ==========================================
 self.addEventListener('activate', (event) => {
-    console.log('[SW v23] Activated');
     event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
+        caches.keys().then(cacheNames =>
+            Promise.all(
                 cacheNames
                     .filter(name => name !== STATIC_CACHE && name !== DYNAMIC_CACHE)
-                    .map(name => {
-                        console.log('[SW v23] Deleting old cache:', name);
-                        return caches.delete(name);
-                    })
-            );
-        })
+                    .map(name => caches.delete(name))
+            )
+        )
     );
     self.clients.claim();
 });
@@ -303,11 +295,10 @@ self.addEventListener('push', (event) => {
             }),
             // Broadcast to open tabs for in-app toast + sound
             self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-                clients.forEach(client => client.postMessage({
-                    type: 'PUSH_NOTIFICATION',
-                    data: data,
-                    priority: data.priority || 'normal'
-                }));
+                const msg = { type: 'PUSH_NOTIFICATION', data: data, priority: data.priority || 'normal' };
+                clients.forEach(client => {
+                    try { client.postMessage(msg); } catch (_) { /* tab closed/navigating */ }
+                });
             })
         ])
     );

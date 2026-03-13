@@ -22,6 +22,7 @@ if (typeof window.ToastNotification !== 'undefined') {
             this.defaultDuration = options.defaultDuration || 5000;
             this.audioCtx = null;
             this.audioBuffer = null;
+            this.shownNotificationIds = new Set();
 
             this.init();
             this.initAudio();
@@ -424,7 +425,8 @@ if (typeof window.ToastNotification !== 'undefined') {
         async loadAudio(url) {
             try {
                 if (!this.audioCtx) return;
-                const response = await fetch(url);
+                const response = await fetch(url, { headers: { 'X-Background-Request': '1' } });
+                if (!response.ok) return;
                 const arrayBuffer = await response.arrayBuffer();
                 this.audioBuffer = await this.audioCtx.decodeAudioData(arrayBuffer);
             } catch (err) {
@@ -598,6 +600,33 @@ if (typeof window.ToastNotification !== 'undefined') {
         }
 
         /**
+         * Show a notification only once per page session (deduplicates push + poll).
+         * Accepts both DB notification shape ({ id, ... }) and push payload shape ({ notification_id, ... }).
+         */
+        showOnce(notification) {
+            const id = notification?.notification_id ?? notification?.id;
+            if (id != null) {
+                if (this.shownNotificationIds.has(String(id))) return;
+                this.shownNotificationIds.add(String(id));
+            }
+            // Push payload shape has 'body'; DB notification shape has 'message'
+            if (notification?.body !== undefined || notification?.url !== undefined) {
+                this.show({
+                    title: notification.title,
+                    message: notification.body,
+                    type: notification.type || 'info',
+                    priority: notification.priority || 'normal',
+                    position: notification.priority === 'critical' ? 'center' : 'default',
+                    icon: notification.icon,
+                    onClick: notification.url ? () => { window.location.href = notification.url; } : null,
+                    customSound: true,
+                });
+            } else {
+                this.showNotification(notification);
+            }
+        }
+
+        /**
          * Poll for new notifications
          */
         async poll() {
@@ -615,9 +644,8 @@ if (typeof window.ToastNotification !== 'undefined') {
                 const data = await response.json();
 
                 if (data.notifications && data.notifications.length > 0) {
-                    // Show new notifications as toasts
                     data.notifications.forEach(notification => {
-                        this.showNotification(notification);
+                        this.showOnce(notification);
                     });
                 }
             } catch (err) {
