@@ -424,6 +424,7 @@ class PublicController
         \App\Services\CurationService::ensureTable();
         return db_fetch_all("
             SELECT
+                cm.id,
                 cm.source_type,
                 cm.source_id,
                 COALESCE(ps.title, a.title, 'Destaque') as title,
@@ -431,19 +432,22 @@ class PublicController
                 cm.media_url as media_content,
                 NULL as raw_response_text,
                 cm.thumbnail_url as thumbnail_url,
-                u.name as user_name,
-                u.avatar_url,
+                COALESCE(u_d.name,    u_s.name,    u_a.name)       as user_name,
+                COALESCE(u_d.avatar_url, u_s.avatar_url, u_a.avatar_url) as avatar_url,
                 cm.created_at as date
             FROM curated_media cm
+            -- Path 1: direct user_id stored on the row (populated by backfill + new inserts)
+            LEFT JOIN users u_d ON u_d.id = cm.user_id
+            -- Path 2: step response chain (fallback for rows without user_id)
             LEFT JOIN user_step_responses usr ON cm.source_type = 'step' AND cm.source_id = usr.id
             LEFT JOIN program_steps ps ON usr.step_id = ps.id
             LEFT JOIN user_program_progress upp ON usr.progress_id = upp.id
-            
+            LEFT JOIN users u_s ON u_s.id = upp.user_id
+            -- Path 3: activity proof chain (fallback for rows without user_id)
             LEFT JOIN activity_proofs ap ON cm.source_type = 'activity' AND cm.source_id = ap.id
             LEFT JOIN user_activities ua ON ap.user_activity_id = ua.id
             LEFT JOIN activities a ON ua.activity_id = a.id
-            
-            LEFT JOIN users u ON u.id = COALESCE(upp.user_id, ua.user_id)
+            LEFT JOIN users u_a ON u_a.id = ua.user_id
             WHERE cm.tenant_id = ?
             ORDER BY date DESC
             LIMIT ? OFFSET ?
@@ -483,7 +487,12 @@ class PublicController
             }
 
             if (empty($media['thumbnail_url'])) {
-                $media['thumbnail_url'] = fetch_media_thumbnail($content);
+                $fetched = fetch_media_thumbnail($content);
+                if ($fetched) {
+                    $media['thumbnail_url'] = $fetched;
+                    // Persist so future loads skip the API call
+                    db_query("UPDATE curated_media SET thumbnail_url = ? WHERE id = ?", [$fetched, $media['id']]);
+                }
             }
 
             $media['media_content'] = $content;

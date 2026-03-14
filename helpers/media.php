@@ -247,9 +247,49 @@ function fetch_media_thumbnail(string $url): ?string
         // Note: No platform logos allowed (User Rule)
     }
 
-    // 3. Instagram (Requires oEmbed with Access Token usually, fallback to premium placeholder)
-    // Direct scraping of IG thumbnails is unreliable without a proxy/token.
-    
+    // 3. Instagram — multi-strategy thumbnail fetch
+    if (preg_match('/instagram\.com\/(p|reel|reels|tv)\/([A-Za-z0-9_-]+)/i', $url, $igm)) {
+        $pageUrl = "https://www.instagram.com/{$igm[1]}/{$igm[2]}/";
+        // Try multiple UAs: Facebook crawler first (Meta product = allowed), then Googlebot, then Chrome
+        $userAgents = [
+            'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+            'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        ];
+        $metaPatterns = [
+            '/<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\'][^>]*>/i',
+            '/<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\'][^>]*>/i',
+            '/<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\'][^>]*>/i',
+            '/<meta[^>]+content=["\']([^"\']+)["\'][^>]+name=["\']twitter:image["\'][^>]*>/i',
+        ];
+        foreach ($userAgents as $ua) {
+            try {
+                $ctx = stream_context_create(['http' => [
+                    'timeout'         => 5,
+                    'header'          => "User-Agent: {$ua}\r\nAccept: text/html,application/xhtml+xml\r\n",
+                    'follow_location' => 1,
+                ]]);
+                $html = @file_get_contents($pageUrl, false, $ctx);
+                if (!$html) continue;
+                // Try meta tags
+                foreach ($metaPatterns as $pat) {
+                    if (preg_match($pat, $html, $ogm)) {
+                        $thumb = html_entity_decode($ogm[1], ENT_QUOTES | ENT_HTML5);
+                        if (filter_var($thumb, FILTER_VALIDATE_URL)) return $thumb;
+                    }
+                }
+                // Try JSON-LD (structured data)
+                if (preg_match('/<script[^>]+type="application\/ld\+json"[^>]*>(.*?)<\/script>/is', $html, $jm)) {
+                    $ld = json_decode($jm[1], true);
+                    $thumb = $ld['image']['url'] ?? $ld['image'] ?? $ld['thumbnailUrl'] ?? null;
+                    if (is_string($thumb) && filter_var($thumb, FILTER_VALIDATE_URL)) return $thumb;
+                }
+                // Got HTML but no image found — no point trying other UAs
+                break;
+            } catch (\Exception $e) { /* Try next UA */ }
+        }
+    }
+
     // 4. Direct Video Files
     if (preg_match('/\.(mp4|webm|mov|ogg)$/i', $url)) {
         // In a real scenario, we might use FFmpeg to generate a frame.

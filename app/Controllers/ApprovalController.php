@@ -657,12 +657,18 @@ class ApprovalController
                     if ($action === 'remove' && $existing) {
                         db_query("DELETE FROM curated_media WHERE id = ?", [$existing['id']]);
                     } elseif (($action === 'add' || $action === 'toggle') && !$existing) {
+                        $stepUserId = (int)db_fetch_column(
+                            "SELECT upp.user_id FROM user_step_responses usr
+                             JOIN user_program_progress upp ON usr.progress_id = upp.id
+                             WHERE usr.id = ?", [$responseId]
+                        );
                         db_insert('curated_media', [
                             'tenant_id' => App::tenantId(),
                             'source_type' => 'step',
                             'source_id' => $responseId,
                             'media_url' => $finalUrl,
                             'thumbnail_url' => $thumbnailUrl,
+                            'user_id' => $stepUserId ?: null,
                             'created_at' => date('Y-m-d H:i:s')
                         ]);
                     }

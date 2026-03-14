@@ -64,24 +64,62 @@ class CommunicationController
         );
 
         // ── Gallery (Highlights) ─────────────────────────────────────────
-        $highlightedMedia = db_fetch_all("
-            SELECT cm.*, 
-                   u.name as user_name, 
+        $allCuratedMedia = db_fetch_all("
+            SELECT cm.*,
+                   u.name as user_name,
                    COALESCE(ps.title, a.title, 'Destaque') as source_title
             FROM curated_media cm
             LEFT JOIN user_step_responses usr ON cm.source_type = 'step' AND cm.source_id = usr.id
             LEFT JOIN program_steps ps ON usr.step_id = ps.id
             LEFT JOIN user_program_progress upp ON usr.progress_id = upp.id
-            
+
             LEFT JOIN activity_proofs ap ON cm.source_type = 'activity' AND cm.source_id = ap.id
             LEFT JOIN user_activities ua ON ap.user_activity_id = ua.id
             LEFT JOIN activities a ON ua.activity_id = a.id
-            
+
             LEFT JOIN users u ON u.id = COALESCE(upp.user_id, ua.user_id)
             WHERE cm.tenant_id = ?
             ORDER BY cm.created_at DESC LIMIT 100
         ", [$tenant['id']]);
 
+        // Purge records whose media_url cannot resolve to a valid URL —
+        // these are invisible on the public page (sanitizeMediaItems filters them out)
+        // and keeping them causes a count mismatch between gallery and public hub.
+        $invalidIds    = [];
+        $highlightedMedia = [];
+        foreach ($allCuratedMedia as $item) {
+            $url = trim($item['media_url'] ?? '');
+            $valid = false;
+            if ($url !== '') {
+                if ($url[0] === '[' || $url[0] === '{') {
+                    // Same JSON-extraction logic as PublicController::sanitizeMediaItems
+                    $decoded = json_decode($url, true);
+                    if (is_array($decoded)) {
+                        foreach ($decoded as $val) {
+                            if (is_string($val) && filter_var($val, FILTER_VALIDATE_URL)) { $valid = true; break; }
+                            if (is_array($val)) {
+                                foreach ($val as $sub) {
+                                    if (is_string($sub) && filter_var($sub, FILTER_VALIDATE_URL)) { $valid = true; break 2; }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    $valid = (bool) filter_var($url, FILTER_VALIDATE_URL);
+                }
+            }
+            if ($valid) {
+                $highlightedMedia[] = $item;
+            } else {
+                $invalidIds[] = (int) $item['id'];
+            }
+        }
+
+        // Delete orphaned records so they never reappear
+        if (!empty($invalidIds)) {
+            $placeholders = implode(',', array_fill(0, count($invalidIds), '?'));
+            db_query("DELETE FROM curated_media WHERE id IN ($placeholders)", $invalidIds);
+        }
 
         // ── Top stats ────────────────────────────────────────────────────
         $stats = [
@@ -290,7 +328,16 @@ class CommunicationController
         }
 
         db_query("DELETE FROM curated_media WHERE id = ?", [$curatedId]);
-        
+
+        // Invalidate public landing page cache so the item disappears immediately
+        $profile = db_fetch_one("SELECT slug FROM club_profiles WHERE tenant_id = ?", [$tenant['id']]);
+        if ($profile) {
+            $cacheFile = BASE_PATH . '/storage/framework/cache/pages/landing_' . md5($profile['slug']) . '.html';
+            if (file_exists($cacheFile)) {
+                @unlink($cacheFile);
+            }
+        }
+
         // Backward compatibility: update legacy show_public flag
         if ($media['source_type'] === 'step') {
             $remaining = (int)db_fetch_column("SELECT COUNT(*) FROM curated_media WHERE source_type = 'step' AND source_id = ?", [$media['source_id']]);

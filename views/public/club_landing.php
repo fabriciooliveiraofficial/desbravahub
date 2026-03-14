@@ -806,16 +806,28 @@ body { overflow-x: hidden; }
     color: #ff3e60;
 }
 
+/* Shield: transparent fixed zone in the top-right corner.
+   Sits above iframes (z-index 99998) so stray touches near the close button
+   are absorbed here instead of by the iframe content. */
+#viewerCloseShield {
+    position: fixed;
+    top: 0; right: 0;
+    width: 90px; height: 90px;
+    z-index: 99998;
+    display: none;
+    pointer-events: auto;
+}
+
 .viewer-float-close {
     position: fixed;
     top: 16px;
     right: 16px;
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.65);
+    background: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 2px solid rgba(255, 255, 255, 0.35);
     color: white;
     display: flex;
     align-items: center;
@@ -825,14 +837,18 @@ body { overflow-x: hidden; }
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     transition: background 0.2s, transform 0.2s;
+    /* Expand tap target without changing visual size */
+    padding: 12px;
+    margin: -12px;
 }
 
-.viewer-float-close:hover {
-    background: rgba(239, 68, 68, 0.8);
+.viewer-float-close:hover,
+.viewer-float-close:active {
+    background: rgba(239, 68, 68, 0.85);
     transform: rotate(90deg);
 }
 
-.viewer-float-close .material-icons-round { font-size: 22px; }
+.viewer-float-close .material-icons-round { font-size: 24px; }
 
 .viewer-inner {
     display: flex;
@@ -1183,6 +1199,31 @@ body { overflow-x: hidden; }
     .viewer-panel-back { display: none; }
 }
 
+/* TikTok unmute overlay */
+.tt-wrap { position: relative; }
+.tt-unmute-btn {
+    position: absolute;
+    bottom: 72px; /* above viewer-actions bar */
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    z-index: 10;
+    white-space: nowrap;
+    touch-action: manipulation;
+}
+.tt-unmute-btn .material-icons-round { font-size: 1.1rem; }
+
 /* Embed containers */
 .embed-wrap { position: relative; border-radius: 16px; overflow: hidden; }
 .embed-wrap.landscape { width: 100%; aspect-ratio: 16/9; }
@@ -1191,7 +1232,9 @@ body { overflow-x: hidden; }
 .embed-wrap.twitter-embed { aspect-ratio: unset; overflow: visible; width: min(550px, 100%); margin: 0 auto; box-shadow: none; background: transparent; border-radius: 0; }
 .embed-wrap.twitter-embed .twitter-tweet { margin: 0 auto !important; }
 /* Social embeds (Instagram, TikTok) — dimensionadas pelo SDK da plataforma */
-.embed-wrap.social-embed-wrap { aspect-ratio: unset; overflow-y: auto; width: 100%; max-width: 605px; margin: 0 auto; box-shadow: none; background: transparent; border-radius: 0; display: flex; justify-content: center; }
+/* align-self:stretch faz o wrapper preencher a altura do .viewer-media no desktop,
+   garantindo que o iframe absoluto (height:100%) tenha um pai com altura definida */
+.embed-wrap.social-embed-wrap { aspect-ratio: unset; overflow-y: auto; width: 100%; max-width: 605px; margin: 0 auto; box-shadow: none; background: transparent; border-radius: 0; display: flex; justify-content: center; align-self: stretch; min-height: 400px; }
 
 /* ── Mobile full-screen Reels ─────────────────────────────────────── */
 @media (max-width: 768px) {
@@ -1752,8 +1795,11 @@ $showHero = !empty($heroHeadline);
 
 <?php /* ══ MEDIA VIEWER MODAL ════════════════════════════════════════════════ */ ?>
 
+<!-- Shield: absorbs stray taps near the close button before the iframe gets them -->
+<div id="viewerCloseShield" onclick="closeViewer()"></div>
+
 <!-- Botão de fechar FORA do modal para evitar que o iframe capture o evento -->
-<button id="viewerFloatClose" class="viewer-float-close" onclick="closeViewer()" aria-label="Fechar" style="display:none;">
+<button id="viewerFloatClose" class="viewer-float-close" aria-label="Fechar" style="display:none;">
     <span class="material-icons-round">close</span>
 </button>
 
@@ -1875,17 +1921,19 @@ function buildEmbedHtml(url, isVideo) {
     if (ytShort) return `<div class="embed-wrap portrait"><iframe src="https://www.youtube.com/embed/${ytShort[1]}?autoplay=1&playsinline=1&rel=0&modestbranding=1" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`;
     if (ytMatch) return `<div class="embed-wrap landscape"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&playsinline=1&rel=0&modestbranding=1" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`;
 
-    // ── TikTok (Official Embed System) ───────────────────────────────
+    // ── TikTok (iframe embed/v2) ──────────────────────────────────────
+    // TikTok embed/v2 always autoplays muted. We show a custom unmute overlay:
+    // tapping it is a direct user gesture in the parent context, which allows us
+    // to re-set iframe.src with allow="autoplay" and the browser will permit audio.
     if (ttMatch) {
         const videoId = ttMatch[1];
-        // Loading official blockquote for better compliance and features
-        EmbedLoader.load('https://www.tiktok.com/embed.js', 'tiktok-embed-js')
-            .then(() => { if (window.tiktok) window.tiktok.Embeds?.render?.(); });
-            
-        return `<div class="embed-wrap portrait" style="background:#000;">
-            <blockquote class="tiktok-embed" cite="${url}" data-video-id="${videoId}" style="max-width: 605px;min-width: 325px;" >
-                <section> <a target="_blank" title="@tiktok" href="https://www.tiktok.com/video/${videoId}">Carregando vídeo...</a> </section>
-            </blockquote>
+        const ttSrc   = `https://www.tiktok.com/embed/v2/${videoId}`;
+        return `<div class="embed-wrap portrait tt-wrap">
+            <iframe class="tt-iframe" src="${ttSrc}" allowfullscreen allow="encrypted-media; fullscreen; picture-in-picture" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            <button class="tt-unmute-btn" onclick="ttActivateSound(this)" aria-label="Ativar som">
+                <span class="material-icons-round">volume_off</span>
+                <span>Toque para ativar o som</span>
+            </button>
         </div>`;
     }
 
@@ -1942,6 +1990,20 @@ const viewerActions= document.getElementById('viewerActions');
 const commentList  = document.getElementById('commentList');
 const commentForm  = document.getElementById('commentForm');
 const floatClose   = document.getElementById('viewerFloatClose');
+const closeShield  = document.getElementById('viewerCloseShield');
+
+// Use pointer/touch events with stopPropagation so the iframe never sees the tap
+floatClose.addEventListener('pointerdown', function(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    closeViewer();
+}, { passive: false });
+// Fallback for environments that don't fire pointerdown
+floatClose.addEventListener('click', function(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    closeViewer();
+});
 
 function openViewer(card, forceComments = false) {
     currentViewerCard = card;
@@ -1995,6 +2057,7 @@ function openViewer(card, forceComments = false) {
     viewer.classList.add('open');
     document.body.style.overflow = 'hidden';
     floatClose.style.display = 'flex';
+    closeShield.style.display = 'block';
 
     // Track view
     trackView(st, si);
@@ -2022,8 +2085,23 @@ function closeViewer() {
     viewer.classList.remove('open');
     document.body.style.overflow = '';
     floatClose.style.display = 'none';
+    closeShield.style.display = 'none';
     viewerMedia.innerHTML = '';
     currentViewerCard = null;
+    // Prevent the residual touch/click from firing on elements now exposed below the close button
+    document.body.style.pointerEvents = 'none';
+    setTimeout(() => { document.body.style.pointerEvents = ''; }, 350);
+}
+
+// Tap-to-unmute for TikTok: reloads the iframe with allow="autoplay" via direct
+// user gesture so the browser grants audio permission.
+function ttActivateSound(btn) {
+    const iframe = btn.previousElementSibling;
+    btn.style.display = 'none';
+    iframe.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture';
+    const src = iframe.src;
+    iframe.src = '';
+    iframe.src = src;
 }
 
 viewer.addEventListener('click', e => {
