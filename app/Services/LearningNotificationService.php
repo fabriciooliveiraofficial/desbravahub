@@ -1,7 +1,7 @@
 <?php
 /**
  * Learning Notification Service
- * 
+ *
  * Triggers notifications for learning engine events.
  * Unified to use NotificationService for all channels (Toast, Push, Email).
  */
@@ -11,15 +11,29 @@ namespace App\Services;
 class LearningNotificationService
 {
     /**
+     * Look up a learning category name by ID.
+     * Returns null if the category is not found or ID is empty.
+     */
+    private static function categoryName(?int $categoryId): ?string
+    {
+        if (!$categoryId) return null;
+        $row = db_fetch_one("SELECT name FROM learning_categories WHERE id = ?", [$categoryId]);
+        return $row['name'] ?? null;
+    }
+
+    /**
      * Notify user about program assignment
      */
     public static function programAssigned(int $tenantId, int $userId, array $program, string $tenantSlug): void
     {
+        $catName = self::categoryName($program['category_id'] ?? null);
+        $title   = $catName ? "📚 {$catName} — Novo programa atribuído!" : '📚 Novo programa atribuído!';
+
         $service = new NotificationService();
         $service->send(
             $userId,
             'program_assigned',
-            '📚 Novo programa atribuído!',
+            $title,
             "Você foi atribuído a: {$program['icon']} {$program['name']}",
             [
                 'data' => [
@@ -66,8 +80,9 @@ class LearningNotificationService
     public static function stepApproved(int $tenantId, int $userId, array $step, array $program, string $tenantSlug): void
     {
         $programIcon = $program['icon'] ?? '📘';
-        $title = '✅ Requisito aprovado!';
-        $message = "Seu requisito \"{$step['title']}\" no programa {$programIcon} {$program['name']} foi aprovado! Continue avançando.";
+        $catName     = self::categoryName($program['category_id'] ?? null);
+        $title       = $catName ? "✅ {$catName} — Requisito aprovado!" : '✅ Requisito aprovado!';
+        $message     = "Seu requisito \"{$step['title']}\" no programa {$programIcon} {$program['name']} foi aprovado! Continue avançando.";
 
         $service = new NotificationService();
         $service->send(
@@ -94,9 +109,10 @@ class LearningNotificationService
     public static function stepRejected(int $tenantId, int $userId, array $step, array $program, string $feedback, string $tenantSlug): void
     {
         $programIcon = $program['icon'] ?? '📘';
-        $title = '❌ Revisão necessária';
-        $message = "Seu requisito \"{$step['title']}\" no programa {$programIcon} {$program['name']} precisa de ajustes.";
-        
+        $catName     = self::categoryName($program['category_id'] ?? null);
+        $title       = $catName ? "❌ {$catName} — Revisão necessária" : '❌ Revisão necessária';
+        $message     = "Seu requisito \"{$step['title']}\" no programa {$programIcon} {$program['name']} precisa de ajustes.";
+
         if ($feedback) {
             // Truncate feedback for push notification readability
             $shortFeedback = mb_strlen($feedback) > 100 ? mb_substr($feedback, 0, 100) . '...' : $feedback;
@@ -127,11 +143,14 @@ class LearningNotificationService
      */
     public static function programCompleted(int $tenantId, int $userId, array $program, string $tenantSlug): void
     {
+        $catName = self::categoryName($program['category_id'] ?? null);
+        $title   = $catName ? "🎉 {$catName} — Programa concluído!" : '🎉 Programa concluído!';
+
         $service = new NotificationService();
         $service->send(
             $userId,
             'program_completed',
-            '🎉 Programa concluído!',
+            $title,
             "Parabéns! Você completou {$program['icon']} {$program['name']}!",
             [
                 'data' => [

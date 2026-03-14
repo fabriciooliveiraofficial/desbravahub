@@ -482,6 +482,10 @@ class PublicController
                 continue;
             }
 
+            if (empty($media['thumbnail_url'])) {
+                $media['thumbnail_url'] = fetch_media_thumbnail($content);
+            }
+
             $media['media_content'] = $content;
             $media = $this->enrichMediaItem($media, $tenantId, $sessionId);
             $sanitized[] = $media;

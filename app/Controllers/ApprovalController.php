@@ -522,6 +522,41 @@ class ApprovalController
     }
 
     /**
+     * Bulk approve selected items (global)
+     */
+    public function bulkApprove(): void
+    {
+        $this->requireAdmin();
+        $input = json_decode(file_get_contents('php://input'), true);
+        $ids = $input['ids'] ?? [];
+
+        if (empty($ids)) {
+            $this->json(['error' => 'Nenhum item selecionado'], 400);
+            return;
+        }
+
+        try {
+            db_begin();
+            $tenantId = \App\Core\App::tenantId();
+
+            foreach ($ids as $id) {
+                // Simplified approval logic for bulk
+                db_update('user_step_responses', [
+                    'status' => 'approved',
+                    'reviewed_by' => \App\Core\App::userId(),
+                    'reviewed_at' => date('Y-m-d H:i:s')
+                ], 'id = ? AND tenant_id = ?', [(int)$id, $tenantId]);
+            }
+
+            db_commit();
+            $this->json(['success' => true, 'message' => count($ids) . ' itens aprovados!']);
+        } catch (\Exception $e) {
+            db_rollback();
+            $this->json(['error' => 'Erro ao processar: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Update progress percentage
      */
     private function updateProgressPercent(int $progressId, string $tenantSlug = ''): void
@@ -581,6 +616,8 @@ class ApprovalController
     public function updateCuration(array $params): void
     {
         $this->requireAdmin();
+        ob_start();
+
         $responseId = (int) ($params['id'] ?? 0);
         
         $input = json_decode(file_get_contents('php://input'), true);
@@ -645,8 +682,10 @@ class ApprovalController
                 db_update('user_step_responses', ['show_public' => 0], 'id = ?', [$responseId]);
             }
 
+            ob_end_clean();
             $this->json(['success' => true, 'message' => 'Configurações de destaque atualizadas!']);
         } catch (\Exception $e) {
+            ob_end_clean();
             $this->json(['error' => 'Erro: ' . $e->getMessage()], 500);
         }
     }

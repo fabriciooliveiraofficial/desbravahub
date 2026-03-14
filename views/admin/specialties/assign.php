@@ -934,7 +934,15 @@ $pageIcon = 'assignment_ind';
                     window.toast.success('Sucesso', data.message || 'Missão liberada! Os desbravadores já podem começar.');
                     submitBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> Missão Iniciada!';
                     setTimeout(() => {
-                        window.location.href = '<?= base_url($tenant['slug'] . '/admin/especialidades') ?>';
+                        const _url = '<?= base_url($tenant['slug'] . '/admin/especialidades') ?>';
+                        // Use HTMX boost navigation so the Authorization header (per-tab sessionStorage token)
+                        // is sent — avoids cookie/token mismatch when multiple users share the same browser.
+                        const _a = document.createElement('a');
+                        _a.href = _url;
+                        _a.style.display = 'none';
+                        document.body.appendChild(_a);
+                        _a.click();
+                        requestAnimationFrame(() => { try { document.body.removeChild(_a); } catch(e) {} });
                     }, 1200);
                 } else {
                     window.toast.error('Erro na Atribuição', data.error || 'Verifique os dados e tente novamente.');

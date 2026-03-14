@@ -217,50 +217,47 @@ function embed_media_sdk_scripts(): string
 }
 
 /**
- * Fetches the original high-resolution thumbnail for a social media URL.
- * Supports YouTube, TikTok, and Instagram (via oEmbed or fallback).
- *
- * @param string $url The media URL.
- * @return string|null The thumbnail URL or null if not found.
+ * Detect media type and fetch a high-quality thumbnail if possible
  */
 function fetch_media_thumbnail(string $url): ?string
 {
     $url = trim($url);
-    if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) return null;
+    if (empty($url)) return null;
 
-    // 1. YouTube
+    // 1. YouTube (Supports various patterns including shorts and live)
     $ytPattern = '/(?:(?:(?:m|www)\.)?youtube\.com\/(?:[^\/\s]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/|live\/)|youtu\.be\/)([^"&?\/\s]{11})/i';
     if (preg_match($ytPattern, $url, $m)) {
         return "https://img.youtube.com/vi/{$m[1]}/hqdefault.jpg";
     }
 
     // 2. TikTok (Public oEmbed — handles all tiktok.com domains including vm/vt)
-    if (str_contains($url, 'tiktok.com')) {
+    if (strpos($url, 'tiktok.com') !== false) {
         try {
             $oembedUrl = 'https://www.tiktok.com/oembed?url=' . urlencode($url);
-            $ctx       = stream_context_create(['http' => ['timeout' => 5]]);
+            $ctx = stream_context_create(['http' => ['timeout' => 3, 'header' => "User-Agent: DesbravaHub/1.0\r\n"]]);
             $response  = @file_get_contents($oembedUrl, false, $ctx);
+            
             if ($response) {
                 $data = json_decode($response, true);
                 if (!empty($data['thumbnail_url'])) {
                     return $data['thumbnail_url'];
                 }
             }
-        } catch (\Exception $e) {
-            // ignore
-        }
-        return 'https://www.google.com/s2/favicons?sz=128&domain=tiktok.com';
+        } catch (\Exception $e) { /* Fallback below */ }
+        // Note: No platform logos allowed (User Rule)
     }
 
-    // 3. Instagram (direct thumbnail scraping is blocked — use brand icon)
-    if (str_contains($url, 'instagram.com')) {
-        return 'https://www.google.com/s2/favicons?sz=128&domain=instagram.com';
+    // 3. Instagram (Requires oEmbed with Access Token usually, fallback to premium placeholder)
+    // Direct scraping of IG thumbnails is unreliable without a proxy/token.
+    
+    // 4. Direct Video Files
+    if (preg_match('/\.(mp4|webm|mov|ogg)$/i', $url)) {
+        // In a real scenario, we might use FFmpeg to generate a frame.
+        // For now, we return null so the frontend can use its placeholder.
+        return null; 
     }
 
-    // 4. Direct video file (.mp4)
-    if (str_ends_with(strtolower($url), '.mp4')) {
-        return 'https://placehold.co/600x600/1e293b/white?text=Video';
-    }
-
+    // Default: Fallback to the premium placeholder provided in assets if nothing else works
+    // The frontend buildThumbJs handles this, but we can set a default relative path here too
     return null;
 }

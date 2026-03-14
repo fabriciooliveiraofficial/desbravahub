@@ -108,6 +108,7 @@ class WebPushService
             'type'            => $data['type'] ?? null,
             'priority'        => $data['priority'] ?? 'normal',
             'notification_id' => $data['notification_id'] ?? null, // hoisted for client-side deduplication
+            'user_id'         => $userId, // used by client to discard cross-user broadcasts
             'data'            => $data,
         ]);
 

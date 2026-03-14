@@ -373,9 +373,7 @@ body { overflow-x: hidden; }
     font-size: 0.82rem;
     display: flex; align-items: flex-start; gap: 8px;
     cursor: default;
-}
-.ideal-item .material-icons-round { font-size: 18px; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
-.ideal-item strong { font-weight: 700; display: block; margin-bottom: 2px; }
+    font-weight: 700; display: block; margin-bottom: 2px; }
 .ideal-item span { color: var(--text-secondary); line-height: 1.4; }
 
 /* ── Center — Media Feed ──────────────────────────────────────────── */
@@ -402,122 +400,183 @@ body { overflow-x: hidden; }
 }
 .feed-title .material-icons-round { color: var(--accent); }
 
-/* Media grid */
+/* ── MEDIA CARDS ────────────────────────────────────────────────────────── */
 .media-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 32px;
+    padding: 24px 0;
 }
 
-/* Media card */
 .media-card {
-    position: relative;
-    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
     overflow: hidden;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    aspect-ratio: 4/5;
-    cursor: pointer;
-    box-shadow: var(--shadow-sm);
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
+
 .media-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md), 0 0 20px rgba(0,204,255,0.12);
-    border-color: rgba(0,204,255,0.45);
+    transform: translateY(-8px);
+    border-color: rgba(0, 204, 255, 0.4);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.media-card__image-container {
+    position: relative;
+    aspect-ratio: 1; /* Quadrado tipo Instagram */
+    background: #000;
+    cursor: pointer;
+    overflow: hidden;
 }
 
 .media-card__thumb {
-    width: 100%; height: 100%;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    transition: transform 0.5s ease;
-    display: block;
+    transition: transform 0.6s ease;
 }
-.media-card:hover .media-card__thumb { transform: scale(1.04); }
 
-/* Gradient overlay always visible at bottom */
+.media-card:hover .media-card__thumb {
+    transform: scale(1.08);
+}
+
 .media-card__gradient {
     position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 60%;
-    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.8) 100%);
     pointer-events: none;
 }
 
-/* Top badges */
 .media-card__top {
     position: absolute;
-    top: 10px; right: 10px;
-    display: flex; gap: 6px;
+    top: 12px;
+    right: 12px;
+    z-index: 5;
 }
-.media-type-badge {
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(6px);
-    color: white;
-    border-radius: 8px;
-    padding: 4px 8px;
-    font-size: 0.7rem; font-weight: 700;
-    display: flex; align-items: center; gap: 4px;
-    border: 1px solid rgba(255,255,255,0.15);
-}
-.media-type-badge .material-icons-round { font-size: 13px; }
 
-/* Bottom info */
-.media-card__info {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    padding: 12px 14px 14px;
+.media-type-badge {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     color: white;
-    z-index: 2;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.05em;
 }
+
+.media-card__body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.media-card__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.media-card__author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.media-card__author img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--accent);
+}
+
+.media-card__author span {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+    opacity: 0.9;
+}
+
 .media-card__title {
-    font-size: 0.85rem; font-weight: 700;
-    margin: 0 0 4px;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 4px;
+    cursor: pointer;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    line-height: 1.3;
-}
-.media-card__author {
-    font-size: 0.72rem; opacity: 0.8;
-    display: flex; align-items: center; gap: 5px;
-}
-.media-card__author img {
-    width: 18px; height: 18px; border-radius: 50%; object-fit: cover;
-    background: rgba(255,255,255,0.1);
 }
 
-/* Quick-action row on card */
-.media-card__actions {
-    position: absolute;
-    bottom: 50%;
-    right: 10px;
-    transform: translateY(50%);
+/* ── PREMIUM INTERACTION BAR ────────────────────────────────────────────── */
+.social-interaction-bar {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
     align-items: center;
-    z-index: 3;
-    opacity: 0;
-    transition: opacity 0.2s;
+    gap: 20px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
-.media-card:hover .media-card__actions { opacity: 1; }
-.card-action-btn {
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(6px);
-    border: 1px solid rgba(255,255,255,0.2);
-    color: white;
-    border-radius: 50%;
-    width: 36px; height: 36px;
-    display: flex; align-items: center; justify-content: center;
+
+.interaction-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     cursor: pointer;
-    font-size: 0; /* icon only */
-    transition: background 0.2s, transform 0.2s;
+    transition: all 0.2s ease;
+    color: rgba(255, 255, 255, 0.7);
 }
-.card-action-btn .material-icons-round { font-size: 18px; }
-.card-action-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
-.card-action-btn.liked .material-icons-round { color: #00e07a; }
+
+.interaction-item .material-icons-round {
+    font-size: 24px;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.interaction-item span:not(.material-icons-round) {
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.interaction-item:hover {
+    color: var(--accent-cyan);
+}
+
+.interaction-item:hover .material-icons-round {
+    transform: scale(1.2);
+}
+
+.interaction-item.liked {
+    color: #ff3e60;
+}
+
+.interaction-item.liked .material-icons-round {
+    animation: heartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes heartPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
+}
+
+/* Hide old overlaid actions */
+.media-card__actions { display: none !important; }
 
 /* Load more */
 .load-sentinel { height: 40px; }
@@ -645,41 +704,134 @@ body { overflow-x: hidden; }
 }
 .ticker-item .material-icons-round { font-size: 16px; color: #00e07a; }
 
-/* ── Media Viewer Modal ────────────────────────────────────────────── */
-/* ── Media Viewer Modal — always dark, theme-independent ─────────── */
+/* ── MEDIA VIEWER ────────────────────────────────────────────────────────── */
 .media-viewer {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 6, 12, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 9000;
     display: none;
-    position: fixed; inset: 0;
-    z-index: 9999;
-    background: rgba(0,0,0,0.94);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    align-items: stretch;
+    align-items: center;
     justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
-.media-viewer.open { display: flex; }
 
-/* Floating close button — always visible regardless of panel position */
+.media-viewer.open {
+    display: flex;
+    opacity: 1;
+}
+
+.viewer-inner {
+    width: 95%;
+    max-width: 1200px;
+    height: 90vh;
+    display: flex;
+    background: rgba(13, 17, 23, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 32px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
+}
+
+.viewer-media {
+    flex: 1.6;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.viewer-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #0d1117;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.viewer-panel-header {
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.viewer-panel-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.viewer-actions {
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.viewer-action-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.viewer-action-btn .material-icons-round {
+    font-size: 28px;
+}
+
+.viewer-action-btn:hover {
+    color: var(--accent-cyan);
+    transform: scale(1.05);
+}
+
+.viewer-action-btn.liked {
+    color: #ff3e60;
+}
+
 .viewer-float-close {
     position: fixed;
-    top: 16px; right: 16px;
-    z-index: 10001;
-    background: rgba(0,204,255,0.15);
-    border: 1px solid rgba(0,204,255,0.45);
-    color: #e8f4ff;
+    top: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    width: 44px; height: 44px;
-    display: flex; align-items: center; justify-content: center;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    transition: background 0.2s, border-color 0.2s;
-    flex-shrink: 0;
+    z-index: 99999;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s, transform 0.2s;
 }
+
 .viewer-float-close:hover {
-    background: rgba(0,204,255,0.28);
-    border-color: rgba(0,204,255,0.7);
+    background: rgba(239, 68, 68, 0.8);
+    transform: rotate(90deg);
 }
+
 .viewer-float-close .material-icons-round { font-size: 22px; }
 
 .viewer-inner {
@@ -742,6 +894,23 @@ body { overflow-x: hidden; }
     border-color: rgba(0,204,255,0.6);
 }
 .viewer-close-btn .material-icons-round { font-size: 18px; }
+
+/* Back button — hidden on desktop, shown on mobile via @media below */
+.viewer-panel-back {
+    display: none;
+    background: none;
+    border: none;
+    color: #e8f4ff;
+    cursor: pointer;
+    padding: 4px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+.viewer-panel-back:hover { background: rgba(255,255,255,0.08); }
+.viewer-panel-back .material-icons-round { font-size: 22px; }
 
 /* Viewer actions row */
 .viewer-actions {
@@ -867,28 +1036,151 @@ body { overflow-x: hidden; }
 .comment-submit-btn .material-icons-round { font-size: 17px; }
 .honeypot { display: none !important; }
 
-/* Mobile viewer: stack vertically */
+/* Placeholder para mídias sem thumbnail (Instagram, TikTok) */
+.media-card__image-container { position: relative; overflow: hidden; }
+.media-card__thumb-placeholder {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #0d1020 0%, #0a1a14 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.media-card__thumb-placeholder::after {
+    content: 'play_circle';
+    font-family: 'Material Icons Round';
+    font-size: 3.5rem;
+    color: rgba(0, 204, 255, 0.4);
+    pointer-events: none;
+}
+
+/* Specific fix for Instagram/Social auto-sizing */
+.social-embed {
+    width: 100%;
+    max-width: 500px;
+    min-height: 450px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    margin: 0 auto;
+}
+.social-embed iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Mobile viewer: vídeo full-screen + barra de ações flutuante */
 @media (max-width: 768px) {
+    .media-viewer { background: #000; }
     .viewer-inner {
         flex-direction: column;
         height: 100dvh;
+        width: 100%; max-width: 100%;
+        margin: 0;
         overflow: hidden;
+        position: relative;
     }
+    /* Vídeo ocupa toda a altura disponível */
     .viewer-media {
-        flex: 0 0 auto;
-        height: 48vh;
-        padding: 12px 12px 8px;
+        flex: 1;
+        min-height: 0;
+        padding: 0;
+        background: #000;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
         overflow: hidden;
     }
-    .viewer-media > * { max-height: 100% !important; }
-    .viewer-panel {
-        width: 100%;
-        flex: 1;
-        border-left: none;
-        border-top: 1px solid rgba(0,204,255,0.14);
-        min-height: 0;
+    /* Landscape (YouTube): mantém proporção 16:9, centraliza verticalmente */
+    .viewer-media .embed-wrap.landscape {
+        width: 100% !important;
+        aspect-ratio: 16/9 !important;
+        border-radius: 0 !important;
+        flex-shrink: 0;
+        align-self: center;
     }
-    .viewer-close-btn { display: none; } /* float btn handles close on mobile */
+    /* Portrait (TikTok, Shorts): preenche toda a altura disponível */
+    .viewer-media .embed-wrap.portrait {
+        width: 100% !important;
+        max-width: 100% !important;
+        aspect-ratio: unset !important;
+        height: 100% !important;
+        border-radius: 0 !important;
+        flex-shrink: 0;
+    }
+    /* Imagens */
+    .viewer-media img {
+        max-height: 100% !important;
+        max-width: 100% !important;
+        width: auto !important;
+        border-radius: 0 !important;
+        object-fit: contain;
+        align-self: center;
+    }
+    /* Social embeds (Instagram, Twitter): preenche altura, scroll interno */
+    .viewer-media .embed-wrap.social-embed-wrap {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        min-height: unset;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-bottom: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+    }
+    /* Painel: barra de ações fixada na parte inferior */
+    .viewer-panel {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        width: 100%; height: auto;
+        border-left: none;
+        border-top: 1px solid rgba(0, 204, 255, 0.12);
+        background: rgba(7, 9, 15, 0.88);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        z-index: 20;
+        flex-direction: column;
+        flex-shrink: 0;
+    }
+    /* No modo barra: ocultar cabeçalho, lista de comentários e form */
+    .viewer-panel-header { display: none; }
+    .comment-list, .comment-form { display: none; }
+    /* Modo showing-comments: painel vira overlay full-screen */
+    .media-viewer.showing-comments .viewer-panel {
+        position: fixed;
+        inset: 0;
+        height: 100dvh;
+        background: #0d1117;
+        border-top: none;
+    }
+    /* Modes */
+    .media-viewer.showing-comments .viewer-media { filter: blur(10px); }
+    @media (max-width: 768px) {
+        .media-viewer.showing-comments .viewer-media { display: none; }
+    }
+    .media-viewer.showing-comments .viewer-panel-header { display: flex; }
+    .media-viewer.showing-comments .comment-list {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow-y: auto;
+    }
+    .media-viewer.showing-comments .comment-form { display: block; }
+    .media-viewer.showing-comments .viewer-media { display: none; }
+    .viewer-close-btn { display: none; }
+    .viewer-panel-back { display: flex; }
+}
+@media (min-width: 769px) {
+    .viewer-close-btn { display: flex; }
+    .viewer-panel-back { display: none; }
 }
 
 /* Embed containers */
@@ -898,6 +1190,8 @@ body { overflow-x: hidden; }
 .embed-wrap iframe    { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
 .embed-wrap.twitter-embed { aspect-ratio: unset; overflow: visible; width: min(550px, 100%); margin: 0 auto; box-shadow: none; background: transparent; border-radius: 0; }
 .embed-wrap.twitter-embed .twitter-tweet { margin: 0 auto !important; }
+/* Social embeds (Instagram, TikTok) — dimensionadas pelo SDK da plataforma */
+.embed-wrap.social-embed-wrap { aspect-ratio: unset; overflow-y: auto; width: 100%; max-width: 605px; margin: 0 auto; box-shadow: none; background: transparent; border-radius: 0; display: flex; justify-content: center; }
 
 /* ── Mobile full-screen Reels ─────────────────────────────────────── */
 @media (max-width: 768px) {
@@ -921,40 +1215,41 @@ body { overflow-x: hidden; }
     .hub-feed { position: relative; }
     .feed-toolbar { display: none; }
 
+    /* Feed layout - simplified for modern look */
     .media-grid {
         display: flex;
         flex-direction: column;
-        gap: 0;
-        height: 100dvh;
-        overflow-y: scroll;
-        scroll-snap-type: y mandatory;
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior-y: contain;
+        gap: 32px;
+        padding: 16px 16px;
+        height: auto;
+        overflow-y: visible;
+        scroll-snap-type: none;
     }
 
     .media-card {
-        flex: none;
-        width: 100%;
-        height: 100dvh;
-        aspect-ratio: unset;
-        border-radius: 0;
-        border: none;
+        height: auto;
         border-bottom: 1px solid var(--border);
-        scroll-snap-align: start;
-        transform: none !important;
+        padding-bottom: 16px;
+        touch-action: manipulation;
     }
-    .media-card:hover { transform: none !important; box-shadow: none; }
 
-    .media-card__thumb { object-position: center center; }
-
-    /* Show actions always on mobile */
-    .media-card__actions {
-        opacity: 1;
-        right: 16px;
-        bottom: 100px;
-        transform: none;
-        top: unset;
+    .media-card__image-container {
+        border-radius: 12px;
+        overflow: hidden;
+        aspect-ratio: 1;
+        background: #000;
+        position: relative;
+        touch-action: manipulation;
+        cursor: pointer;
     }
+
+    .media-card__thumb {
+        height: 100%;
+        object-fit: contain;
+    }
+
+    /* Hide the old floating actions */
+    .media-card__actions { display: none !important; }
 
     /* Bigger bottom info on mobile */
     .media-card__info {
@@ -999,18 +1294,28 @@ body { overflow-x: hidden; }
 function buildThumb(array $media): string {
     $url   = trim((string)($media['media_content'] ?? ''));
     $thumb = $media['thumbnail_url'] ?? '';
+    
+    // Check if thumbnail is just a platform favicon
+    if (!empty($thumb) && strpos($thumb, 'favicon') !== false && strpos($thumb, 'google.com/s2/favicons') !== false) {
+        $thumb = '';
+    }
+
     if (!empty($thumb)) return $thumb;
 
     if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/|live\/)|youtu\.be\/)([^"&?\/\s]{11})/i', $url, $m)) {
         return 'https://img.youtube.com/vi/' . $m[1] . '/hqdefault.jpg';
     }
-    if (strpos($url, 'tiktok.com') !== false) return 'https://www.google.com/s2/favicons?sz=128&domain=tiktok.com';
-    if (strpos($url, 'instagram.com') !== false) return 'https://www.google.com/s2/favicons?sz=128&domain=instagram.com';
+    if (strpos($url, 'instagram.com') !== false) {
+        return base_url('/assets/images/video_placeholder.png');
+    }
+    if (strpos($url, 'tiktok.com') !== false) {
+        return base_url('/assets/images/video_placeholder.png');
+    }
     if (preg_match('/\.(jpg|jpeg|png|webp|gif|avif|svg)/i', $url)) {
         return strpos($url, 'storage/') === 0 ? base_url('/' . $url) : $url;
     }
     if (strpos($url, 'storage/') === 0) return base_url('/' . $url);
-    return 'https://placehold.co/400x500/0f172a/38bdf8?text=Media';
+    return base_url('/assets/images/video_placeholder.png');
 }
 
 function isVideoUrl(string $url): bool {
@@ -1313,56 +1618,55 @@ $showHero = !empty($heroHeadline);
                  data-has-liked="<?= $liked ? '1' : '0' ?>"
                  data-comment-count="<?= $comCount ?>"
                  data-title="<?= $title ?>"
-                 data-viewed="0"
-                 onclick="openViewer(this)"
-                 ondblclick="doubleTapLike(event, this)">
+                 data-viewed="0">
 
-                <img class="media-card__thumb" src="<?= htmlspecialchars($thumb) ?>" alt="<?= $title ?>" loading="lazy">
-                <div class="media-card__gradient"></div>
-
-                <div class="media-card__top">
-                    <div class="media-type-badge">
-                        <span class="material-icons-round"><?= $badgeIco ?></span>
-                        <?= $badge ?>
-                    </div>
-                    <?php if ($views > 0): ?>
-                    <div class="media-type-badge">
-                        <span class="material-icons-round">visibility</span>
-                        <?= number_format($views) ?>
-                    </div>
+                <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
+                    <?php if ($thumb): ?>
+                    <img class="media-card__thumb" src="<?= htmlspecialchars($thumb) ?>" alt="<?= $title ?>" loading="lazy">
+                    <?php else: ?>
+                    <div class="media-card__thumb-placeholder"></div>
                     <?php endif; ?>
+                    <div class="media-card__gradient"></div>
+                    <div class="media-card__top">
+                        <div class="media-type-badge">
+                            <span class="material-icons-round"><?= $badgeIco ?></span>
+                            <?= $badge ?>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="media-card__actions" onclick="event.stopPropagation()">
-                    <button class="card-action-btn <?= $liked ? 'liked' : '' ?>"
-                            id="cardLike_<?= $st ?>_<?= $si ?>"
-                            onclick="handleLike('<?= $st ?>', <?= $si ?>); event.stopPropagation();"
-                            title="Curtir">
-                        <span class="material-icons-round"><?= $liked ? 'favorite' : 'favorite_border' ?></span>
-                    </button>
-                    <div class="card-action-count" id="cardLikeCount_<?= $st ?>_<?= $si ?>"><?= $likes > 0 ? $likes : '' ?></div>
-
-                    <button class="card-action-btn"
-                            onclick="openViewer(this.closest('.media-card')); event.stopPropagation();"
-                            title="Comentários">
-                        <span class="material-icons-round">chat_bubble_outline</span>
-                    </button>
-                    <div class="card-action-count"><?= $comCount > 0 ? $comCount : '' ?></div>
-
-                    <button class="card-action-btn"
-                            onclick="shareMedia('<?= base_url('c/' . $clubSlug) ?>', '<?= $title ?>'); event.stopPropagation();"
-                            title="Compartilhar">
-                        <span class="material-icons-round">share</span>
-                    </button>
-                </div>
-
-                <div class="media-card__info">
-                    <div class="media-card__title"><?= $title ?></div>
-                    <div class="media-card__author">
-                        <?php if ($avatar): ?>
-                            <img src="<?= $avatar ?>" alt="">
+                <div class="media-card__body">
+                    <div class="media-card__meta">
+                        <div class="media-card__author">
+                            <?php if ($avatar): ?>
+                                <img src="<?= $avatar ?>" alt="">
+                            <?php endif; ?>
+                            <span><?= $author ?></span>
+                        </div>
+                        <?php if ($views > 0): ?>
+                        <div class="stat-chip" style="padding: 2px 8px; font-size: 0.7rem;">
+                            <span class="material-icons-round" style="font-size: 14px;">visibility</span>
+                            <?= number_format($views) ?>
+                        </div>
                         <?php endif; ?>
-                        <?= $author ?>
+                    </div>
+
+                    <div class="media-card__title" onclick="openViewer(this.closest('.media-card'))"><?= $title ?></div>
+
+                    <div class="social-interaction-bar">
+                        <div class="interaction-item <?= $liked ? 'liked' : '' ?>" 
+                             id="cardLike_<?= $st ?>_<?= $si ?>"
+                             onclick="handleLike('<?= $st ?>', <?= $si ?>)">
+                            <span class="material-icons-round"><?= $liked ? 'favorite' : 'favorite_border' ?></span>
+                            <span id="cardLikeCount_<?= $st ?>_<?= $si ?>"><?= $likes > 0 ? $likes : '' ?></span>
+                        </div>
+                        <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
+                            <span class="material-icons-round">chat_bubble_outline</span>
+                            <span><?= $comCount > 0 ? $comCount : '' ?></span>
+                        </div>
+                        <div class="interaction-item" onclick="shareMedia('<?= base_url('c/' . $clubSlug) ?>', '<?= $title ?>')">
+                            <span class="material-icons-round">share</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1447,12 +1751,13 @@ $showHero = !empty($heroHeadline);
 </div><!-- /.hub-shell -->
 
 <?php /* ══ MEDIA VIEWER MODAL ════════════════════════════════════════════════ */ ?>
-<div id="mediaViewer" class="media-viewer" role="dialog" aria-modal="true">
 
-    <!-- Floating close — always visible on any screen size -->
-    <button class="viewer-float-close" onclick="closeViewer()" aria-label="Fechar">
-        <span class="material-icons-round">close</span>
-    </button>
+<!-- Botão de fechar FORA do modal para evitar que o iframe capture o evento -->
+<button id="viewerFloatClose" class="viewer-float-close" onclick="closeViewer()" aria-label="Fechar" style="display:none;">
+    <span class="material-icons-round">close</span>
+</button>
+
+<div id="mediaViewer" class="media-viewer" role="dialog" aria-modal="true">
 
     <div class="viewer-inner">
         <!-- Media pane -->
@@ -1463,7 +1768,10 @@ $showHero = !empty($heroHeadline);
         <!-- Side panel -->
         <div class="viewer-panel">
             <div class="viewer-panel-header">
-                <h3>
+                <button class="viewer-panel-back" onclick="viewer.classList.remove('showing-comments')" aria-label="Voltar">
+                    <span class="material-icons-round">arrow_back</span>
+                </button>
+                <h3 id="viewerTitle">
                     <span class="material-icons-round">chat_bubble_outline</span>
                     Comentários
                 </h3>
@@ -1497,6 +1805,23 @@ $showHero = !empty($heroHeadline);
     </div>
 </div>
 
+<?php
+/* Detectar quais SDKs são necessários para pré-carregar */
+$_needsIgSdk = false;
+$_needsTtSdk = false;
+foreach ($curatedMedia as $_m) {
+    $_u = trim($_m['media_content'] ?? '');
+    if (strpos($_u, 'instagram.com') !== false) $_needsIgSdk = true;
+    if (strpos($_u, 'tiktok.com') !== false)    $_needsTtSdk = true;
+}
+?>
+<?php if ($_needsIgSdk): ?>
+<script async id="instagram-embed-js" src="//www.instagram.com/embed.js"></script>
+<?php endif; ?>
+<?php if ($_needsTtSdk): ?>
+<script async id="tiktok-embed-js" src="https://www.tiktok.com/embed.js"></script>
+<?php endif; ?>
+
 <script>
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -1526,36 +1851,70 @@ const EmbedLoader = {
     }
 };
 
+// Regex matching exact patterns from helpers/media.php embed_media()
 const RE_YT_SHORT = /youtube\.com\/shorts\/([^"&?\/\s]{11})/i;
-const RE_YT       = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|live\/)|youtu\.be\/)([^"&?\/\s]{11})/i;
-const RE_TT       = /tiktok\.com\/.*\/video\/([0-9]+)/i;
-const RE_IG       = /instagram\.com\/(p|reels?|tv)\/([A-Za-z0-9_-]+)/i;
-const RE_TW       = /(?:twitter|x)\.com\/\w+\/status\/([0-9]+)/i;
+const RE_YT       = /(?:(?:(?:m|www)\.)?youtube\.com\/(?:[^\/\s]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|live\/)|youtu\.be\/)([^"&?\/\s]{11})/i;
+const RE_TT       = /(?:www\.)?tiktok\.com\/.*\/video\/([0-9]+)/i;
+const RE_IG       = /(?:www\.)?instagram\.com\/(p|reel|reels|tv)\/([A-Za-z0-9_-]+)/i;
+const RE_TW       = /(?:twitter|x)\.com\/[^\s/]+\/status\/([0-9]+)/i;
 const RE_VID      = /(\.mp4|\.webm|\.mov)$/i;
 
 function buildEmbedHtml(url, isVideo) {
     if (!isVideo) {
         const src = url.startsWith('storage/') ? '/' + url : url;
-        return `<img src="${src}" style="max-height:85vh;max-width:100%;border-radius:16px;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,0.6);">`;
+        return `<img src="${src}" style="max-height:85vh;max-width:100%;border-radius:24px;object-fit:contain;box-shadow:0 30px 90px rgba(0,0,0,0.8);">`;
     }
 
     const ytShort = url.match(RE_YT_SHORT);
     const ytMatch = !ytShort && url.match(RE_YT);
     const ttMatch = url.match(RE_TT);
-    const igMatch = url.match(RE_IG);
+    const igMatch = !ttMatch && url.match(RE_IG);
     const twMatch = url.match(RE_TW);
 
-    if (ytShort) return `<div class="embed-wrap portrait"><iframe src="https://www.youtube.com/embed/${ytShort[1]}?autoplay=1" allow="autoplay;encrypted-media" allowfullscreen></iframe></div>`;
-    if (ytMatch) return `<div class="embed-wrap landscape"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1" allow="autoplay;encrypted-media" allowfullscreen></iframe></div>`;
-    if (ttMatch) return `<div class="embed-wrap portrait"><iframe src="https://www.tiktok.com/embed/v2/${ttMatch[1]}" allowfullscreen></iframe></div>`;
-    if (url.includes('tiktok.com')) return externalLinkCard(url, 'TikTok', 'music_video');
-    if (igMatch) {
-        const igType  = igMatch[1].toLowerCase() === 'reels' ? 'reel' : igMatch[1];
-        const igId    = igMatch[2];
-        const igRatio = (igType === 'reel' || igType === 'tv') ? 'portrait' : 'landscape';
-        return `<div class="embed-wrap ${igRatio}"><iframe src="https://www.instagram.com/${igType}/${igId}/embed/" scrolling="no" allowtransparency="true" allowfullscreen></iframe></div>`;
+    // ── YouTube (iframe nativo) ────────────────────────────────────────
+    if (ytShort) return `<div class="embed-wrap portrait"><iframe src="https://www.youtube.com/embed/${ytShort[1]}?autoplay=1&playsinline=1&rel=0&modestbranding=1" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`;
+    if (ytMatch) return `<div class="embed-wrap landscape"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&playsinline=1&rel=0&modestbranding=1" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`;
+
+    // ── TikTok (Official Embed System) ───────────────────────────────
+    if (ttMatch) {
+        const videoId = ttMatch[1];
+        // Loading official blockquote for better compliance and features
+        EmbedLoader.load('https://www.tiktok.com/embed.js', 'tiktok-embed-js')
+            .then(() => { if (window.tiktok) window.tiktok.Embeds?.render?.(); });
+            
+        return `<div class="embed-wrap portrait" style="background:#000;">
+            <blockquote class="tiktok-embed" cite="${url}" data-video-id="${videoId}" style="max-width: 605px;min-width: 325px;" >
+                <section> <a target="_blank" title="@tiktok" href="https://www.tiktok.com/video/${videoId}">Carregando vídeo...</a> </section>
+            </blockquote>
+        </div>`;
     }
-    if (twMatch) return `<div class="embed-wrap twitter-embed"><blockquote class="twitter-tweet" data-theme="dark" data-conversation="none"><a href="https://twitter.com/i/status/${twMatch[1]}"></a></blockquote></div>`;
+
+    // ── Instagram (blockquote + SDK oficial) ──────────────────────────
+    if (igMatch) {
+        const postType = igMatch[1].toLowerCase() === 'reels' ? 'reel' : igMatch[1];
+        const postId   = igMatch[2];
+        const igUrl    = `https://www.instagram.com/${postType}/${postId}/?utm_source=ig_embed&utm_campaign=loading`;
+        
+        EmbedLoader.load('https://www.instagram.com/embed.js', 'instagram-embed-js')
+            .then(() => { if (window.instgrm) window.instgrm.Embeds.process(); });
+
+        return `<div class="embed-wrap social-embed-wrap">
+            <blockquote class="instagram-media" data-instgrm-permalink="${igUrl}" data-instgrm-version="14"
+                style="background:#FFF;border:0;border-radius:12px;box-shadow:0 0 1px 0 rgba(0,0,0,.5),0 1px 10px 0 rgba(0,0,0,.15);margin:1px;max-width:540px;min-width:326px;padding:0;width:99.375%;width:-webkit-calc(100% - 2px);width:calc(100% - 2px);">
+                <div style="padding:16px;"> <a href="${url}" target="_blank" style="color:#000;text-decoration:none;font-family:Sans-Serif;font-size:14px;font-style:normal;font-weight:normal;line-height:17px;">Ver no Instagram</a> </div>
+            </blockquote>
+        </div>`;
+    }
+
+    // ── X / Twitter ───────────────────────────────────────────────────
+    if (twMatch) {
+        const tweetUrl = url.replace(/https?:\/\/(?:www\.)?x\.com/i, 'https://twitter.com');
+        EmbedLoader.load('https://platform.twitter.com/widgets.js', 'twitter-widgets-js')
+            .then(() => window.twttr?.widgets?.load(viewerMedia));
+        return `<div class="embed-wrap social-embed-wrap"><blockquote class="twitter-tweet" data-theme="dark" data-conversation="none"><a href="${tweetUrl}">Ver no X</a></blockquote></div>`;
+    }
+
+    // ── Direct / Storage Files ────────────────────────────────────────
     if (RE_VID.test(url) || url.includes('storage/')) {
         const src = url.startsWith('storage/') ? '/' + url : url;
         return `<div class="embed-wrap landscape" style="background:#000;"><video src="${src}" controls autoplay playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;"></video></div>`;
@@ -1569,9 +1928,9 @@ function externalLinkCard(url, name, icon) {
         <span class="material-icons-round" style="font-size:4rem;margin-bottom:20px;display:block;color:var(--accent);">${icon}</span>
         <h3 style="color:white;margin:0 0 8px;font-size:1.2rem;">${name}</h3>
         ${domain ? `<p style="color:rgba(255,255,255,0.4);font-size:0.82rem;margin:0 0 28px;font-family:monospace;">${domain}</p>` : ''}
-        <a href="${url}" target="_blank" rel="noopener noreferrer"
+        <a href="${url}" onclick="closeViewer()"
            style="display:inline-flex;align-items:center;gap:10px;padding:12px 28px;background:var(--accent);color:#000;border-radius:12px;font-weight:800;text-decoration:none;">
-            <span class="material-icons-round">open_in_new</span> Abrir
+            <span class="material-icons-round">open_in_new</span> Ver conteúdo
         </a>
     </div>`;
 }
@@ -1582,8 +1941,9 @@ const viewerMedia  = document.getElementById('viewerMedia');
 const viewerActions= document.getElementById('viewerActions');
 const commentList  = document.getElementById('commentList');
 const commentForm  = document.getElementById('commentForm');
+const floatClose   = document.getElementById('viewerFloatClose');
 
-function openViewer(card) {
+function openViewer(card, forceComments = false) {
     currentViewerCard = card;
     const url      = card.dataset.url;
     const isVideo  = card.dataset.isVideo === '1';
@@ -1591,9 +1951,16 @@ function openViewer(card) {
     const si       = card.dataset.sourceId;
     const liked    = card.dataset.hasLiked === '1';
     const likes    = parseInt(card.dataset.likeCount) || 0;
+    const title    = card.dataset.title;
 
     // Build embed
     viewerMedia.innerHTML = buildEmbedHtml(url, isVideo);
+
+    // Update title
+    document.getElementById('viewerTitle').innerHTML = `
+        <span class="material-icons-round">${isVideo ? 'play_circle' : 'image'}</span>
+        ${title || 'Mídia'}
+    `;
 
     // Twitter widget
     if (url.match(RE_TW)) {
@@ -1602,15 +1969,19 @@ function openViewer(card) {
             .catch(() => { viewerMedia.innerHTML = externalLinkCard(url, 'X / Twitter', 'open_in_new'); });
     }
 
-    // Actions bar
+    // Actions bar - PREMIUM DESIGN
     viewerActions.innerHTML = `
         <button class="viewer-action-btn ${liked ? 'liked' : ''}" id="viewerLikeBtn"
                 onclick="handleLike('${st}', ${si})">
             <span class="material-icons-round">${liked ? 'favorite' : 'favorite_border'}</span>
-            <span id="viewerLikeCount">${likes}</span>
+            <span id="viewerLikeCount">${likes > 0 ? likes : ''}</span>
+        </button>
+        <button class="viewer-action-btn" onclick="viewer.classList.add('showing-comments')">
+            <span class="material-icons-round">chat_bubble_outline</span>
+            <span>${parseInt(card.dataset.commentCount) || ''}</span>
         </button>
         <button class="viewer-action-btn" onclick="shareMedia(window.location.href, '${card.dataset.title}')">
-            <span class="material-icons-round">share</span> Compartilhar
+            <span class="material-icons-round">share</span>
         </button>`;
 
     // Load comments
@@ -1623,14 +1994,34 @@ function openViewer(card) {
 
     viewer.classList.add('open');
     document.body.style.overflow = 'hidden';
+    floatClose.style.display = 'flex';
 
     // Track view
     trackView(st, si);
+
+    // If mobile, check if we should show comments full screen
+    if (window.innerWidth <= 768 && forceComments) {
+        viewer.classList.add('showing-comments');
+    } else {
+        viewer.classList.remove('showing-comments');
+    }
+
+    // Re-processar Instagram SDK: tenta imediatamente + retry se ainda carregando
+    const _igProcess = () => {
+        if (window.instgrm) {
+            window.instgrm.Embeds.process();
+        } else {
+            // SDK ainda carregando — aguarda mais 800ms e tenta novamente
+            setTimeout(() => { if (window.instgrm) window.instgrm.Embeds.process(); }, 800);
+        }
+    };
+    setTimeout(_igProcess, 100);
 }
 
 function closeViewer() {
     viewer.classList.remove('open');
     document.body.style.overflow = '';
+    floatClose.style.display = 'none';
     viewerMedia.innerHTML = '';
     currentViewerCard = null;
 }
@@ -1830,34 +2221,37 @@ function buildCardElement(item) {
     div.setAttribute('ondblclick', 'doubleTapLike(event, this)');
 
     div.innerHTML = `
-        <img class="media-card__thumb" src="${escapeHtml(thumb)}" alt="${title}" loading="lazy">
-        <div class="media-card__gradient"></div>
-        <div class="media-card__top">
-            <div class="media-type-badge">
-                <span class="material-icons-round">${isVideo ? 'smart_display' : 'image'}</span>
-                ${isVideo ? 'Vídeo' : 'Foto'}
+        <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))">
+            ${thumb ? `<img class="media-card__thumb" src="${escapeHtml(thumb)}" alt="${title}" loading="lazy">` : '<div class="media-card__thumb-placeholder"></div>'}
+            <div class="media-card__gradient"></div>
+            <div class="media-card__top">
+                <div class="media-type-badge">
+                    <span class="material-icons-round">${isVideo ? 'smart_display' : 'image'}</span>
+                    ${isVideo ? 'Vídeo' : 'Foto'}
+                </div>
             </div>
-            ${views > 0 ? `<div class="media-type-badge"><span class="material-icons-round">visibility</span>${views}</div>` : ''}
         </div>
-        <div class="media-card__actions" onclick="event.stopPropagation()">
-            <button class="card-action-btn ${liked ? 'liked' : ''}" id="cardLike_${st}_${si}"
-                    onclick="handleLike('${st}', ${si}); event.stopPropagation();" title="Curtir">
-                <span class="material-icons-round">${liked ? 'favorite' : 'favorite_border'}</span>
-            </button>
-            <div class="card-action-count" id="cardLikeCount_${st}_${si}">${likes > 0 ? likes : ''}</div>
-            <button class="card-action-btn" onclick="openViewer(this.closest('.media-card')); event.stopPropagation();" title="Comentários">
-                <span class="material-icons-round">chat_bubble_outline</span>
-            </button>
-            <div class="card-action-count">${comCount > 0 ? comCount : ''}</div>
-            <button class="card-action-btn" onclick="shareMedia(window.location.href, '${title}'); event.stopPropagation();" title="Compartilhar">
-                <span class="material-icons-round">share</span>
-            </button>
-        </div>
-        <div class="media-card__info">
-            <div class="media-card__title">${title}</div>
-            <div class="media-card__author">
-                ${avatar ? `<img src="${escapeHtml(avatar)}" alt="">` : ''}
-                ${author}
+        <div class="media-card__body">
+            <div class="media-card__meta">
+                <div class="media-card__author">
+                    ${avatar ? `<img src="${escapeHtml(avatar)}" alt="">` : ''}
+                    <span>${author}</span>
+                </div>
+                ${views > 0 ? `<div class="stat-chip" style="padding: 2px 8px; font-size: 0.7rem;"><span class="material-icons-round" style="font-size: 14px;">visibility</span>${views}</div>` : ''}
+            </div>
+            <div class="media-card__title" onclick="openViewer(this.closest('.media-card'))">${title}</div>
+            <div class="social-interaction-bar">
+                <div class="interaction-item ${liked ? 'liked' : ''}" id="cardLike_${st}_${si}" onclick="handleLike('${st}', ${si})">
+                    <span class="material-icons-round">${liked ? 'favorite' : 'favorite_border'}</span>
+                    <span id="cardLikeCount_${st}_${si}">${likes > 0 ? likes : ''}</span>
+                </div>
+                <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
+                    <span class="material-icons-round">chat_bubble_outline</span>
+                    <span>${comCount > 0 ? comCount : ''}</span>
+                </div>
+                <div class="interaction-item" onclick="shareMedia(window.location.href, '${title}')">
+                    <span class="material-icons-round">share</span>
+                </div>
             </div>
         </div>`;
     return div;
@@ -1868,7 +2262,7 @@ function buildThumbJs(item) {
     if (item.thumbnail_url) return item.thumbnail_url;
     const yt = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/i);
     if (yt) return `https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg`;
-    return 'https://placehold.co/400x500/0f172a/38bdf8?text=Media';
+    return '<?= base_url("assets/images/video_placeholder.png") ?>';
 }
 
 // ── Double-tap like ───────────────────────────────────────────────────────────

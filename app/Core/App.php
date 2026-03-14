@@ -78,4 +78,24 @@ class App
     {
         return self::$user !== null;
     }
+
+    /**
+     * Clean JSON Response
+     * 
+     * Silences notices and clears buffer to ensure pure JSON delivery.
+     */
+    public static function jsonResponse(array $data, int $httpCode = 200): void
+    {
+        // Suppress any further error output
+        error_reporting(0);
+        ini_set('display_errors', 0);
+        
+        // Clear anything already in the buffer (notices, whitespace)
+        if (ob_get_length()) ob_clean();
+        
+        http_response_code($httpCode);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 }

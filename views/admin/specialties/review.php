@@ -463,7 +463,13 @@ $progressPercent = $totalReqs > 0 ? round(($completedReqs / $totalReqs) * 100) :
                 const result = await response.json();
                 if (result.success) {
                     await Swal.fire('Parabéns!', `A especialidade foi concluída e o desbravador recebeu ${result.xp} XP.`, 'success');
-                    location.href = '<?= base_url($tenant['slug'] . '/admin/especialidades/atribuicoes') ?>';
+                    const _url = '<?= base_url($tenant['slug'] . '/admin/especialidades/atribuicoes') ?>';
+                    const _a = document.createElement('a');
+                    _a.href = _url;
+                    _a.style.display = 'none';
+                    document.body.appendChild(_a);
+                    _a.click();
+                    requestAnimationFrame(() => { try { document.body.removeChild(_a); } catch(e) {} });
                 } else {
                     showToast(result.error || 'Erro ao concluir missão', 'error');
                 }

@@ -225,6 +225,17 @@ class PushNotifications {
             return;
         }
 
+        // Guard: discard pushes intended for a different user.
+        // The SW broadcasts to ALL open tabs; without this check a pathfinder tab
+        // would show — and link to — notifications meant for admins (and vice versa).
+        if (data?.user_id && typeof SessionGuard !== 'undefined') {
+            const tabUserId = SessionGuard.getUserId();
+            if (tabUserId && String(data.user_id) !== String(tabUserId)) {
+                this.log('Ignoring push for user', data.user_id, '— tab belongs to', tabUserId);
+                return;
+            }
+        }
+
         // Merge SW envelope priority into data so showOnce can read it
         window.toast.showOnce({ ...data, priority: priority || data.priority || 'normal' });
 

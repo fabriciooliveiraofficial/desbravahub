@@ -511,10 +511,11 @@ $activeTab = $_GET['tab'] ?? (isset($_GET['incomplete']) ? 'registry' : 'overvie
                 </a>
             </div>
 
-            <a href="<?= base_url($tenant['slug'] . '/logout?t=' . time()) ?>" hx-boost="false" class="nav-item-hud danger btn-logout-hud">
+            <button type="button" class="nav-item-hud danger btn-logout-hud" onclick="doLogout(this)">
                 <span class="material-icons-round" style="font-size: 1rem;">logout</span>
                 ENCERRAR SESSÃO
-            </a>
+            </button>
+            <form id="logoutForm" action="<?= base_url($tenant['slug'] . '/logout') ?>" method="POST" style="display:none;"></form>
         </div>
 
         <?php if (isset($_GET['incomplete'])): ?>
@@ -685,6 +686,30 @@ $activeTab = $_GET['tab'] ?? (isset($_GET['incomplete']) ? 'registry' : 'overvie
 </div>
 
 <script>
+async function doLogout(btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-icons-round spin" style="font-size:1rem;">loop</span> Saindo...';
+
+    try {
+        const form = document.getElementById('logoutForm');
+        const res  = await fetch(form.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+            credentials: 'same-origin'
+        });
+        const json = await res.json();
+
+        // Clear per-tab session before navigating
+        if (window.SessionGuard) SessionGuard.clearSession();
+
+        window.location.href = json.redirect || '/';
+    } catch (err) {
+        // Fallback: submit the form directly
+        if (window.SessionGuard) SessionGuard.clearSession();
+        document.getElementById('logoutForm').submit();
+    }
+}
+
 function calculateAge() {
     const birthDateInput = document.getElementById('birth_date');
     const ageDisplay = document.getElementById('age_display');

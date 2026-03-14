@@ -701,7 +701,7 @@ class SpecialtyService
             
             if ($force) {
                 // Cascade delete requirements progress and proofs
-                db_query("DELETE FROM assignment_requirements WHERE assignment_id = ?", [$id]);
+                // Note: 'assignment_requirements' was a legacy table and is no longer used.
                 db_query("DELETE FROM user_requirement_progress WHERE assignment_id = ? AND tenant_id = ?", [$id, $tenantId]);
             }
             

@@ -76,7 +76,6 @@ window.NotificationCenter = class NotificationCenter {
                     <span class="material-icons-round nc-title-icon">notifications</span>
                     Notificações
                 </span>
-                <button class="nc-mark-all" type="button">Marcar todas como lidas</button>
             </div>
             <div class="nc-body">
                 <div class="nc-loading" id="nc-loading">
@@ -107,8 +106,6 @@ window.NotificationCenter = class NotificationCenter {
         const container = this._btn.closest('.bell-container') || this._btn.parentElement;
         container.appendChild(this._popover);
 
-        this._popover.querySelector('.nc-mark-all')
-            .addEventListener('click', (e) => { e.stopPropagation(); this._markAllRead(); });
     }
 
     // ── Events ─────────────────────────────────────────────────────────────────
@@ -247,10 +244,7 @@ window.NotificationCenter = class NotificationCenter {
         const id  = el.dataset.id;
         const url = el.dataset.url;
         if (id && !el.dataset.read) this._markAsRead(id, el);
-        if (url) {
-            const isExternal = url.startsWith('http://') || url.startsWith('https://');
-            isExternal ? window.open(url, '_blank', 'noopener,noreferrer') : (window.location.href = url);
-        }
+        if (url) window.location.href = url;
     }
 
     // ── Mark as Read ───────────────────────────────────────────────────────────

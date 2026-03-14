@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'desbravahub-v30';
+const CACHE_VERSION = 'desbravahub-v32';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const DYNAMIC_CACHE = CACHE_VERSION + '-dynamic';
 const OFFLINE_URL = '/offline.html';
@@ -55,11 +55,10 @@ self.addEventListener('fetch', (event) => {
     if (request.method !== 'GET') return;
     if (url.origin !== self.location.origin) return;
 
-    // By-pass Service Worker entirely for logout routes
-    // This prevents the SW from intercepting the logout redirect and mistakenly showing the offline page
-    // We check for /logout at the end of the URL or as a standalone path segment
+    // By-pass Service Worker entirely for logout routes.
+    // Do NOT call event.respondWith() — let the browser handle the navigation and
+    // follow the server redirect natively so the address bar updates correctly.
     if (url.pathname.endsWith('/logout') || url.pathname.includes('/logout/')) {
-        event.respondWith(fetch(request));
         return;
     }
 
@@ -352,7 +351,12 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     if (event.action === 'close') return;
 
-    const targetUrl = event.notification.data?.url || '/';
+    const rawUrl = event.notification.data?.url || '/';
+    // Resolve relative URLs (e.g. "/{slug}/admin/aprovacoes") against the SW origin
+    // so that new URL() never throws for non-absolute strings.
+    const targetUrl = (rawUrl.startsWith('http://') || rawUrl.startsWith('https://'))
+        ? rawUrl
+        : self.location.origin + (rawUrl.startsWith('/') ? rawUrl : '/' + rawUrl);
 
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {

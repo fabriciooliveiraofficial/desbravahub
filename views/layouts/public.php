@@ -440,5 +440,6 @@
             updateThemeIcon(theme);
         });
     </script>
+    <?= embed_media_sdk_scripts() ?>
 </body>
 </html>

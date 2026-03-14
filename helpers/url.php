@@ -172,3 +172,13 @@ function is_https(): bool
 {
     return !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
 }
+/**
+ * Set HTTP Response Code
+ * 
+ * @param int $code HTTP response code
+ * @return int The status code
+ */
+function http_code(int $code): int
+{
+    return http_response_code($code);
+}

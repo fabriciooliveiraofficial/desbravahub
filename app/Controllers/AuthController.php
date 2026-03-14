@@ -105,23 +105,26 @@ class AuthController
 
         // Only clear cache; cookie/storage are handled explicitly to preserve other tabs
         header('Clear-Site-Data: "cache"');
-        
+
         $redirectUrl = $tenant ? base_url($tenant['slug'] . '/login') : base_url();
 
-        // If it's a GET request (standard link click), ALWAYS redirect
-        // This avoids issues where mobile browsers might request JSON headers for standard links
-        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            header('Location: ' . $redirectUrl);
+        // HTMX boost intercepts GET links: respond with HX-Redirect so HTMX does a
+        // full-page navigation instead of a partial swap.
+        if (!empty($_SERVER['HTTP_HX_REQUEST'])) {
+            header('HX-Redirect: ' . $redirectUrl);
+            http_response_code(200);
             exit;
         }
 
-        // Handle both JSON and redirect responses for other methods (e.g. POST from AJAX)
-        if ($this->isJsonRequest()) {
-            $this->jsonSuccess(['message' => 'Logged out successfully']);
-        } else {
-            header('Location: ' . $redirectUrl);
-            exit;
+        // POST from the logout form: return JSON so JS can clear sessionStorage then redirect.
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->jsonSuccess(['redirect' => $redirectUrl]);
+            return;
         }
+
+        // GET fallback (direct URL or non-HTMX browsers)
+        header('Location: ' . $redirectUrl);
+        exit;
     }
 
     /**

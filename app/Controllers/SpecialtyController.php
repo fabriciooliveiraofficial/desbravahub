@@ -257,6 +257,22 @@ class SpecialtyController
         $assigned = 0;
         $errors = [];
 
+        // Determine category name for notification titles (computed once, reused per-user iteration)
+        $isProgram = str_starts_with($specialtyId, 'prog_');
+        $notifCategoryName = null;
+        if ($isProgram) {
+            $programDbId = (int) str_replace('prog_', '', $specialtyId);
+            $catRow = db_fetch_one(
+                "SELECT lc.name FROM learning_programs lp
+                 JOIN learning_categories lc ON lp.category_id = lc.id
+                 WHERE lp.id = ?",
+                [$programDbId]
+            );
+            $notifCategoryName = $catRow['name'] ?? null;
+        } else {
+            $notifCategoryName = $specialty['category_name'] ?? null;
+        }
+
         // Buffer output to prevent PHP notices from breaking JSON
         ob_start();
 
@@ -271,18 +287,20 @@ class SpecialtyController
                     $instructions ?: null
                 );
 
-                // Build deep link URL for notification
-                $isProgram = str_starts_with($specialtyId, 'prog_');
+                // Build deep link URL and send notification
                 $notificationService = new NotificationService();
                 if ($isProgram) {
                     // Use Program ID in the URL — Assignment IDs can collide with Program IDs
                     // in LearningController::show(), causing 403 errors for valid assignments.
                     $programId = (int) str_replace('prog_', '', $specialtyId);
                     $deepLinkUrl = base_url($tenant['slug'] . '/aprendizado/' . $programId);
+                    $progTitle = $notifCategoryName
+                        ? "📚 {$notifCategoryName} — Novo Programa"
+                        : '📚 Novo Programa';
                     $notificationService->send(
                         (int) $userId,
                         'program_assigned',
-                        '📚 Novo Programa',
+                        $progTitle,
                         "Você recebeu o programa '{$specialty['name']}' para completar.",
                         ['data' => ['program_id' => $programId, 'link' => $deepLinkUrl], 'channels' => ['toast', 'push']]
                     );
@@ -294,10 +312,13 @@ class SpecialtyController
                     $deepLinkUrl = $assignmentId
                         ? base_url($tenant['slug'] . '/especialidades/' . $assignmentId)
                         : base_url($tenant['slug'] . '/especialidades');
+                    $specTitle = $notifCategoryName
+                        ? "🎯 {$notifCategoryName} — Nova Especialidade"
+                        : '🎯 Nova Especialidade';
                     $notificationService->send(
                         (int) $userId,
                         'specialty_assigned',
-                        '🎯 Nova Especialidade',
+                        $specTitle,
                         "Você recebeu a especialidade '{$specialty['name']}' para completar.",
                         ['data' => ['specialty_id' => $specialtyId, 'link' => $deepLinkUrl], 'channels' => ['toast', 'push']]
                     );
@@ -329,46 +350,58 @@ class SpecialtyController
         $tenant = App::tenant();
         $assignmentId = $_POST['assignment_id'] ?? '';
 
-        header('Content-Type: application/json');
-
         if (empty($assignmentId)) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'ID inválido']);
+            App::jsonResponse(['success' => false, 'message' => 'ID inválido'], 400);
             return;
         }
 
-        // Check if user has permission to delete active/started assignments
-        $permissionService = new \App\Services\PermissionService();
-        $canForceDelete = $permissionService->can('specialties.delete_active');
+        try {
+            // Check if user has permission to delete active/started assignments
+            $permissionService = new \App\Services\PermissionService();
+            $canForceDelete = $permissionService->can('specialties.delete_active');
 
-        // Capture assignment details before deletion so we can notify the pathfinder
-        $assignment = SpecialtyService::getUnifiedAssignment($assignmentId, $tenant['id']);
-        $assignedUserId = $assignment['user_id'] ?? null;
-        $missionName    = $assignment['specialty']['name'] ?? 'missão';
-
-        $success = SpecialtyService::deleteAssignment($assignmentId, $tenant['id'], $canForceDelete);
-
-        if ($success) {
-            // Notify the pathfinder that their assignment was removed
-            if ($assignedUserId) {
-                $notificationService = new NotificationService();
-                $notificationService->send(
-                    (int) $assignedUserId,
-                    'mission_removed',
-                    '⚠️ Missão Removida',
-                    "A missão '{$missionName}' foi removida e não está mais disponível.",
-                    ['channels' => ['toast', 'push'], 'data' => ['customSound' => true]]
-                );
+            // Capture assignment details before deletion so we can notify the pathfinder
+            $assignment = SpecialtyService::getUnifiedAssignment($assignmentId, $tenant['id']);
+            
+            if (!$assignment) {
+                App::jsonResponse(['success' => false, 'message' => 'Missão não encontrada ou já removida.'], 404);
+                return;
             }
 
-            echo json_encode(['success' => true, 'message' => 'Missão removida com sucesso!']);
-        } else {
-            http_response_code(400);
-            if (!$canForceDelete) {
-                echo json_encode(['success' => false, 'message' => 'Não é possível remover: missão em andamento (falta permissão especial).']);
+            $assignedUserId = $assignment['user_id'] ?? null;
+            $missionName    = $assignment['specialty']['name'] ?? 'missão';
+
+            $success = SpecialtyService::deleteAssignment($assignmentId, $tenant['id'], $canForceDelete);
+
+            if ($success) {
+                // Notify the pathfinder that their assignment was removed
+                // Note: NotificationService might trigger WebPush notices if GMP/BCMath is missing
+                if ($assignedUserId) {
+                    try {
+                        $notificationService = new NotificationService();
+                        $notificationService->send(
+                            (int) $assignedUserId,
+                            'mission_removed',
+                            '⚠️ Missão Removida',
+                            "A missão '{$missionName}' foi removida e não está mais disponível.",
+                            ['channels' => ['toast', 'push'], 'data' => ['customSound' => true]]
+                        );
+                    } catch (\Exception $ne) {
+                        error_log("Push Notification Error (Silenced): " . $ne->getMessage());
+                    }
+                }
+
+                App::jsonResponse(['success' => true, 'message' => 'Missão removida com sucesso!']);
             } else {
-                echo json_encode(['success' => false, 'message' => 'Erro interno ao remover missão.']);
+                if (!$canForceDelete) {
+                    App::jsonResponse(['success' => false, 'message' => 'Não é possível remover: missão em andamento (falta permissão especial).'], 400);
+                } else {
+                    App::jsonResponse(['success' => false, 'message' => 'Erro interno ao remover missão.'], 400);
+                }
             }
+        } catch (\Exception $e) {
+            error_log("SpecialtyController::deleteAssignment Error: " . $e->getMessage());
+            App::jsonResponse(['success' => false, 'message' => 'Erro interno ao processar a solicitação: ' . $e->getMessage()], 500);
         }
     }
 
@@ -1391,14 +1424,14 @@ class SpecialtyController
                 ]);
             }
 
-            $this->json([
+            $this->jsonResponse([
                 'success' => true,
                 'message' => 'Requisitos salvos com sucesso!',
                 'count' => count($requirements)
             ]);
 
         } catch (\Exception $e) {
-            $this->json(['error' => 'Erro ao salvar: ' . $e->getMessage()], 500);
+            $this->jsonResponse(['error' => 'Erro ao salvar: ' . $e->getMessage()], 500);
         }
     }
 
@@ -1445,7 +1478,7 @@ class SpecialtyController
         $tenant = App::tenant();
 
         try {
-            if (str_starts_with($id, 'prog_')) {
+            if (strncmp($id, 'prog_', 5) === 0) {
                 // Delete Learning Program
                 $progId = (int) substr($id, 5);
                 
@@ -1518,10 +1551,13 @@ class SpecialtyController
         $user = App::user();
         $role = strtolower($user['role_name'] ?? '');
 
-        if (!in_array($role, ['admin', 'director', 'associate_director', 'instructor', 'counselor'])) {
+        // Expanded roles to include leader and chaplain
+        if (!in_array($role, ['admin', 'director', 'associate_director', 'instructor', 'counselor', 'leader', 'chaplain'])) {
             error_log("SpecialtyController::requireLeadership - Access Denied: User " . ($user['id'] ?? 'unknown') . " with role $role tried to access leadership specialty features.");
 
             $isHtmx = !empty($_SERVER['HTTP_HX_REQUEST']);
+            $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) 
+                   || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
 
             if ($isHtmx) {
                 // Tell HTMX to navigate the full window — never inject a login page into a <tbody>
@@ -1529,9 +1565,15 @@ class SpecialtyController
                 $redirect = base_url(($tenant['slug'] ?? '') . '/login');
                 http_response_code(403);
                 header('HX-Redirect: ' . $redirect);
-            } else {
+            } elseif ($isAjax) {
                 http_response_code(403);
-                echo 'Acesso negado';
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Acesso negado: Requer privilégios de liderança.']);
+            } else {
+                // Redirect to login for plain browser navigations — avoids blank white "Acesso negado" page.
+                // This can occur when cookie/token mismatch causes the server to resolve the wrong user.
+                $tenant = App::tenant();
+                header('Location: ' . base_url(($tenant['slug'] ?? '') . '/login'));
             }
             exit;
         }
@@ -1548,7 +1590,7 @@ class SpecialtyController
         $query = trim($_GET['q'] ?? '');
 
         if (strlen($query) < 2) {
-            $this->json(['results' => []]);
+            $this->jsonResponse(['results' => []]);
             return;
         }
 
@@ -1563,13 +1605,16 @@ class SpecialtyController
             'badge_icon' => $s['badge_icon'] ?? '📘'
         ], $results);
 
-        $this->json(['results' => $formatted]);
+        $this->jsonResponse(['results' => $formatted]);
     }
 
-    private function json(array $data, int $code = 200): void
+    /**
+     * Clean JSON Response
+     * 
+     * Silences notices and clears buffer to ensure pure JSON delivery.
+     */
+    private function jsonResponse(array $data, int $httpCode = 200): void
     {
-        http_response_code($code);
-        header('Content-Type: application/json');
-        echo json_encode($data);
+        \App\Core\App::jsonResponse($data, $httpCode);
     }
 }
