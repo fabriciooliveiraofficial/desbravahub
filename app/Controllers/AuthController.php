@@ -103,10 +103,17 @@ class AuthController
             $this->authService->clearAuthCookie('/');
         }
 
-        // Only clear cache; cookie/storage are handled explicitly to preserve other tabs
-        header('Clear-Site-Data: "cache"');
-
         $redirectUrl = $tenant ? base_url($tenant['slug'] . '/login') : base_url();
+
+        // POST from JS fetch: return JSON redirect URL.
+        // Do NOT send Clear-Site-Data here — the header aborts fetch() response processing in some browsers.
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->jsonSuccess(['redirect' => $redirectUrl]);
+            return;
+        }
+
+        // For full-page navigations: clear HTTP cache on the way out.
+        header('Clear-Site-Data: "cache"');
 
         // HTMX boost intercepts GET links: respond with HX-Redirect so HTMX does a
         // full-page navigation instead of a partial swap.
@@ -114,12 +121,6 @@ class AuthController
             header('HX-Redirect: ' . $redirectUrl);
             http_response_code(200);
             exit;
-        }
-
-        // POST from the logout form: return JSON so JS can clear sessionStorage then redirect.
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $this->jsonSuccess(['redirect' => $redirectUrl]);
-            return;
         }
 
         // GET fallback (direct URL or non-HTMX browsers)
