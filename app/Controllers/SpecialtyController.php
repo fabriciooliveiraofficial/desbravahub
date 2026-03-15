@@ -1617,4 +1617,9 @@ class SpecialtyController
     {
         \App\Core\App::jsonResponse($data, $httpCode);
     }
+
+    private function json(array $data, int $httpCode = 200): void
+    {
+        \App\Core\App::jsonResponse($data, $httpCode);
+    }
 }

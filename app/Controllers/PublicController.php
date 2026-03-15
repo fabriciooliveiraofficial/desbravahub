@@ -427,27 +427,28 @@ class PublicController
                 cm.id,
                 cm.source_type,
                 cm.source_id,
-                COALESCE(ps.title, a.title, 'Destaque') as title,
+                cm.thumbnail_attempted,
+                -- Title: prefer stored caption, fallback to JOIN, fallback to 'Destaque'
+                COALESCE(cm.caption, ps.title, a.title, 'Destaque') as title,
                 'url' as media_type,
                 cm.media_url as media_content,
                 NULL as raw_response_text,
-                cm.thumbnail_url as thumbnail_url,
-                COALESCE(u_d.name,    u_s.name,    u_a.name)       as user_name,
-                COALESCE(u_d.avatar_url, u_s.avatar_url, u_a.avatar_url) as avatar_url,
+                cm.thumbnail_url,
+                -- User info: prefer stored columns (survive source deletions), fallback to JOIN
+                COALESCE(cm.display_name,   u_s.name,       u_a.name)       as user_name,
+                COALESCE(cm.display_avatar, u_s.avatar_url, u_a.avatar_url) as avatar_url,
                 cm.created_at as date
             FROM curated_media cm
-            -- Path 1: direct user_id stored on the row (populated by backfill + new inserts)
-            LEFT JOIN users u_d ON u_d.id = cm.user_id
-            -- Path 2: step response chain (fallback for rows without user_id)
-            LEFT JOIN user_step_responses usr ON cm.source_type = 'step' AND cm.source_id = usr.id
-            LEFT JOIN program_steps ps ON usr.step_id = ps.id
+            -- Step fallback (only when display_name is not stored yet)
+            LEFT JOIN user_step_responses usr ON cm.display_name IS NULL AND cm.source_type = 'step' AND cm.source_id = usr.id
+            LEFT JOIN program_steps ps        ON usr.step_id = ps.id
             LEFT JOIN user_program_progress upp ON usr.progress_id = upp.id
-            LEFT JOIN users u_s ON u_s.id = upp.user_id
-            -- Path 3: activity proof chain (fallback for rows without user_id)
-            LEFT JOIN activity_proofs ap ON cm.source_type = 'activity' AND cm.source_id = ap.id
-            LEFT JOIN user_activities ua ON ap.user_activity_id = ua.id
-            LEFT JOIN activities a ON ua.activity_id = a.id
-            LEFT JOIN users u_a ON u_a.id = ua.user_id
+            LEFT JOIN users u_s               ON u_s.id = upp.user_id
+            -- Activity fallback (only when display_name is not stored yet)
+            LEFT JOIN activity_proofs ap      ON cm.display_name IS NULL AND cm.source_type = 'activity' AND cm.source_id = ap.id
+            LEFT JOIN user_activities ua      ON ap.user_activity_id = ua.id
+            LEFT JOIN activities a            ON ua.activity_id = a.id
+            LEFT JOIN users u_a               ON u_a.id = ua.user_id
             WHERE cm.tenant_id = ?
             ORDER BY date DESC
             LIMIT ? OFFSET ?
@@ -486,12 +487,21 @@ class PublicController
                 continue;
             }
 
-            if (empty($media['thumbnail_url'])) {
+            // Only attempt thumbnail fetch if: no thumbnail yet AND not already attempted before
+            if (empty($media['thumbnail_url']) && empty($media['thumbnail_attempted'])) {
                 $fetched = fetch_media_thumbnail($content);
                 if ($fetched) {
                     $media['thumbnail_url'] = $fetched;
-                    // Persist so future loads skip the API call
-                    db_query("UPDATE curated_media SET thumbnail_url = ? WHERE id = ?", [$fetched, $media['id']]);
+                    db_query(
+                        "UPDATE curated_media SET thumbnail_url = ?, thumbnail_attempted = 1 WHERE id = ?",
+                        [$fetched, $media['id']]
+                    );
+                } else {
+                    // Mark as attempted so we don't retry on every page load
+                    db_query(
+                        "UPDATE curated_media SET thumbnail_attempted = 1 WHERE id = ?",
+                        [$media['id']]
+                    );
                 }
             }
 

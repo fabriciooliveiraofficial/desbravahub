@@ -213,19 +213,19 @@ class ProofService
             \App\Services\CurationService::ensureTable();
             $exists = db_fetch_one("SELECT id FROM curated_media WHERE source_type = 'activity' AND source_id = ? AND media_url = ?", [$proofId, $proof['content']]);
             if (!$exists) {
-                $proofUserId = (int)db_fetch_column(
-                    "SELECT ua.user_id FROM activity_proofs ap
-                     JOIN user_activities ua ON ap.user_activity_id = ua.id
-                     WHERE ap.id = ?", [$proofId]
-                );
+                $displayData = \App\Services\CurationService::resolveDisplayData('activity', $proofId);
                 db_insert('curated_media', [
-                    'tenant_id' => $tenantId,
-                    'source_type' => 'activity',
-                    'source_id' => $proofId,
-                    'media_url' => $proof['content'],
-                    'thumbnail_url' => $thumbnailUrl,
-                    'user_id' => $proofUserId ?: null,
-                    'created_at' => date('Y-m-d H:i:s')
+                    'tenant_id'      => $tenantId,
+                    'source_type'    => 'activity',
+                    'source_id'      => $proofId,
+                    'media_url'      => $proof['content'],
+                    'thumbnail_url'  => $thumbnailUrl,
+                    'thumbnail_attempted' => $thumbnailUrl ? 1 : 0,
+                    'user_id'        => $displayData['user_id'],
+                    'display_name'   => $displayData['display_name'],
+                    'display_avatar' => $displayData['display_avatar'],
+                    'caption'        => $displayData['caption'],
+                    'created_at'     => date('Y-m-d H:i:s')
                 ]);
             }
         } else {
