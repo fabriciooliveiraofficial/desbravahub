@@ -96,6 +96,7 @@ $router->get('/c/{club_slug}/media/{source_type}/{source_id}/comments', [PublicC
 $router->post('/c/{club_slug}/media/{source_type}/{source_id}/comment', [PublicController::class, 'postComment']);
 $router->post('/c/{club_slug}/media/{source_type}/{source_id}/view', [PublicController::class, 'trackView']);
 $router->post('/c/{club_slug}/lead', [PublicController::class, 'postLead']);
+$router->post('/c/{club_slug}/react', [PublicController::class, 'react']);
 
 // Support Ticket Management (merged into Super Admin)
 $router->get('/super-admin/suporte', [SuperAdminController::class, 'supportDashboard'], [SuperAdminMiddleware::class]);

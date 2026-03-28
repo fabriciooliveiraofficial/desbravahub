@@ -256,35 +256,107 @@ public function toggleUserStatus(array $params): void
 }
 
 /**
- * Delete user (Soft delete)
+ * Delete user — hard delete with full cascade
  */
-public function deleteUser(array $params): void
-{
-    $this->requirePermission('users.manage');
+    public function deleteUser(array $params): void
+    {
+        $this->requirePermission('users.manage');
 
-    $userId = (int) $params['id'];
-    $tenant = App::tenant();
-    $currentUser = auth();
+        $userId = (int) $params['id'];
+        $tenant = App::tenant();
+        $currentUser = auth();
 
-    if ($userId === $currentUser['id']) {
-        $this->jsonError('Você não pode excluir sua própria conta');
-        return;
+        if ($userId === $currentUser['id']) {
+            $this->jsonError('Você não pode excluir sua própria conta');
+            return;
+        }
+
+        // Verify user belongs to tenant
+        $user = db_fetch_one(
+            "SELECT id FROM users WHERE id = ? AND tenant_id = ?",
+            [$userId, $tenant['id']]
+        );
+
+        if (!$user) {
+            $this->jsonError('Usuário não encontrado', 404);
+            return;
+        }
+
+        try {
+            db_begin();
+
+            // ── STEP 0: Nullify reverse-reference FKs ──────────────────────────────
+            // When the deleted user was an ACTOR on OTHER users' data (as leader/admin/referrer),
+            // nullify those references so the final DELETE FROM users doesn't hit FK violations.
+            try { db_query("UPDATE specialty_assignments SET assigned_by = NULL WHERE assigned_by = ?", [$userId]); } catch (\Exception $e) {}
+            try { db_query("UPDATE user_step_responses SET reviewed_by = NULL WHERE reviewed_by = ?", [$userId]); } catch (\Exception $e) {}
+            try { db_query("UPDATE activity_proofs SET reviewed_by = NULL, reviewer_id = NULL WHERE reviewed_by = ? OR reviewer_id = ?", [$userId, $userId]); } catch (\Exception $e) {}
+            // Self-referential FK: other users referred by this user
+            try { db_query("UPDATE users SET referred_by_id = NULL WHERE referred_by_id = ?", [$userId]); } catch (\Exception $e) {}
+            // Referral invites: this user as referrer or converted user
+            try { db_query("UPDATE referral_invites SET referrer_id = NULL WHERE referrer_id = ?", [$userId]); } catch (\Exception $e) {}
+            try { db_query("UPDATE referral_invites SET converted_user_id = NULL WHERE converted_user_id = ?", [$userId]); } catch (\Exception $e) {}
+            // Invitation tables: this user as inviter
+            try { db_query("UPDATE leadership_invitations SET invited_by = NULL WHERE invited_by = ?", [$userId]); } catch (\Exception $e) {}
+            try { db_query("UPDATE member_invitations SET invited_by = NULL WHERE invited_by = ?", [$userId]); } catch (\Exception $e) {}
+
+            // ── STEP 1: DELETE INDIRECT DEPENDENCIES (cascade-style) ───────────────
+
+            // Activity Proofs owned by this user (via user_activities)
+            db_query("DELETE FROM activity_proofs WHERE user_activity_id IN (SELECT id FROM user_activities WHERE user_id = ?)", [$userId]);
+
+            // Curated Media uploaded by or derived from this user's step responses
+            db_query("DELETE FROM curated_media WHERE (source_type = 'step' AND source_id IN (SELECT id FROM user_step_responses WHERE progress_id IN (SELECT id FROM user_program_progress WHERE user_id = ?))) OR user_id = ?", [$userId, $userId]);
+
+            // Approval Logs — use correct column name: performed_by (not user_id)
+            db_query("DELETE FROM approval_logs WHERE performed_by = ?", [$userId]);
+            db_query("DELETE FROM approval_logs WHERE response_id IN (SELECT id FROM user_step_responses WHERE progress_id IN (SELECT id FROM user_program_progress WHERE user_id = ?))", [$userId]);
+
+            // User Step Responses (via user_program_progress)
+            db_query("DELETE FROM user_step_responses WHERE progress_id IN (SELECT id FROM user_program_progress WHERE user_id = ?)", [$userId]);
+
+            // User Requirement Progress (via specialty_assignments OR user_program_progress)
+            db_query("DELETE FROM user_requirement_progress WHERE assignment_id IN (SELECT id FROM specialty_assignments WHERE user_id = ?)", [$userId]);
+            db_query("DELETE FROM user_requirement_progress WHERE assignment_id IN (SELECT id FROM user_program_progress WHERE user_id = ?)", [$userId]);
+
+            // ── STEP 2: DELETE DIRECT DEPENDENCIES (user_id column) ────────────────
+            $directTables = [
+                'user_achievements',
+                'user_activities',
+                'user_inventory',
+                'user_notification_preferences',
+                'user_profiles',
+                'user_program_progress',
+                'user_quiz_attempts',
+                'user_requirement_progress',
+                'user_sessions',
+                'user_step_responses',
+                'user_xp_log',
+                'specialty_assignments',
+                'notifications',
+                'issued_certificates',
+            ];
+
+            foreach ($directTables as $table) {
+                try {
+                    db_query("DELETE FROM `$table` WHERE user_id = ?", [$userId]);
+                } catch (\Exception $e) {
+                    // Silently skip if table doesn't have user_id column
+                }
+            }
+
+            // ── STEP 3: PERMANENTLY DELETE THE USER ────────────────────────────────
+            db_query("DELETE FROM users WHERE id = ? AND tenant_id = ?", [$userId, $tenant['id']]);
+
+            db_commit();
+            $this->json(['success' => true]);
+
+        } catch (\Exception $e) {
+            db_rollback();
+            error_log("Super-Delete failure for user $userId: " . $e->getMessage());
+            $this->jsonError('Erro crítico ao realizar exclusão total: ' . $e->getMessage());
+        }
     }
-
-    // Verify user belongs to tenant
-    $user = db_fetch_one(
-        "SELECT id FROM users WHERE id = ? AND tenant_id = ?",
-        [$userId, $tenant['id']]
-    );
-
-    if (!$user) {
-        $this->jsonError('Usuário não encontrado', 404);
-        return;
-    }
-
-    db_update('users', ['deleted_at' => date('Y-m-d H:i:s')], 'id = ?', [$userId]);
-    $this->json(['success' => true]);
-}
 
     /**
      * Proofs pending review

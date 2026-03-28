@@ -232,9 +232,9 @@ $pageIcon = 'add_circle';
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Categoria</label>
-                            <select name="category_id" class="form-control">
-                                <option value="">Sem categoria</option>
+                            <label>Categoria *</label>
+                            <select name="category_id" class="form-control" required>
+                                <option value="" disabled selected>Selecione uma categoria...</option>
                                 <?php foreach ($categories as $cat): ?>
                                     <option value="<?= $cat['id'] ?>" style="color: <?= $cat['color'] ?>;">
                                         <?php if (str_starts_with($cat['icon'] ?? '', 'fa-')): ?>

@@ -128,9 +128,9 @@ class InvitationController
             $errors[] = 'Cargo inválido';
         }
 
-        // Check if user already exists
+        // Check if user already exists (ignore soft-deleted accounts)
         $existingUser = db_fetch_one(
-            "SELECT id FROM users WHERE email = ? AND tenant_id = ?",
+            "SELECT id FROM users WHERE email = ? AND tenant_id = ? AND deleted_at IS NULL",
             [$email, $tenant['id']]
         );
 
@@ -564,9 +564,9 @@ class InvitationController
             $errors[] = 'Função inválida';
         }
 
-        // Check user existence
+        // Check user existence (ignore soft-deleted accounts)
         $existingUser = db_fetch_one(
-            "SELECT id FROM users WHERE email = ? AND tenant_id = ?",
+            "SELECT id FROM users WHERE email = ? AND tenant_id = ? AND deleted_at IS NULL",
             [$email, $tenant['id']]
         );
 

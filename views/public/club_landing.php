@@ -1101,8 +1101,11 @@ body { overflow-x: hidden; }
         margin: 0;
         overflow: hidden;
         position: relative;
+        /* align-items:stretch garante que .viewer-panel ocupe largura total */
+        align-items: stretch;
     }
-    /* Vídeo ocupa toda a altura disponível */
+    /* Vídeo ocupa apenas a área acima do painel (flex:1 + min-height:0).
+       O iframe NUNCA se estende para a área do painel. */
     .viewer-media {
         flex: 1;
         min-height: 0;
@@ -1112,6 +1115,8 @@ body { overflow-x: hidden; }
         align-items: stretch;
         justify-content: center;
         overflow: hidden;
+        /* Isola o contexto de empilhamento: iframe fica contido aqui */
+        isolation: isolate;
     }
     /* Landscape (YouTube): mantém proporção 16:9, centraliza verticalmente */
     .viewer-media .embed-wrap.landscape {
@@ -1152,19 +1157,19 @@ body { overflow-x: hidden; }
         align-items: flex-start;
         justify-content: center;
     }
-    /* Painel: barra de ações fixada na parte inferior */
+    /* Painel: item flex abaixo do vídeo — SEM position:absolute.
+       O iframe ocupa apenas a área de .viewer-media (acima); a área do painel
+       não tem iframe por baixo, então toques nos botões nunca são capturados.
+       flex: 0 0 auto cancela o flex-grow:1 herdado do CSS base (que causava
+       o painel a ocupar metade da tela). */
     .viewer-panel {
-        position: absolute;
-        bottom: 0; left: 0; right: 0;
-        width: 100%; height: auto;
+        position: relative;
+        flex: 0 0 auto;
+        width: 100%;
         border-left: none;
-        border-top: 1px solid rgba(0, 204, 255, 0.12);
-        background: rgba(7, 9, 15, 0.88);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        z-index: 20;
+        border-top: 1px solid rgba(0, 204, 255, 0.2);
+        background: #0a0e18;
         flex-direction: column;
-        flex-shrink: 0;
     }
     /* No modo barra: ocultar cabeçalho, lista de comentários e form */
     .viewer-panel-header { display: none; }
@@ -1199,30 +1204,47 @@ body { overflow-x: hidden; }
     .viewer-panel-back { display: none; }
 }
 
-/* TikTok unmute overlay */
+/* TikTok — overlay cobre 100% do iframe, bloqueia qualquer toque no conteúdo do TikTok
+   (impede redirect ao app) e fornece o gesto de usuário necessário para ativar o áudio */
 .tt-wrap { position: relative; }
-.tt-unmute-btn {
+.tt-sound-overlay {
     position: absolute;
-    bottom: 72px; /* above viewer-actions bar */
-    left: 50%;
-    transform: translateX(-50%);
+    inset: 0;
+    z-index: 10;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    background: rgba(0,0,0,0.75);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 999px;
-    color: #fff;
-    font-size: 0.85rem;
-    font-weight: 700;
+    justify-content: center;
     cursor: pointer;
-    z-index: 10;
-    white-space: nowrap;
     touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    /* fundo levemente escuro para deixar o vídeo visível por baixo */
+    background: rgba(0, 0, 0, 0.28);
 }
-.tt-unmute-btn .material-icons-round { font-size: 1.1rem; }
+.tt-sound-overlay__pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 22px 36px;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 24px;
+    color: #fff;
+    pointer-events: none; /* o clique vai para o .tt-sound-overlay pai */
+    text-align: center;
+}
+.tt-sound-overlay__pill .material-icons-round {
+    font-size: 2.8rem;
+    color: #fff;
+}
+.tt-sound-overlay__pill span:last-child {
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+}
 
 /* Embed containers */
 .embed-wrap { position: relative; border-radius: 16px; overflow: hidden; }
@@ -1330,6 +1352,589 @@ body { overflow-x: hidden; }
     font-size: 5rem;
     animation: heartPop 0.7s ease forwards;
 }
+
+/* ── Story Bubbles ──────────────────────────────────────────────────────────── */
+.story-bar {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding: 4px 2px 14px;
+    margin-bottom: 16px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.story-bar::-webkit-scrollbar { display: none; }
+.story-bubble {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.18s;
+    -webkit-tap-highlight-color: transparent;
+}
+.story-bubble:hover { transform: scale(1.09); }
+.story-bubble.active .story-ring {
+    background: linear-gradient(135deg, var(--accent-primary) 0%, #f43f5e 50%, #f97316 100%);
+}
+.story-ring {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    padding: 2.5px;
+    background: rgba(255,255,255,0.14);
+    transition: background 0.3s;
+}
+.story-ring img,
+.story-ring .story-initials {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--bg-primary, #0a0a0a);
+    display: block;
+}
+.story-initials {
+    background: linear-gradient(135deg, var(--accent-primary), #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: white;
+    text-transform: uppercase;
+    border: 2px solid var(--bg-primary, #0a0a0a);
+}
+.story-name {
+    font-size: 0.67rem;
+    color: rgba(255,255,255,0.65);
+    max-width: 62px;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.story-bubble-all .story-ring {
+    background: linear-gradient(135deg, var(--accent-primary), #8b5cf6);
+}
+
+/* ── Story Bubble Count Badge ───────────────────────────────────────────────── */
+.story-bubble-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: var(--accent-primary, #00ccff);
+    color: #000;
+    font-size: 0.6rem;
+    font-weight: 800;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    line-height: 1;
+    border: 1px solid rgba(7,9,15,0.8);
+    pointer-events: none;
+}
+
+/* ── Type Filter Bar ────────────────────────────────────────────────────────── */
+.type-filter-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+.type-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 13px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.6);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+}
+.type-filter-btn:hover { border-color: rgba(0,204,255,0.4); color: #e8f4ff; }
+.type-filter-btn.active {
+    background: rgba(0,204,255,0.15);
+    border-color: rgba(0,204,255,0.55);
+    color: #00ccff;
+}
+.type-filter-btn .material-icons-round { font-size: 14px; }
+.type-filter-btn-count {
+    background: rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 0 5px;
+    font-size: 0.7rem;
+    margin-left: 2px;
+}
+.type-filter-btn.active .type-filter-btn-count {
+    background: rgba(0,204,255,0.25);
+}
+
+/* ── Viewer Author Strip ─────────────────────────────────────────────────────── */
+.viewer-author-strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-bottom: 1px solid rgba(0,204,255,0.08);
+    background: rgba(0,0,0,0.2);
+    flex-shrink: 0;
+}
+.viewer-author-strip img {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(0,204,255,0.3);
+    flex-shrink: 0;
+}
+.viewer-author-strip-initials {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(0,204,255,0.15);
+    border: 1px solid rgba(0,204,255,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #00ccff;
+    flex-shrink: 0;
+}
+.viewer-author-strip-info { flex: 1; min-width: 0; }
+.viewer-author-strip-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #e8f4ff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.viewer-author-strip-posts {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.4);
+    margin-top: 1px;
+}
+
+/* ── Reaction Picker ─────────────────────────────────────────────────────────── */
+.reaction-bar {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.reaction-summary {
+    display: flex;
+    gap: 2px;
+    font-size: 0.78rem;
+    align-items: center;
+    color: rgba(255,255,255,0.55);
+}
+.reaction-summary span { cursor: default; }
+
+.reaction-picker-wrap { position: relative; display: inline-flex; }
+.reaction-picker {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) scale(0.85);
+    display: flex;
+    gap: 4px;
+    background: #1a1f2e;
+    border: 1px solid rgba(0,204,255,0.2);
+    border-radius: 30px;
+    padding: 6px 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.18s cubic-bezier(0.175,0.885,0.32,1.275);
+    z-index: 50;
+    white-space: nowrap;
+}
+.reaction-picker.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) scale(1);
+}
+.reaction-btn {
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 2px 4px;
+    border-radius: 8px;
+    transition: transform 0.12s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.reaction-btn:hover { transform: scale(1.35); }
+.reaction-btn.my-reaction {
+    background: rgba(0,204,255,0.15);
+    transform: scale(1.15);
+}
+
+/* ── Event Albums bar (23snaps style) ────────────────────────────────────────── */
+.event-albums-bar {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 4px 0 16px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.event-albums-bar::-webkit-scrollbar { display: none; }
+.event-album-card {
+    flex-shrink: 0;
+    width: 140px;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.08);
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative;
+    background: #0d1017;
+}
+.event-album-card:hover, .event-album-card.active {
+    border-color: rgba(0,204,255,0.6);
+    transform: translateY(-3px);
+}
+.event-album-thumb {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+}
+.event-album-thumb-placeholder {
+    width: 100%;
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #0d1020, #0a1a14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.event-album-thumb-placeholder .material-icons-round {
+    font-size: 2rem;
+    color: rgba(0,204,255,0.3);
+}
+.event-album-info {
+    padding: 8px 10px 10px;
+}
+.event-album-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #e8f4ff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.event-album-count {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.4);
+    margin-top: 2px;
+}
+
+/* ── TikTok Overlay ──────────────────────────────────────────────────────────── */
+#tikTokOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background: #000;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    overscroll-behavior: contain;
+}
+#tikTokOverlay.open { display: block; }
+.tt-card {
+    height: 100svh;
+    width: 100vw;
+    scroll-snap-align: start;
+    position: relative;
+    overflow: hidden;
+    background: #000;
+    cursor: pointer;
+}
+.tt-card__bg {
+    position: absolute;
+    inset: 0;
+    background: #0d1017;
+}
+.tt-card__thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0.85;
+}
+.tt-card__gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 55%);
+    pointer-events: none;
+}
+.tt-card__info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 72px;
+    padding: 20px 16px 48px;
+}
+.tt-card__title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.tt-card__author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+}
+.tt-card__author img {
+    width: 24px; height: 24px;
+    border-radius: 50%; object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+.tt-card__side {
+    position: absolute;
+    right: 12px;
+    bottom: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+.tt-side-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.65rem;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+.tt-side-btn .material-icons-round {
+    font-size: 28px;
+    filter: drop-shadow(0 1px 4px rgba(0,0,0,0.6));
+}
+.tt-side-btn.liked .material-icons-round { color: #f43f5e; }
+#tikTokClose {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 301;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+}
+#tikTokOverlay.open ~ #tikTokClose,
+#tikTokClose.open { display: flex; }
+.tt-type-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 8px;
+    padding: 3px 8px;
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    backdrop-filter: blur(4px);
+}
+.tt-type-badge .material-icons-round { font-size: 13px; }
+
+/* ── PWA Install Banner ───────────────────────────────────────────────────────── */
+#pwaInstallBanner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120px);
+    background: #1a1f2e;
+    border: 1px solid rgba(0,204,255,0.3);
+    border-radius: 20px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    z-index: 400;
+    transition: transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+    max-width: 340px;
+    width: calc(100vw - 40px);
+}
+#pwaInstallBanner.visible { transform: translateX(-50%) translateY(0); }
+#pwaInstallBanner .material-icons-round { color: #00ccff; font-size: 28px; flex-shrink: 0; }
+.pwa-banner-text { flex: 1; min-width: 0; }
+.pwa-banner-text strong { display: block; font-size: 0.9rem; color: #e8f4ff; }
+.pwa-banner-text span { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+.pwa-install-btn {
+    background: #00ccff;
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    padding: 7px 14px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.pwa-dismiss-btn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.4);
+    cursor: pointer;
+    padding: 4px;
+    flex-shrink: 0;
+}
+
+/* ── Feed Mode Toggle ───────────────────────────────────────────────────────── */
+.feed-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.view-toggle-group {
+    display: flex;
+    gap: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 20px;
+    padding: 3px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.view-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 16px;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.55);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.view-toggle-btn.active {
+    background: var(--accent-primary);
+    color: #000;
+}
+.view-toggle-btn .material-icons-round { font-size: 16px; }
+
+/* ── Feed Mode — vertical card list ────────────────────────────────────────── */
+.media-grid.feed-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.media-grid.feed-mode .media-card {
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+    height: auto;
+    min-height: 0;
+    border-radius: 20px;
+    scroll-snap-align: start;
+}
+.media-grid.feed-mode .media-card__image-container {
+    flex: 0 0 160px;
+    width: 160px;
+    height: auto;
+    aspect-ratio: 9/16;
+    border-radius: 16px 0 0 16px;
+    overflow: hidden;
+    cursor: pointer;
+}
+.media-grid.feed-mode .media-card__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 14px;
+    min-width: 0;
+}
+
+/* ── Viewer Navigation Arrows ───────────────────────────────────────────────── */
+/* Nav row — lives inside .viewer-panel, never overlaps the iframe */
+.viewer-nav-row {
+    display: none; /* shown via .visible class when viewer opens */
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 14px;
+    border-bottom: 1px solid rgba(0,204,255,0.1);
+    background: #080c12;
+    flex-shrink: 0;
+    gap: 8px;
+}
+.viewer-nav-row.visible { display: flex; }
+.viewer-nav-counter {
+    font-size: 0.78rem;
+    color: rgba(232,244,255,0.4);
+    font-variant-numeric: tabular-nums;
+    flex: 1;
+    text-align: center;
+    letter-spacing: 0.03em;
+}
+.viewer-nav-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(0,204,255,0.1);
+    border: 1px solid rgba(0,204,255,0.28);
+    color: #e8f4ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s, border-color 0.2s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+.viewer-nav-btn:hover  { background: rgba(0,204,255,0.22); border-color: rgba(0,204,255,0.6); }
+.viewer-nav-btn:disabled { opacity: 0.2; pointer-events: none; }
+.viewer-nav-btn .material-icons-round { font-size: 20px; }
+
+/* ── Author filter — hidden cards ───────────────────────────────────────────── */
+.media-card.filtered-out {
+    display: none !important;
+}
 </style>
 
 <?php
@@ -1388,6 +1993,18 @@ function mediaBadgeIcon(array $media): string {
         'Foto'    => 'image',
     ];
     return $icons[$badge] ?? 'perm_media';
+}
+
+function getMediaTypeKey(array $media): string {
+    $url = trim((string)($media['media_content'] ?? ''));
+    if (preg_match('/youtube\.com\/shorts/i', $url)) return 'youtube';
+    if (preg_match('/youtube\.com|youtu\.be/i', $url)) return 'youtube';
+    if (preg_match('/tiktok\.com/i', $url)) return 'tiktok';
+    if (preg_match('/instagram\.com/i', $url)) return 'reels';
+    if (preg_match('/\.(mp4|webm|mov)/i', $url)) return 'video';
+    if (preg_match('/\.(jpg|jpeg|png|webp|gif)/i', $url)) return 'photo';
+    if (!empty($media['thumbnail_url'])) return 'photo';
+    return 'other';
 }
 ?>
 
@@ -1625,13 +2242,156 @@ $showHero = !empty($heroHeadline);
     </aside>
 
     <?php /* ── CENTER FEED ──────────────────────────────────────────────────── */ ?>
+    <?php
+    // Build unique author list for story bubbles (from curated media already loaded)
+    $_storyAuthors = [];
+    $_storyNames   = [];
+    $_authorCounts = array_count_values(array_filter(array_map(
+        fn($m) => trim($m['user_name'] ?? ''), $curatedMedia
+    )));
+    foreach ($curatedMedia as $_sm) {
+        $_sn = trim($_sm['user_name'] ?? '');
+        if (!$_sn || in_array($_sn, $_storyNames)) continue;
+        $_storyNames[]   = $_sn;
+        $_storyAuthors[] = ['name' => $_sn, 'avatar' => trim($_sm['avatar_url'] ?? ''), 'count' => (int)($_authorCounts[$_sn] ?? 0)];
+        if (count($_storyAuthors) >= 14) break;
+    }
+    ?>
     <main class="hub-feed">
+
+        <?php if (count($_storyAuthors) > 1): ?>
+        <div class="story-bar" id="storyBar" aria-label="Filtrar por membro">
+            <?php /* "Todos" bubble */ ?>
+            <button class="story-bubble story-bubble-all active" onclick="filterByAuthor(null, this)" aria-label="Todos os membros">
+                <div class="story-ring">
+                    <div class="story-initials" style="font-size:1.5rem;">★</div>
+                </div>
+                <span class="story-name">Todos</span>
+            </button>
+            <?php foreach ($_storyAuthors as $_sa): ?>
+            <button class="story-bubble"
+                    onclick="filterByAuthor(<?= json_encode($_sa['name']) ?>, this)"
+                    aria-label="<?= htmlspecialchars($_sa['name']) ?>">
+                <div class="story-ring" style="position:relative;">
+                    <?php if (!empty($_sa['avatar'])): ?>
+                    <img src="<?= htmlspecialchars($_sa['avatar']) ?>" alt="<?= htmlspecialchars($_sa['name']) ?>" loading="lazy">
+                    <?php else: ?>
+                    <div class="story-initials"><?= htmlspecialchars(mb_substr($_sa['name'], 0, 1)) ?></div>
+                    <?php endif; ?>
+                    <?php if ($_sa['count'] > 1): ?>
+                    <span class="story-bubble-badge"><?= $_sa['count'] ?></span>
+                    <?php endif; ?>
+                </div>
+                <span class="story-name"><?= htmlspecialchars(explode(' ', $_sa['name'])[0]) ?></span>
+            </button>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+
         <div class="feed-toolbar">
             <h2 class="feed-title">
                 <span class="material-icons-round">auto_awesome</span>
                 Galeria do Clube
             </h2>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <div class="view-toggle-group" role="group" aria-label="Ordenar">
+                    <button class="view-toggle-btn active" id="btnSortRecent" onclick="sortCards('recent', this)" title="Mais recentes">
+                        <span class="material-icons-round">schedule</span>
+                    </button>
+                    <button class="view-toggle-btn" id="btnSortLikes" onclick="sortCards('likes', this)" title="Mais curtidos">
+                        <span class="material-icons-round">favorite_border</span>
+                    </button>
+                    <button class="view-toggle-btn" id="btnSortViews" onclick="sortCards('views', this)" title="Mais vistos">
+                        <span class="material-icons-round">visibility</span>
+                    </button>
+                </div>
+                <div class="view-toggle-group" role="group" aria-label="Modo de visualização">
+                    <button class="view-toggle-btn active" id="btnGridMode" onclick="setViewMode('grid')" aria-label="Grade">
+                        <span class="material-icons-round">grid_view</span>
+                    </button>
+                    <button class="view-toggle-btn" id="btnFeedMode" onclick="setViewMode('feed')" aria-label="Feed">
+                        <span class="material-icons-round">view_agenda</span>
+                    </button>
+                    <button class="view-toggle-btn" id="btnTikTokMode" onclick="enterTikTokMode()" aria-label="Modo TikTok" title="Tela cheia">
+                        <span class="material-icons-round">smart_display</span>
+                    </button>
+                </div>
+            </div>
         </div>
+
+        <?php if (!empty($curatedMedia)):
+            // Build type counts for filter buttons
+            $_typeCounts = ['photo' => 0, 'video' => 0, 'reels' => 0, 'tiktok' => 0, 'youtube' => 0];
+            foreach ($curatedMedia as $_tm) {
+                $_tk = getMediaTypeKey($_tm);
+                if (isset($_typeCounts[$_tk])) $_typeCounts[$_tk]++;
+            }
+        ?>
+        <div class="type-filter-bar" id="typeFilterBar">
+            <button class="type-filter-btn active" data-media-filter="" onclick="filterByType('', this)">
+                <span class="material-icons-round">apps</span>
+                Tudo
+                <span class="type-filter-btn-count"><?= count($curatedMedia) ?></span>
+            </button>
+            <?php if ($_typeCounts['photo'] > 0): ?>
+            <button class="type-filter-btn" data-media-filter="photo" onclick="filterByType('photo', this)">
+                <span class="material-icons-round">image</span>
+                Fotos
+                <span class="type-filter-btn-count"><?= $_typeCounts['photo'] ?></span>
+            </button>
+            <?php endif; ?>
+            <?php if ($_typeCounts['video'] > 0): ?>
+            <button class="type-filter-btn" data-media-filter="video" onclick="filterByType('video', this)">
+                <span class="material-icons-round">videocam</span>
+                Vídeos
+                <span class="type-filter-btn-count"><?= $_typeCounts['video'] ?></span>
+            </button>
+            <?php endif; ?>
+            <?php if ($_typeCounts['reels'] > 0): ?>
+            <button class="type-filter-btn" data-media-filter="reels" onclick="filterByType('reels', this)">
+                <span class="material-icons-round">photo_camera</span>
+                Reels
+                <span class="type-filter-btn-count"><?= $_typeCounts['reels'] ?></span>
+            </button>
+            <?php endif; ?>
+            <?php if ($_typeCounts['tiktok'] > 0): ?>
+            <button class="type-filter-btn" data-media-filter="tiktok" onclick="filterByType('tiktok', this)">
+                <span class="material-icons-round">music_video</span>
+                TikTok
+                <span class="type-filter-btn-count"><?= $_typeCounts['tiktok'] ?></span>
+            </button>
+            <?php endif; ?>
+            <?php if ($_typeCounts['youtube'] > 0): ?>
+            <button class="type-filter-btn" data-media-filter="youtube" onclick="filterByType('youtube', this)">
+                <span class="material-icons-round">smart_display</span>
+                YouTube
+                <span class="type-filter-btn-count"><?= $_typeCounts['youtube'] ?></span>
+            </button>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!empty($eventGroups)): ?>
+        <div class="event-albums-bar" id="eventAlbumsBar">
+            <?php foreach ($eventGroups as $_eg): ?>
+            <div class="event-album-card"
+                 onclick="filterByDateRange(<?= json_encode($_eg['from']) ?>, <?= json_encode($_eg['to']) ?>, this)"
+                 title="<?= htmlspecialchars($_eg['title']) ?>">
+                <?php if (!empty($_eg['cover'])): ?>
+                <img class="event-album-thumb" src="<?= htmlspecialchars($_eg['cover']) ?>" alt="<?= htmlspecialchars($_eg['title']) ?>" loading="lazy">
+                <?php else: ?>
+                <div class="event-album-thumb-placeholder">
+                    <span class="material-icons-round">photo_library</span>
+                </div>
+                <?php endif; ?>
+                <div class="event-album-info">
+                    <div class="event-album-title"><?= htmlspecialchars($_eg['title']) ?></div>
+                    <div class="event-album-count"><?= $_eg['count'] ?> mídia<?= $_eg['count'] > 1 ? 's' : '' ?></div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
 
         <?php if (!empty($curatedMedia)): ?>
         <div class="media-grid" id="mediaGrid">
@@ -1647,10 +2407,14 @@ $showHero = !empty($heroHeadline);
                 $likes    = (int)($media['like_count'] ?? 0);
                 $views    = (int)($media['view_count'] ?? 0);
                 $comCount = (int)($media['comment_count'] ?? 0);
-                $content  = htmlspecialchars($media['media_content'] ?? '', ENT_QUOTES);
-                $title    = htmlspecialchars($media['title'] ?? '');
-                $author   = htmlspecialchars($media['user_name'] ?? '');
-                $avatar   = htmlspecialchars($media['avatar_url'] ?? '');
+                $content   = htmlspecialchars($media['media_content'] ?? '', ENT_QUOTES);
+                $title     = htmlspecialchars($media['title'] ?? '');
+                $author    = htmlspecialchars($media['user_name'] ?? '');
+                $avatar    = htmlspecialchars($media['avatar_url'] ?? '');
+                $mediaType = getMediaTypeKey($media);
+                $mediaDate = $media['date'] ?? '';
+                $reactionsJson = htmlspecialchars(json_encode($media['reactions'] ?? []), ENT_QUOTES);
+                $myReaction    = htmlspecialchars($media['my_reaction'] ?? '', ENT_QUOTES);
             ?>
             <div class="media-card"
                  data-source-type="<?= $st ?>"
@@ -1660,7 +2424,14 @@ $showHero = !empty($heroHeadline);
                  data-like-count="<?= $likes ?>"
                  data-has-liked="<?= $liked ? '1' : '0' ?>"
                  data-comment-count="<?= $comCount ?>"
+                 data-view-count="<?= $views ?>"
                  data-title="<?= $title ?>"
+                 data-author="<?= $author ?>"
+                 data-avatar="<?= $avatar ?>"
+                 data-media-type="<?= $mediaType ?>"
+                 data-date="<?= htmlspecialchars($mediaDate) ?>"
+                 data-reactions="<?= $reactionsJson ?>"
+                 data-my-reaction="<?= $myReaction ?>"
                  data-viewed="0">
 
                 <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
@@ -1697,12 +2468,35 @@ $showHero = !empty($heroHeadline);
                     <div class="media-card__title" onclick="openViewer(this.closest('.media-card'))"><?= $title ?></div>
 
                     <div class="social-interaction-bar">
-                        <div class="interaction-item <?= $liked ? 'liked' : '' ?>" 
-                             id="cardLike_<?= $st ?>_<?= $si ?>"
-                             onclick="handleLike('<?= $st ?>', <?= $si ?>)">
-                            <span class="material-icons-round"><?= $liked ? 'favorite' : 'favorite_border' ?></span>
-                            <span id="cardLikeCount_<?= $st ?>_<?= $si ?>"><?= $likes > 0 ? $likes : '' ?></span>
+                        <div class="reaction-picker-wrap" id="rxWrap_<?= $st ?>_<?= $si ?>">
+                            <div class="reaction-picker" id="rxPicker_<?= $st ?>_<?= $si ?>">
+                                <?php foreach (['like'=>'❤️','love'=>'😍','haha'=>'😂','wow'=>'😮','clap'=>'👏','fire'=>'🔥'] as $_rk => $_re): ?>
+                                <button class="reaction-btn <?= ($myReaction === $_rk) ? 'my-reaction' : '' ?>"
+                                        onclick="sendReaction('<?= $st ?>', <?= $si ?>, '<?= $_rk ?>', this); event.stopPropagation();"
+                                        title="<?= $_rk ?>">
+                                    <?= $_re ?>
+                                </button>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="interaction-item <?= $liked ? 'liked' : '' ?>"
+                                 id="cardLike_<?= $st ?>_<?= $si ?>"
+                                 onclick="handleLike('<?= $st ?>', <?= $si ?>)"
+                                 oncontextmenu="toggleReactionPicker('<?= $st ?>',<?= $si ?>); return false;"
+                                 ontouchstart="startReactionHold('<?= $st ?>',<?= $si ?>)"
+                                 ontouchend="clearReactionHold()">
+                                <span class="material-icons-round"><?= $liked ? 'favorite' : 'favorite_border' ?></span>
+                                <span id="cardLikeCount_<?= $st ?>_<?= $si ?>"><?= $likes > 0 ? $likes : '' ?></span>
+                            </div>
                         </div>
+                        <?php /* Reaction summary (top 3 emojis) */ ?>
+                        <?php if (!empty($media['reactions'])): ?>
+                        <div class="reaction-summary" id="rxSummary_<?= $st ?>_<?= $si ?>">
+                            <?php $_rxEmojis = ['like'=>'❤️','love'=>'😍','haha'=>'😂','wow'=>'😮','clap'=>'👏','fire'=>'🔥']; ?>
+                            <?php foreach (array_slice($media['reactions'], 0, 3) as $_rx): ?>
+                            <span title="<?= (int)$_rx['cnt'] ?>"><?= $_rxEmojis[$_rx['reaction_type']] ?? '' ?></span>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
                         <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
                             <span class="material-icons-round">chat_bubble_outline</span>
                             <span><?= $comCount > 0 ? $comCount : '' ?></span>
@@ -1826,6 +2620,21 @@ $showHero = !empty($heroHeadline);
                 </button>
             </div>
 
+            <!-- Nav row: inside the panel = completely outside the iframe area -->
+            <div class="viewer-nav-row" id="viewerNavRow">
+                <button id="viewerPrev" class="viewer-nav-btn" aria-label="Anterior">
+                    <span class="material-icons-round">chevron_left</span>
+                </button>
+                <span class="viewer-nav-counter" id="viewerNavCounter"></span>
+                <button id="viewerNext" class="viewer-nav-btn" aria-label="Próximo">
+                    <span class="material-icons-round">chevron_right</span>
+                </button>
+            </div>
+
+            <div class="viewer-author-strip" id="viewerAuthorInfo" style="display:none;">
+                <!-- Author info injected by JS -->
+            </div>
+
             <div class="viewer-actions" id="viewerActions">
                 <!-- Like + share injected by JS -->
             </div>
@@ -1851,22 +2660,19 @@ $showHero = !empty($heroHeadline);
     </div>
 </div>
 
+
 <?php
-/* Detectar quais SDKs são necessários para pré-carregar */
-$_needsIgSdk = false;
-$_needsTtSdk = false;
+// Preconnect hints for embed origins used in the viewer
+$_hasIg = false; $_hasTt = false;
 foreach ($curatedMedia as $_m) {
     $_u = trim($_m['media_content'] ?? '');
-    if (strpos($_u, 'instagram.com') !== false) $_needsIgSdk = true;
-    if (strpos($_u, 'tiktok.com') !== false)    $_needsTtSdk = true;
+    if (strpos($_u, 'instagram.com') !== false) $_hasIg = true;
+    if (strpos($_u, 'tiktok.com')    !== false) $_hasTt = true;
 }
 ?>
-<?php if ($_needsIgSdk): ?>
-<script async id="instagram-embed-js" src="//www.instagram.com/embed.js"></script>
-<?php endif; ?>
-<?php if ($_needsTtSdk): ?>
-<script async id="tiktok-embed-js" src="https://www.tiktok.com/embed.js"></script>
-<?php endif; ?>
+<?php if ($_hasIg): ?><link rel="preconnect" href="https://www.instagram.com"><?php endif; ?>
+<?php if ($_hasTt): ?><link rel="preconnect" href="https://www.tiktok.com"><?php endif; ?>
+<?php /* Instagram and TikTok embeds use direct iframe (no SDK scripts needed) */ ?>
 
 <script>
 
@@ -1927,31 +2733,56 @@ function buildEmbedHtml(url, isVideo) {
     // to re-set iframe.src with allow="autoplay" and the browser will permit audio.
     if (ttMatch) {
         const videoId = ttMatch[1];
-        const ttSrc   = `https://www.tiktok.com/embed/v2/${videoId}`;
+        // autoplay=1 no URL + allow="autoplay" no iframe: em Android Chrome o vídeo
+        // pode começar com áudio se o iframe for criado durante um evento de clique.
+        // Em iOS Safari o áudio ainda inicia mudo (política do browser, incontornável).
+        // A overlay cobre 100% do iframe: (1) impede qualquer toque no UI do TikTok
+        // (evita redirect ao app), (2) fornece o gesto necessário para ativar o áudio.
+        const ttSrc = `https://www.tiktok.com/embed/v2/${videoId}?autoplay=1`;
         return `<div class="embed-wrap portrait tt-wrap">
-            <iframe class="tt-iframe" src="${ttSrc}" allowfullscreen allow="encrypted-media; fullscreen; picture-in-picture" referrerpolicy="no-referrer-when-downgrade"></iframe>
-            <button class="tt-unmute-btn" onclick="ttActivateSound(this)" aria-label="Ativar som">
-                <span class="material-icons-round">volume_off</span>
-                <span>Toque para ativar o som</span>
-            </button>
+            <iframe class="tt-iframe" src="${ttSrc}" allowfullscreen
+                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                    referrerpolicy="no-referrer-when-downgrade"></iframe>
+            <div class="tt-sound-overlay" onclick="ttActivateSound(this)" role="button" aria-label="Ativar som">
+                <div class="tt-sound-overlay__pill">
+                    <span class="material-icons-round">volume_up</span>
+                    <span>Toque para<br>ativar o som</span>
+                </div>
+            </div>
         </div>`;
     }
 
-    // ── Instagram (blockquote + SDK oficial) ──────────────────────────
+    // ── Instagram (iframe direto — sem SDK, sem ad-blocker issues) ────
+    // Instagram serve /reel/{id}/embed/ e /p/{id}/embed/ nativamente sem SDK.
+    // É o mesmo mecanismo do botão "Compartilhar > Incorporar" do próprio app.
     if (igMatch) {
         const postType = igMatch[1].toLowerCase() === 'reels' ? 'reel' : igMatch[1];
         const postId   = igMatch[2];
-        const igUrl    = `https://www.instagram.com/${postType}/${postId}/?utm_source=ig_embed&utm_campaign=loading`;
-        
-        EmbedLoader.load('https://www.instagram.com/embed.js', 'instagram-embed-js')
-            .then(() => { if (window.instgrm) window.instgrm.Embeds.process(); });
+        const isReel   = postType === 'reel' || postType === 'tv';
+        const embedSrc = `https://www.instagram.com/${postType}/${postId}/embed/`;
 
-        return `<div class="embed-wrap social-embed-wrap">
-            <blockquote class="instagram-media" data-instgrm-permalink="${igUrl}" data-instgrm-version="14"
-                style="background:#FFF;border:0;border-radius:12px;box-shadow:0 0 1px 0 rgba(0,0,0,.5),0 1px 10px 0 rgba(0,0,0,.15);margin:1px;max-width:540px;min-width:326px;padding:0;width:99.375%;width:-webkit-calc(100% - 2px);width:calc(100% - 2px);">
-                <div style="padding:16px;"> <a href="${url}" target="_blank" style="color:#000;text-decoration:none;font-family:Sans-Serif;font-size:14px;font-style:normal;font-weight:normal;line-height:17px;">Ver no Instagram</a> </div>
-            </blockquote>
-        </div>`;
+        if (isReel) {
+            // Reels e IGTV são portrait (9:16) — usa o sistema embed-wrap existente
+            return `<div class="embed-wrap portrait">
+                <iframe src="${embedSrc}"
+                        style="position:absolute;inset:0;width:100%;height:100%;border:none;overflow:hidden;"
+                        allowtransparency="true" allowfullscreen="true"
+                        allow="encrypted-media; picture-in-picture; clipboard-write"
+                        scrolling="no" loading="lazy">
+                </iframe>
+            </div>`;
+        } else {
+            // Posts regulares (p/) — proporção mais próxima de quadrado
+            return `<div style="width:100%;max-width:540px;margin:0 auto;">
+                <iframe src="${embedSrc}"
+                        width="100%" height="600"
+                        style="border:none;overflow:hidden;display:block;border-radius:12px;"
+                        allowtransparency="true" allowfullscreen="true"
+                        allow="encrypted-media; picture-in-picture; clipboard-write"
+                        scrolling="no" loading="lazy">
+                </iframe>
+            </div>`;
+        }
     }
 
     // ── X / Twitter ───────────────────────────────────────────────────
@@ -2014,6 +2845,8 @@ function openViewer(card, forceComments = false) {
     const liked    = card.dataset.hasLiked === '1';
     const likes    = parseInt(card.dataset.likeCount) || 0;
     const title    = card.dataset.title;
+    const author   = card.dataset.author || '';
+    const avatar   = card.dataset.avatar || '';
 
     // Build embed
     viewerMedia.innerHTML = buildEmbedHtml(url, isVideo);
@@ -2023,6 +2856,25 @@ function openViewer(card, forceComments = false) {
         <span class="material-icons-round">${isVideo ? 'play_circle' : 'image'}</span>
         ${title || 'Mídia'}
     `;
+
+    // Author strip
+    const authorStrip = document.getElementById('viewerAuthorInfo');
+    if (authorStrip && author) {
+        // Count posts by this author visible in the grid
+        const authorPostCount = document.querySelectorAll(`#mediaGrid .media-card[data-author="${CSS.escape(author)}"]`).length;
+        const avatarHtml = avatar
+            ? `<img src="${escapeHtml(avatar)}" alt="${escapeHtml(author)}">`
+            : `<div class="viewer-author-strip-initials">${escapeHtml(author.charAt(0).toUpperCase())}</div>`;
+        authorStrip.innerHTML = `
+            ${avatarHtml}
+            <div class="viewer-author-strip-info">
+                <div class="viewer-author-strip-name">${escapeHtml(author)}</div>
+                <div class="viewer-author-strip-posts">${authorPostCount > 0 ? authorPostCount + ' publicação' + (authorPostCount > 1 ? 'ões' : '') : ''}</div>
+            </div>`;
+        authorStrip.style.display = 'flex';
+    } else if (authorStrip) {
+        authorStrip.style.display = 'none';
+    }
 
     // Twitter widget
     if (url.match(RE_TW)) {
@@ -2044,7 +2896,8 @@ function openViewer(card, forceComments = false) {
         </button>
         <button class="viewer-action-btn" onclick="shareMedia(window.location.href, '${card.dataset.title}')">
             <span class="material-icons-round">share</span>
-        </button>`;
+        </button>
+        ${_viewerDownloadBtn(url, card.dataset.title)}`;
 
     // Load comments
     loadComments(st, si);
@@ -2069,16 +2922,7 @@ function openViewer(card, forceComments = false) {
         viewer.classList.remove('showing-comments');
     }
 
-    // Re-processar Instagram SDK: tenta imediatamente + retry se ainda carregando
-    const _igProcess = () => {
-        if (window.instgrm) {
-            window.instgrm.Embeds.process();
-        } else {
-            // SDK ainda carregando — aguarda mais 800ms e tenta novamente
-            setTimeout(() => { if (window.instgrm) window.instgrm.Embeds.process(); }, 800);
-        }
-    };
-    setTimeout(_igProcess, 100);
+    // Instagram usa iframe direto — nenhum SDK para processar
 }
 
 function closeViewer() {
@@ -2093,15 +2937,25 @@ function closeViewer() {
     setTimeout(() => { document.body.style.pointerEvents = ''; }, 350);
 }
 
-// Tap-to-unmute for TikTok: reloads the iframe with allow="autoplay" via direct
-// user gesture so the browser grants audio permission.
-function ttActivateSound(btn) {
-    const iframe = btn.previousElementSibling;
-    btn.style.display = 'none';
-    iframe.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture';
-    const src = iframe.src;
-    iframe.src = '';
-    iframe.src = src;
+// Tap-to-unmute for TikTok.
+// Mudar iframe.allow depois que o elemento já está no DOM não retroage na política
+// de permissões do browser. A única forma correta é substituir o iframe por um
+// novo elemento criado com allow="autoplay" desde o início — dentro de um gesto
+// direto do usuário (click) para que o browser conceda a permissão de áudio.
+function ttActivateSound(overlay) {
+    // Remove a overlay PRIMEIRO — isso já bloqueia qualquer toque adicional.
+    // Em seguida recria o iframe com allow="autoplay" dentro do mesmo gesto de
+    // clique/toque, o que garante permissão de áudio no Android Chrome.
+    const wrapper  = overlay.closest('.tt-wrap');
+    const oldFrame = wrapper.querySelector('.tt-iframe');
+    overlay.remove();
+    const newFrame = document.createElement('iframe');
+    newFrame.className       = 'tt-iframe';
+    newFrame.src             = oldFrame.src; // já tem ?autoplay=1
+    newFrame.allowFullscreen = true;
+    newFrame.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture');
+    newFrame.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+    oldFrame.replaceWith(newFrame);
 }
 
 viewer.addEventListener('click', e => {
@@ -2231,7 +3085,11 @@ function observeCards(container) {
 }
 
 const grid = document.getElementById('mediaGrid');
-if (grid) observeCards(grid);
+if (grid) {
+    observeCards(grid);
+    // Tag original DOM order so "Recentes" sort can restore it
+    grid.querySelectorAll('.media-card').forEach((c, i) => { c.dataset.origIdx = i; });
+}
 
 // Infinite scroll
 const sentinel = document.getElementById('loadSentinel');
@@ -2285,6 +3143,18 @@ function buildCardElement(item) {
     const author    = escapeHtml(item.user_name || '');
     const avatar    = item.avatar_url || '';
 
+    // Detect media type key (mirrors PHP getMediaTypeKey)
+    function _getTypeKey(u) {
+        if (/youtube\.com\/shorts/i.test(u)) return 'youtube';
+        if (/youtube\.com|youtu\.be/i.test(u)) return 'youtube';
+        if (/tiktok\.com/i.test(u)) return 'tiktok';
+        if (/instagram\.com/i.test(u)) return 'reels';
+        if (/\.(mp4|webm|mov)/i.test(u)) return 'video';
+        if (/\.(jpg|jpeg|png|webp|gif)/i.test(u)) return 'photo';
+        return 'other';
+    }
+    const mediaType = _getTypeKey(url);
+
     div.className = 'media-card';
     div.dataset.sourceType  = st;
     div.dataset.sourceId    = si;
@@ -2293,8 +3163,15 @@ function buildCardElement(item) {
     div.dataset.likeCount   = likes;
     div.dataset.hasLiked    = liked ? '1' : '0';
     div.dataset.commentCount= comCount;
+    div.dataset.viewCount   = views;
     div.dataset.title       = title;
+    div.dataset.author      = author;
+    div.dataset.avatar      = avatar;
+    div.dataset.mediaType   = mediaType;
     div.dataset.viewed      = '0';
+    // Apply active filters to newly loaded cards
+    if (_activeAuthor && author !== _activeAuthor) div.classList.add('filtered-out');
+    if (_activeType && mediaType !== _activeType) div.classList.add('filtered-out');
     div.setAttribute('onclick', 'openViewer(this)');
     div.setAttribute('ondblclick', 'doubleTapLike(event, this)');
 
@@ -2304,8 +3181,8 @@ function buildCardElement(item) {
             <div class="media-card__gradient"></div>
             <div class="media-card__top">
                 <div class="media-type-badge">
-                    <span class="material-icons-round">${isVideo ? 'smart_display' : 'image'}</span>
-                    ${isVideo ? 'Vídeo' : 'Foto'}
+                    <span class="material-icons-round">${{youtube:'smart_display',tiktok:'music_video',reels:'photo_camera',video:'videocam',photo:'image'}[mediaType]||'perm_media'}</span>
+                    ${{youtube:'YouTube',tiktok:'TikTok',reels:'Reels',video:'Vídeo',photo:'Foto'}[mediaType]||'Mídia'}
                 </div>
             </div>
         </div>
@@ -2383,6 +3260,153 @@ function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
+// ── Viewer Navigation (prev/next + swipe + keyboard) ─────────────────────────
+// Buttons live inside .viewer-panel — never overlap the iframe, no workarounds needed.
+const viewerPrevBtn    = document.getElementById('viewerPrev');
+const viewerNextBtn    = document.getElementById('viewerNext');
+const viewerNavRow     = document.getElementById('viewerNavRow');
+const viewerNavCounter = document.getElementById('viewerNavCounter');
+
+if (viewerPrevBtn) viewerPrevBtn.addEventListener('click', () => navigateViewer(-1));
+if (viewerNextBtn) viewerNextBtn.addEventListener('click', () => navigateViewer(1));
+
+function getAllCards() {
+    return Array.from(document.querySelectorAll('#mediaGrid .media-card:not(.filtered-out)'));
+}
+
+function navigateViewer(direction) {
+    if (!currentViewerCard) return;
+    const cards = getAllCards();
+    const idx   = cards.indexOf(currentViewerCard);
+    const next  = cards[idx + direction];
+    if (next) openViewer(next);
+}
+
+function updateNavButtons() {
+    if (!currentViewerCard) return;
+    const cards = getAllCards();
+    const idx   = cards.indexOf(currentViewerCard);
+    if (viewerPrevBtn) viewerPrevBtn.disabled = idx <= 0;
+    if (viewerNextBtn) viewerNextBtn.disabled = idx >= cards.length - 1;
+    if (viewerNavCounter) viewerNavCounter.textContent = `${idx + 1} / ${cards.length}`;
+}
+
+// Show/hide nav row with the viewer
+const _origOpenViewer  = openViewer;
+const _origCloseViewer = closeViewer;
+openViewer = function(card, forceComments) {
+    _origOpenViewer(card, forceComments);
+    if (viewerNavRow) viewerNavRow.classList.add('visible');
+    updateNavButtons();
+};
+closeViewer = function() {
+    _origCloseViewer();
+    if (viewerNavRow) viewerNavRow.classList.remove('visible');
+};
+
+// Keyboard arrow navigation
+document.addEventListener('keydown', e => {
+    if (!viewer?.classList.contains('open')) return;
+    if (e.key === 'ArrowRight') navigateViewer(1);
+    if (e.key === 'ArrowLeft')  navigateViewer(-1);
+});
+
+// Swipe gesture detection (on the viewer backdrop — iframes don't block this area)
+let _swX = 0, _swY = 0;
+viewer?.addEventListener('touchstart', e => {
+    _swX = e.touches[0].clientX;
+    _swY = e.touches[0].clientY;
+}, { passive: true });
+viewer?.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - _swX;
+    const dy = e.changedTouches[0].clientY - _swY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 55) {
+        // Horizontal swipe: left=next, right=prev
+        navigateViewer(dx < 0 ? 1 : -1);
+    }
+}, { passive: true });
+
+// ── Story Bubbles — Filter by author ─────────────────────────────────────────
+let _activeAuthor = null;
+let _activeType   = '';
+
+function _applyFilters() {
+    document.querySelectorAll('#mediaGrid .media-card').forEach(card => {
+        const authorOk = !_activeAuthor || card.dataset.author === _activeAuthor;
+        const typeOk   = !_activeType   || card.dataset.mediaType === _activeType;
+        card.classList.toggle('filtered-out', !(authorOk && typeOk));
+    });
+}
+
+function filterByAuthor(authorName, btn) {
+    _activeAuthor = authorName;
+    document.querySelectorAll('.story-bubble').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    _applyFilters();
+}
+
+function filterByType(typeKey, btn) {
+    _activeType = typeKey;
+    document.querySelectorAll('.type-filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    _applyFilters();
+}
+
+// ── Sort cards ────────────────────────────────────────────────────────────────
+function sortCards(mode, btn) {
+    document.querySelectorAll('#btnSortRecent, #btnSortLikes, #btnSortViews').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    const grid     = document.getElementById('mediaGrid');
+    const sentinel = document.getElementById('infiniteScrollSentinel');
+    if (!grid) return;
+
+    const cards = Array.from(grid.querySelectorAll('.media-card'));
+    // Ensure all cards have an origIdx (dynamically loaded cards may not have one)
+    let _maxIdx = cards.reduce((m, c) => Math.max(m, parseInt(c.dataset.origIdx) || 0), -1);
+    cards.forEach(c => { if (!c.dataset.origIdx) c.dataset.origIdx = ++_maxIdx; });
+
+    cards.sort((a, b) => {
+        if (mode === 'likes') return (parseInt(b.dataset.likeCount)||0) - (parseInt(a.dataset.likeCount)||0);
+        if (mode === 'views') return (parseInt(b.dataset.viewCount)||0) - (parseInt(a.dataset.viewCount)||0);
+        // 'recent': restore original server order
+        return (parseInt(a.dataset.origIdx)||0) - (parseInt(b.dataset.origIdx)||0);
+    });
+    cards.forEach(c => grid.insertBefore(c, sentinel || null));
+}
+
+// ── Feed Mode vs Grid Mode ────────────────────────────────────────────────────
+let _currentViewMode = 'grid';
+
+function setViewMode(mode) {
+    _currentViewMode = mode;
+    const g = document.getElementById('mediaGrid');
+    if (!g) return;
+
+    if (mode === 'feed') {
+        g.classList.add('feed-mode');
+        document.getElementById('btnGridMode')?.classList.remove('active');
+        document.getElementById('btnFeedMode')?.classList.add('active');
+    } else {
+        g.classList.remove('feed-mode');
+        document.getElementById('btnGridMode')?.classList.add('active');
+        document.getElementById('btnFeedMode')?.classList.remove('active');
+    }
+}
+
+// ── Download button in viewer ─────────────────────────────────────────────────
+// Shown only for storage/ URLs (native content, not external embeds)
+function _viewerDownloadBtn(url, title) {
+    const isStorage = url && (url.startsWith('storage/') || url.startsWith('/storage/'));
+    if (!isStorage) return '';
+    const src = url.startsWith('/') ? url : '/' + url;
+    return `<a class="viewer-action-btn" href="${src}" download="${escapeHtml(title || 'midia')}"
+              title="Baixar" style="text-decoration:none;">
+        <span class="material-icons-round">download</span>
+        <span></span>
+    </a>`;
+}
+
 function formatDate(str) {
     if (!str) return '';
     try {
@@ -2436,4 +3460,228 @@ async function submitLead(e) {
         btn.textContent = 'Enviar Interesse';
     }
 }
+
+// ── Reactions ─────────────────────────────────────────────────────────────────
+const REACTION_EMOJIS = {like:'❤️',love:'😍',haha:'😂',wow:'😮',clap:'👏',fire:'🔥'};
+const _reactUrl = '<?= base_url('c/' . $clubSlug . '/react') ?>';
+let _holdTimer  = null;
+
+function toggleReactionPicker(st, si) {
+    const picker = document.getElementById(`rxPicker_${st}_${si}`);
+    if (!picker) return;
+    document.querySelectorAll('.reaction-picker.open').forEach(p => { if (p !== picker) p.classList.remove('open'); });
+    picker.classList.toggle('open');
+}
+function startReactionHold(st, si) {
+    _holdTimer = setTimeout(() => { toggleReactionPicker(st, si); _holdTimer = null; }, 500);
+}
+function clearReactionHold() { if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; } }
+
+// Close open pickers when clicking outside
+document.addEventListener('click', e => {
+    if (!e.target.closest('.reaction-picker-wrap')) {
+        document.querySelectorAll('.reaction-picker.open').forEach(p => p.classList.remove('open'));
+    }
+});
+
+async function sendReaction(st, si, type, btn) {
+    const picker = btn.closest('.reaction-picker');
+    if (picker) picker.classList.remove('open');
+
+    try {
+        const res  = await fetch(_reactUrl, {
+            method: 'POST',
+            headers: {'Content-Type':'application/x-www-form-urlencoded'},
+            body: `source_type=${encodeURIComponent(st)}&source_id=${encodeURIComponent(si)}&reaction_type=${encodeURIComponent(type)}`
+        });
+        const data = await res.json();
+        if (!data.success) return;
+
+        // Update card data-my-reaction
+        const card = document.getElementById(`rxWrap_${st}_${si}`)?.closest('.media-card');
+        if (card) card.dataset.myReaction = data.my_reaction || '';
+
+        // Update picker button states
+        const pickerEl = document.getElementById(`rxPicker_${st}_${si}`);
+        if (pickerEl) pickerEl.querySelectorAll('.reaction-btn').forEach(b => {
+            b.classList.toggle('my-reaction', b.title === data.my_reaction);
+        });
+
+        // Update reaction summary
+        const summary = document.getElementById(`rxSummary_${st}_${si}`);
+        if (summary) {
+            const top3 = (data.counts || []).slice(0, 3);
+            summary.innerHTML = top3.map(r => `<span title="${r.cnt}">${REACTION_EMOJIS[r.reaction_type]||''}</span>`).join('');
+        }
+
+        // Also update viewer if open
+        const viewerReactions = document.getElementById('viewerReactions');
+        if (viewerReactions && document.getElementById('mediaViewer')?.classList.contains('open')) {
+            const top3 = (data.counts || []).slice(0, 3);
+            viewerReactions.innerHTML = top3.map(r => `<span class="viewer-reaction-chip">${REACTION_EMOJIS[r.reaction_type]||''} <small>${r.cnt}</small></span>`).join('');
+        }
+    } catch(e) { /* silent */ }
+}
+
+// ── Event Date Range Filter ───────────────────────────────────────────────────
+let _activeAlbum = null;
+function filterByDateRange(from, to, albumCard) {
+    if (_activeAlbum === albumCard && albumCard.classList.contains('active')) {
+        // Toggle off
+        _activeAlbum = null;
+        albumCard.classList.remove('active');
+        window._activeDateFrom = null;
+        window._activeDateTo   = null;
+        _applyFilters();
+        return;
+    }
+    document.querySelectorAll('.event-album-card').forEach(c => c.classList.remove('active'));
+    albumCard.classList.add('active');
+    _activeAlbum          = albumCard;
+    window._activeDateFrom = new Date(from).getTime();
+    window._activeDateTo   = new Date(to).getTime();
+    _applyFilters();
+}
+
+// Patch _applyFilters to also filter by date range
+const _origApplyFilters = _applyFilters;
+function _applyFilters() {
+    document.querySelectorAll('#mediaGrid .media-card').forEach(card => {
+        const authorOk = !_activeAuthor || card.dataset.author === _activeAuthor;
+        const typeOk   = !_activeType   || card.dataset.mediaType === _activeType;
+        let dateOk = true;
+        if (window._activeDateFrom && card.dataset.date) {
+            const ts = new Date(card.dataset.date).getTime();
+            dateOk = ts >= window._activeDateFrom && ts <= window._activeDateTo;
+        }
+        card.classList.toggle('filtered-out', !(authorOk && typeOk && dateOk));
+    });
+}
+
+// ── TikTok Overlay ────────────────────────────────────────────────────────────
+const tikTokOverlay = document.getElementById('tikTokOverlay');
+const tikTokClose   = document.getElementById('tikTokClose');
+
+function enterTikTokMode() {
+    if (!tikTokOverlay) return;
+    const cards = getAllCards();
+    tikTokOverlay.innerHTML = '';
+
+    cards.forEach((card, idx) => {
+        const url        = card.dataset.url || '';
+        const title      = card.dataset.title || '';
+        const author     = card.dataset.author || '';
+        const avatar     = card.dataset.avatar || '';
+        const st         = card.dataset.sourceType;
+        const si         = card.dataset.sourceId;
+        const liked      = card.dataset.hasLiked === '1';
+        const likes      = parseInt(card.dataset.likeCount) || 0;
+        const mediaType  = card.dataset.mediaType || '';
+        const typeIcons  = {youtube:'smart_display',tiktok:'music_video',reels:'photo_camera',video:'videocam',photo:'image'};
+        const typeLabels = {youtube:'YouTube',tiktok:'TikTok',reels:'Reels',video:'Vídeo',photo:'Foto'};
+
+        // Get thumbnail from child img
+        const imgEl   = card.querySelector('.media-card__thumb');
+        const thumbSrc = imgEl?.src || '';
+
+        const ttCard = document.createElement('div');
+        ttCard.className = 'tt-card';
+        ttCard.dataset.idx = idx;
+        ttCard.innerHTML = `
+            <div class="tt-card__bg">
+                ${thumbSrc ? `<img class="tt-card__thumb" src="${escapeHtml(thumbSrc)}" alt="${escapeHtml(title)}" loading="lazy">` : ''}
+            </div>
+            <div class="tt-card__gradient"></div>
+            <div class="tt-type-badge">
+                <span class="material-icons-round">${typeIcons[mediaType]||'perm_media'}</span>
+                ${typeLabels[mediaType]||'Mídia'}
+            </div>
+            <div class="tt-card__info">
+                <div class="tt-card__title">${escapeHtml(title)}</div>
+                <div class="tt-card__author">
+                    ${avatar ? `<img src="${escapeHtml(avatar)}" alt="">` : ''}
+                    <span>${escapeHtml(author)}</span>
+                </div>
+            </div>
+            <div class="tt-card__side">
+                <button class="tt-side-btn ${liked?'liked':''}" id="ttLike_${st}_${si}"
+                        onclick="handleLike('${st}',${si}); this.classList.toggle('liked')">
+                    <span class="material-icons-round">${liked?'favorite':'favorite_border'}</span>
+                    <span id="ttLikeCount_${st}_${si}">${likes||''}</span>
+                </button>
+                <button class="tt-side-btn" onclick="openViewer(document.querySelector('.media-card[data-source-type=\\'${st}\\'][data-source-id=\\'${si}\\']'), true)">
+                    <span class="material-icons-round">chat_bubble_outline</span>
+                    <span></span>
+                </button>
+                <button class="tt-side-btn" onclick="shareMedia(window.location.href, '${escapeHtml(title).replace(/'/g,"\\'")}')" >
+                    <span class="material-icons-round">share</span>
+                    <span></span>
+                </button>
+                <button class="tt-side-btn" onclick="openViewer(document.querySelector('.media-card[data-source-type=\\'${st}\\'][data-source-id=\\'${si}\\']'))">
+                    <span class="material-icons-round">open_in_full</span>
+                    <span></span>
+                </button>
+            </div>`;
+        tikTokOverlay.appendChild(ttCard);
+    });
+
+    tikTokOverlay.classList.add('open');
+    tikTokClose.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function exitTikTokMode() {
+    tikTokOverlay?.classList.remove('open');
+    tikTokClose?.classList.remove('open');
+    tikTokOverlay.innerHTML = '';
+    document.body.style.overflow = '';
+}
+
+tikTokClose?.addEventListener('click', exitTikTokMode);
+
+// ── Service Worker Registration ───────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => { /* offline */ });
+    });
+}
+
+// ── PWA Install Banner ────────────────────────────────────────────────────────
+let _deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    _deferredPrompt = e;
+    setTimeout(() => document.getElementById('pwaInstallBanner')?.classList.add('visible'), 3000);
+});
+
+function pwaInstall() {
+    if (!_deferredPrompt) return;
+    _deferredPrompt.prompt();
+    _deferredPrompt.userChoice.then(() => {
+        _deferredPrompt = null;
+        document.getElementById('pwaInstallBanner')?.classList.remove('visible');
+    });
+}
+function pwaDismiss() {
+    document.getElementById('pwaInstallBanner')?.classList.remove('visible');
+}
 </script>
+
+<!-- TikTok fullscreen overlay -->
+<div id="tikTokOverlay"></div>
+<button id="tikTokClose" aria-label="Fechar modo TikTok">
+    <span class="material-icons-round">close</span>
+</button>
+
+<!-- PWA Install Banner -->
+<div id="pwaInstallBanner" role="banner">
+    <span class="material-icons-round">install_mobile</span>
+    <div class="pwa-banner-text">
+        <strong>Adicionar à tela inicial</strong>
+        <span>Acesse o clube sem abrir o navegador</span>
+    </div>
+    <button class="pwa-install-btn" onclick="pwaInstall()">Instalar</button>
+    <button class="pwa-dismiss-btn" onclick="pwaDismiss()" aria-label="Fechar">
+        <span class="material-icons-round">close</span>
+    </button>
+</div>

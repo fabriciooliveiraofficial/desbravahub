@@ -42,10 +42,14 @@
     <meta property="twitter:url" content="<?= htmlspecialchars((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]") ?>">
     <meta property="twitter:title" content="<?= htmlspecialchars($pageTitle ?? 'DesbravaHub') ?>">
     <meta property="twitter:description" content="<?= htmlspecialchars($metaDescription ?? 'Plataforma oficial do clube. Acompanhe nossas especialidades, eventos e conquistas!') ?>">
-    <?php if (isset($profile['logo_url'])): ?>
-        <meta property="og:image" content="<?= htmlspecialchars($profile['logo_url']) ?>">
+    <?php $__ogImg = $ogImage ?? (isset($profile['logo_url']) ? $profile['logo_url'] : null); ?>
+    <?php if ($__ogImg): ?>
+        <meta property="og:image" content="<?= htmlspecialchars($__ogImg) ?>">
+        <meta property="twitter:image" content="<?= htmlspecialchars($__ogImg) ?>">
     <?php endif; ?>
 
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00ccff">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">

@@ -1031,9 +1031,9 @@ class DashboardController
                     'progress' => $progress,
                     'total_steps' => $total,
                     'completed_steps' => $answered,
-                    'category' => $p['category_name'] ?? 'Sem Categoria',
-                    'category_color' => $p['category_color'] ?? '#8b5cf6',
-                    'category_icon' => $p['category_icon'] ?? '📂',
+                    'category' => $p['category_name'] ?? 'Geral',
+                    'category_color' => $p['category_color'] ?? '#64748b',
+                    'category_icon' => $p['category_icon'] ?? '📁',
                     'type' => ($p['program_type'] === 'class') ? 'class' : 'specialty',
                     'link' => base_url($tenant['slug'] . '/aprendizado/' . $p['program_id'])
                 ];

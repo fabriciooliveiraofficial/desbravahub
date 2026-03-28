@@ -1,680 +1,534 @@
 <?php
 /**
- * Admin — Communication & Engagement Hub
+ * Communication Hub - Re-aligned with Dashboard Design
  */
-$tenantSlug  = $tenant['slug'] ?? '';
-$baseUrl     = base_url($tenantSlug . '/admin/comunicacao');
 ?>
 
-<style>
-/* ── Hub Stats ──────────────────────────────────── */
-.hub-stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 28px;
-}
-@media (max-width: 900px) { .hub-stats { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 560px) { .hub-stats { grid-template-columns: 1fr 1fr; } }
-
-.hub-stat-card {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-light);
-    border-radius: 16px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-.hub-stat-icon {
-    width: 48px; height: 48px;
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-}
-.hub-stat-icon .material-icons-round { font-size: 24px; }
-.hub-stat-value { font-size: 1.8rem; font-weight: 900; line-height: 1; }
-.hub-stat-label { font-size: 0.8rem; color: var(--text-secondary); margin-top: 3px; }
-
-/* ── Tabs ───────────────────────────────────────── */
-.hub-tabs {
-    display: flex; gap: 6px;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-    border-bottom: 2px solid var(--border-light);
-    padding-bottom: 0;
-}
-.hub-tab {
-    padding: 10px 22px;
-    border-radius: 10px 10px 0 0;
-    font-weight: 700; font-size: 0.88rem;
-    text-decoration: none;
-    color: var(--text-secondary);
-    display: flex; align-items: center; gap: 7px;
-    border: 1px solid transparent;
-    border-bottom: none;
-    margin-bottom: -2px;
-    transition: all .2s;
-}
-.hub-tab:hover { color: var(--text-primary); background: var(--bg-elevated); }
-.hub-tab.active {
-    background: var(--bg-surface);
-    color: var(--text-primary);
-    border-color: var(--border-light);
-    border-bottom-color: var(--bg-surface);
-}
-.hub-tab .badge {
-    background: var(--accent); color: #000;
-    font-size: 0.72rem; font-weight: 800;
-    padding: 1px 7px; border-radius: 20px;
-    line-height: 1.4;
-}
-.hub-tab .badge.alert { background: #ef4444; color: white; }
-
-/* ── Lead cards ──────────────────────────────────── */
-.lead-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 16px;
-}
-.lead-card {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-light);
-    border-radius: 16px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    transition: border-color .2s;
-}
-.lead-card:hover { border-color: var(--accent); }
-.lead-card__name {
-    font-size: 1.05rem; font-weight: 800;
-    display: flex; align-items: center; gap: 8px;
-}
-.lead-card__name .material-icons-round { font-size: 20px; color: var(--accent); }
-.lead-card__meta { font-size: 0.82rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px; }
-.lead-card__meta span { display: flex; align-items: center; gap: 6px; }
-.lead-card__meta .material-icons-round { font-size: 15px; color: var(--text-secondary); }
-.lead-card__msg {
-    font-size: 0.85rem; color: var(--text-primary);
-    background: var(--bg-elevated);
-    border-radius: 8px; padding: 8px 12px;
-    border-left: 3px solid var(--accent);
-    font-style: italic;
-}
-.lead-card__actions { display: flex; gap: 8px; flex-wrap: wrap; }
-
-.btn-wa {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 14px; border-radius: 10px; border: none;
-    background: #22c55e; color: #fff;
-    font-weight: 700; font-size: 0.82rem; cursor: pointer;
-    text-decoration: none; transition: opacity .2s;
-}
-.btn-wa:hover { opacity: .85; }
-.btn-email {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 14px; border-radius: 10px; border: none;
-    background: #3b82f6; color: #fff;
-    font-weight: 700; font-size: 0.82rem; cursor: pointer;
-    text-decoration: none; transition: opacity .2s;
-}
-.btn-email:hover { opacity: .85; }
-.btn-status {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 7px 12px; border-radius: 9px;
-    font-weight: 700; font-size: 0.78rem; cursor: pointer;
-    border: 1px solid var(--border-light);
-    background: var(--bg-elevated); color: var(--text-secondary);
-    transition: all .2s;
-}
-.btn-status:hover { border-color: var(--accent); color: var(--accent); }
-.btn-status .material-icons-round { font-size: 14px; }
-
-.lead-status-pill {
-    padding: 3px 10px; border-radius: 20px;
-    font-size: 0.72rem; font-weight: 700;
-    margin-left: auto;
-}
-.lead-status-pill.new        { background: rgba(0,204,255,.15); color: #00ccff; }
-.lead-status-pill.contacting { background: rgba(251,191,36,.15); color: #f59e0b; }
-.lead-status-pill.converted  { background: rgba(34,197,94,.15);  color: #22c55e; }
-.lead-status-pill.dismissed  { background: rgba(239,68,68,.15);  color: #ef4444; }
-
-/* Lead filter tabs */
-.lead-filter-tabs {
-    display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
-}
-.lead-filter-tab {
-    padding: 6px 16px; border-radius: 20px;
-    font-weight: 700; font-size: 0.82rem;
-    text-decoration: none; cursor: pointer;
-    background: var(--bg-elevated); color: var(--text-secondary);
-    border: 1px solid var(--border-light);
-    transition: all .2s;
-}
-.lead-filter-tab.active, .lead-filter-tab:hover {
-    background: var(--accent); color: #000; border-color: var(--accent);
-}
-
-/* ── Comment cards (reuse from public-comments) ── */
-.comment-card {
-    background: var(--bg-surface); border: 1px solid var(--border-light);
-    border-radius: 14px; padding: 18px; margin-bottom: 14px;
-    display: flex; flex-direction: column; gap: 10px;
-}
-.comment-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-.comment-author { font-weight: 700; }
-.comment-meta   { font-size: 0.8rem; color: var(--text-secondary); }
-.comment-body   { font-size: 0.9rem; line-height: 1.5; }
-.comment-source { font-size: 0.78rem; color: var(--text-secondary); }
-.comment-actions { display: flex; gap: 8px; }
-.btn-approve { padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; background: #22c55e; color: #fff; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; gap: 5px; }
-.btn-reject  { padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; background: #ef4444; color: #fff; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; gap: 5px; }
-.status-pill { padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
-.status-pill.pending  { background: rgba(251,191,36,.15); color: #f59e0b; }
-.status-pill.approved { background: rgba(34,197,94,.15);  color: #22c55e; }
-.status-pill.rejected { background: rgba(239,68,68,.15);  color: #ef4444; }
-
-/* ── Campaign form ──────────────────────────────── */
-.campaign-form-card {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-light);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 28px;
-}
-.campaign-form-card h3 {
-    margin: 0 0 18px;
-    font-size: 1rem; font-weight: 800;
-    display: flex; align-items: center; gap: 8px;
-}
-.campaign-list-table { width: 100%; border-collapse: collapse; }
-.campaign-list-table th,
-.campaign-list-table td { padding: 10px 14px; text-align: left; font-size: 0.85rem; border-bottom: 1px solid var(--border-light); }
-.campaign-list-table th { font-weight: 700; color: var(--text-secondary); font-size: 0.78rem; text-transform: uppercase; }
-.sent-badge { background: rgba(34,197,94,.15); color: #22c55e; border-radius: 20px; padding: 2px 9px; font-size: 0.72rem; font-weight: 700; }
-.failed-badge { background: rgba(239,68,68,.15); color: #ef4444; border-radius: 20px; padding: 2px 9px; font-size: 0.72rem; font-weight: 700; }
-.draft-badge { background: rgba(148,163,184,.15); color: #94a3b8; border-radius: 20px; padding: 2px 9px; font-size: 0.72rem; font-weight: 700; }
-
-.empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); border: 1px dashed var(--border-light); border-radius: 16px; }
-.empty-state .material-icons-round { font-size: 3rem; display: block; margin-bottom: 12px; opacity: .4; }
-</style>
-
-<!-- Page Header -->
-<div class="admin-page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:24px;">
-    <div>
-        <h1 style="margin:0; font-size:1.6rem; font-weight:800;">
-            <span class="material-icons-round" style="vertical-align:middle; color:var(--accent);">hub</span>
-            Hub de Comunicação
-        </h1>
-        <p style="margin:4px 0 0; color:var(--text-secondary); font-size:0.9rem;">Leads, comentários e campanhas — tudo em um lugar.</p>
-    </div>
-    <a href="<?= base_url('c/' . $tenantSlug) ?>" target="_blank"
-       style="display:flex; align-items:center; gap:6px; padding:8px 16px; border-radius:10px; background:var(--bg-elevated); border:1px solid var(--border-light); color:var(--text-secondary); text-decoration:none; font-size:0.85rem; font-weight:600;">
-        <span class="material-icons-round" style="font-size:18px;">open_in_new</span>
-        Ver Hub Público
-    </a>
-</div>
-
-<!-- Stats Row -->
-<div class="hub-stats">
-    <div class="hub-stat-card">
-        <div class="hub-stat-icon" style="background:rgba(0,204,255,0.12);">
-            <span class="material-icons-round" style="color:#00ccff;">person_add</span>
+<div class="stats-grid">
+    <!-- New Leads (Purple) -->
+    <div class="stat-card purple">
+        <div class="stat-card-bg-icon purple">
+            <span class="material-icons-round">person_add</span>
         </div>
-        <div>
-            <div class="hub-stat-value" style="color:#00ccff;"><?= $stats['new_leads'] ?></div>
-            <div class="hub-stat-label">Novos Leads</div>
+        <div class="stat-icon">
+            <span class="material-icons-round">person_add</span>
+        </div>
+        <div class="stat-content">
+            <span class="stat-value"><?= $stats['new_leads'] ?></span>
+            <span class="stat-label">Novos Leads</span>
         </div>
     </div>
-    <div class="hub-stat-card">
-        <div class="hub-stat-icon" style="background:rgba(251,191,36,0.12);">
-            <span class="material-icons-round" style="color:#f59e0b;">mark_chat_unread</span>
+
+    <!-- Pending Comments (Amber) -->
+    <div class="stat-card amber">
+        <div class="stat-card-bg-icon amber">
+            <span class="material-icons-round">mark_chat_unread</span>
         </div>
-        <div>
-            <div class="hub-stat-value" style="color:#f59e0b;"><?= $stats['pending_comments'] ?></div>
-            <div class="hub-stat-label">Comentários Pendentes</div>
+        <div class="stat-icon">
+            <span class="material-icons-round">mark_chat_unread</span>
         </div>
-    </div>
-    <div class="hub-stat-card">
-        <div class="hub-stat-icon" style="background:rgba(0,224,122,0.12);">
-            <span class="material-icons-round" style="color:#00e07a;">how_to_reg</span>
-        </div>
-        <div>
-            <div class="hub-stat-value" style="color:#00e07a;"><?= $stats['converted_leads'] ?></div>
-            <div class="hub-stat-label">Leads Convertidos</div>
+        <div class="stat-content">
+            <span class="stat-value"><?= $stats['pending_comments'] ?></span>
+            <span class="stat-label">Comentários Pendentes</span>
         </div>
     </div>
-    <div class="hub-stat-card">
-        <div class="hub-stat-icon" style="background:rgba(139,92,246,0.12);">
-            <span class="material-icons-round" style="color:#8b5cf6;">campaign</span>
+
+    <!-- Converted Leads (Green) -->
+    <div class="stat-card green">
+        <div class="stat-card-bg-icon green">
+            <span class="material-icons-round">verified</span>
         </div>
-        <div>
-            <div class="hub-stat-value" style="color:#8b5cf6;"><?= $stats['total_campaigns'] ?></div>
-            <div class="hub-stat-label">Campanhas</div>
+        <div class="stat-icon">
+            <span class="material-icons-round">verified</span>
+        </div>
+        <div class="stat-content">
+            <span class="stat-value"><?= $stats['converted_leads'] ?></span>
+            <span class="stat-label">Leads Convertidos</span>
         </div>
     </div>
-</div>
 
-<!-- Main Tabs -->
-<div class="hub-tabs">
-    <a href="<?= $baseUrl ?>?tab=leads" class="hub-tab <?= $tab === 'leads' ? 'active' : '' ?>">
-        <span class="material-icons-round" style="font-size:18px;">person_add</span>
-        Leads
-        <?php if ($stats['new_leads'] > 0): ?>
-        <span class="badge alert"><?= $stats['new_leads'] ?></span>
-        <?php endif; ?>
-    </a>
-    <a href="<?= $baseUrl ?>?tab=comentarios" class="hub-tab <?= $tab === 'comentarios' ? 'active' : '' ?>">
-        <span class="material-icons-round" style="font-size:18px;">comment</span>
-        Comentários
-        <?php if ($stats['pending_comments'] > 0): ?>
-        <span class="badge alert"><?= $stats['pending_comments'] ?></span>
-        <?php endif; ?>
-    </a>
-    <a href="<?= $baseUrl ?>?tab=campanhas" class="hub-tab <?= $tab === 'campanhas' ? 'active' : '' ?>">
-        <span class="material-icons-round" style="font-size:18px;">campaign</span>
-        Campanhas
-    </a>
-    <a href="<?= $baseUrl ?>?tab=galeria" class="hub-tab <?= $tab === 'galeria' ? 'active' : '' ?>">
-        <span class="material-icons-round" style="font-size:18px;">collections</span>
-        Galeria
-        <?php if ($stats['highlighted_media'] > 0): ?>
-        <span class="badge"><?= $stats['highlighted_media'] ?></span>
-        <?php endif; ?>
-    </a>
-</div>
-
-<?php /* ══ TAB: LEADS ══════════════════════════════════════════════ */ ?>
-<?php if ($tab === 'leads'): ?>
-
-<div class="lead-filter-tabs">
-    <?php
-    $leadLabels = ['new' => 'Novos', 'contacting' => 'Em Contato', 'converted' => 'Convertidos', 'dismissed' => 'Descartados'];
-    $currentLeadFilter = $_GET['lead_status'] ?? 'new';
-    foreach ($leadLabels as $key => $label):
-    ?>
-    <a href="<?= $baseUrl ?>?tab=leads&lead_status=<?= $key ?>" class="lead-filter-tab <?= $currentLeadFilter === $key ? 'active' : '' ?>">
-        <?= $label ?> <span style="opacity:.7;">(<?= $leadCounts[$key] ?>)</span>
-    </a>
-    <?php endforeach; ?>
-</div>
-
-<?php
-$filteredLeads = array_filter($leads, fn($l) => $l['status'] === $currentLeadFilter);
-$filteredLeads = array_values($filteredLeads);
-?>
-
-<?php if (empty($filteredLeads)): ?>
-<div class="empty-state">
-    <span class="material-icons-round">person_search</span>
-    Nenhum lead com status "<?= htmlspecialchars($leadLabels[$currentLeadFilter] ?? $currentLeadFilter) ?>".
-    <?php if ($currentLeadFilter === 'new'): ?>
-    <p style="margin-top:8px;font-size:0.85rem;">Quando visitantes clicarem em "Quero Participar" no Hub Público, aparecerão aqui.</p>
-    <?php endif; ?>
-</div>
-<?php else: ?>
-<div class="lead-grid">
-<?php foreach ($filteredLeads as $lead): ?>
-<div class="lead-card" id="lead-<?= $lead['id'] ?>">
-    <div class="lead-card__name">
-        <span class="material-icons-round">person</span>
-        <?= htmlspecialchars($lead['name']) ?>
-        <span class="lead-status-pill <?= $lead['status'] ?>" style="margin-left:auto;">
-            <?= $leadLabels[$lead['status']] ?? $lead['status'] ?>
-        </span>
-    </div>
-    <div class="lead-card__meta">
-        <?php if ($lead['phone']): ?>
-        <span>
-            <span class="material-icons-round">phone</span>
-            <?= htmlspecialchars($lead['phone']) ?>
-        </span>
-        <?php endif; ?>
-        <?php if ($lead['email']): ?>
-        <span>
-            <span class="material-icons-round">email</span>
-            <?= htmlspecialchars($lead['email']) ?>
-        </span>
-        <?php endif; ?>
-        <span>
-            <span class="material-icons-round">schedule</span>
-            <?= date('d/m/Y H:i', strtotime($lead['created_at'])) ?>
-        </span>
-    </div>
-    <?php if ($lead['message']): ?>
-    <div class="lead-card__msg">"<?= htmlspecialchars($lead['message']) ?>"</div>
-    <?php endif; ?>
-    <div class="lead-card__actions">
-        <?php if ($lead['phone']): ?>
-        <?php $waMsg = urlencode("Olá {$lead['name']}! Vi que você tem interesse em conhecer o nosso clube Desbravador. Posso te ajudar com mais informações?"); ?>
-        <a href="https://wa.me/<?= preg_replace('/\D/', '', $lead['phone']) ?>?text=<?= $waMsg ?>"
-           target="_blank" class="btn-wa" onclick="markContacting(<?= $lead['id'] ?>)">
-            <span class="material-icons-round" style="font-size:16px;">chat</span> WhatsApp
-        </a>
-        <?php endif; ?>
-        <?php if ($lead['email']): ?>
-        <a href="mailto:<?= htmlspecialchars($lead['email']) ?>?subject=Clube+Desbravador+–+Informações&body=Olá+<?= urlencode($lead['name']) ?>%2C%0A%0AObrigado+pelo+interesse...%0A"
-           class="btn-email" onclick="markContacting(<?= $lead['id'] ?>)">
-            <span class="material-icons-round" style="font-size:16px;">mail</span> E-mail
-        </a>
-        <?php endif; ?>
-        <?php if ($lead['status'] !== 'converted'): ?>
-        <button class="btn-status" onclick="updateLeadStatus(<?= $lead['id'] ?>, 'converted')">
-            <span class="material-icons-round">how_to_reg</span> Convertido
-        </button>
-        <?php endif; ?>
-        <?php if ($lead['status'] !== 'dismissed'): ?>
-        <button class="btn-status" onclick="updateLeadStatus(<?= $lead['id'] ?>, 'dismissed')" style="color:#ef4444;border-color:rgba(239,68,68,0.3);">
-            <span class="material-icons-round">block</span> Descartar
-        </button>
-        <?php endif; ?>
-    </div>
-</div>
-<?php endforeach; ?>
-</div>
-<?php endif; ?>
-
-<?php /* ══ TAB: COMENTÁRIOS ═════════════════════════════════════════ */ ?>
-<?php elseif ($tab === 'comentarios'): ?>
-
-<div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
-<?php
-$cTabLabels = ['pending' => 'Pendentes', 'approved' => 'Aprovados', 'rejected' => 'Rejeitados'];
-foreach ($cTabLabels as $key => $label):
-    $isActive = $commentStatusFilter === $key;
-?>
-<a href="<?= $baseUrl ?>?tab=comentarios&comment_status=<?= $key ?>"
-   style="padding:6px 16px; border-radius:20px; font-weight:700; font-size:0.82rem; text-decoration:none;
-          background:<?= $isActive ? 'var(--accent)' : 'var(--bg-elevated)' ?>;
-          color:<?= $isActive ? '#000' : 'var(--text-secondary)' ?>;
-          border:1px solid <?= $isActive ? 'var(--accent)' : 'var(--border-light)' ?>;">
-    <?= $label ?> (<?= $commentCounts[$key] ?? 0 ?>)
-</a>
-<?php endforeach; ?>
-</div>
-
-<?php if (empty($comments)): ?>
-<div class="empty-state">
-    <span class="material-icons-round">inbox</span>
-    Nenhum comentário com status "<?= htmlspecialchars($commentStatusFilter) ?>".
-</div>
-<?php else: ?>
-<?php foreach ($comments as $c): ?>
-<div class="comment-card" id="comment-<?= $c['id'] ?>">
-    <div class="comment-header">
-        <div>
-            <span class="comment-author"><?= htmlspecialchars($c['author_name']) ?></span>
-            <span class="comment-meta"> • <?= date('d/m/Y H:i', strtotime($c['created_at'])) ?></span>
-        </div>
-        <span class="status-pill <?= $c['status'] ?>"><?= ucfirst($c['status']) ?></span>
-    </div>
-    <div class="comment-body"><?= nl2br(htmlspecialchars($c['content'])) ?></div>
-    <div class="comment-source">Mídia: <strong><?= htmlspecialchars($c['source_type']) ?> #<?= (int)$c['source_id'] ?></strong></div>
-    <?php if ($c['status'] === 'pending'): ?>
-    <div class="comment-actions">
-        <button class="btn-approve" onclick="moderateComment(<?= $c['id'] ?>, 'approved', this)">
-            <span class="material-icons-round" style="font-size:16px;">check</span> Aprovar
-        </button>
-        <button class="btn-reject" onclick="moderateComment(<?= $c['id'] ?>, 'rejected', this)">
-            <span class="material-icons-round" style="font-size:16px;">close</span> Rejeitar
-        </button>
-    </div>
-    <?php elseif ($c['status'] === 'approved'): ?>
-    <div class="comment-actions">
-        <button class="btn-reject" onclick="moderateComment(<?= $c['id'] ?>, 'rejected', this)">
-            <span class="material-icons-round" style="font-size:16px;">close</span> Rejeitar
-        </button>
-    </div>
-    <?php else: ?>
-    <div class="comment-actions">
-        <button class="btn-approve" onclick="moderateComment(<?= $c['id'] ?>, 'approved', this)">
-            <span class="material-icons-round" style="font-size:16px;">check</span> Aprovar
-        </button>
-    </div>
-    <?php endif; ?>
-</div>
-<?php endforeach; ?>
-<?php endif; ?>
-
-<?php /* ══ TAB: CAMPANHAS ══════════════════════════════════════════ */ ?>
-<?php elseif ($tab === 'campanhas'): ?>
-
-<div class="campaign-form-card">
-    <h3>
-        <span class="material-icons-round" style="color:#8b5cf6;">send</span>
-        Nova Campanha
-    </h3>
-    <form id="campaignForm">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-            <div class="form-group" style="margin:0;">
-                <label>Título</label>
-                <input type="text" name="title" class="form-control" required placeholder="Ex: Evento de Abertura do Ano">
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-                <div class="form-group" style="margin:0;">
-                    <label>Tipo</label>
-                    <select name="type" class="form-control" style="background:var(--bg-dashboard);border:1px solid var(--border-light);color:var(--text-primary);padding:12px;border-radius:8px;width:100%;">
-                        <option value="push">Push</option>
-                        <option value="email">E-mail</option>
-                        <option value="blast">Push + E-mail</option>
-                    </select>
-                </div>
-                <div class="form-group" style="margin:0;">
-                    <label>Público</label>
-                    <select name="target_group" class="form-control" style="background:var(--bg-dashboard);border:1px solid var(--border-light);color:var(--text-primary);padding:12px;border-radius:8px;width:100%;">
-                        <option value="members">Membros</option>
-                        <option value="all">Todos</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-        <div class="form-group" style="margin-bottom:16px;">
-            <label>Mensagem</label>
-            <textarea name="content" class="form-control" rows="3" required placeholder="Escreva a mensagem da campanha..."></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary" style="display:flex;align-items:center;gap:8px;">
-            <span class="material-icons-round">send</span> Enviar Campanha
-        </button>
-    </form>
-</div>
-
-<div class="dashboard-card">
-    <header class="dashboard-card-header">
-        <span class="material-icons-round" style="color:#8b5cf6;">history</span>
-        <h3>Histórico de Campanhas</h3>
-    </header>
-    <div class="dashboard-card-body" style="padding:0;">
-        <?php if (empty($campaigns)): ?>
-        <div class="empty-state" style="border:none;">
+    <!-- Total Campaigns (Pink) -->
+    <div class="stat-card pink">
+        <div class="stat-card-bg-icon pink">
             <span class="material-icons-round">campaign</span>
-            Nenhuma campanha enviada ainda.
         </div>
-        <?php else: ?>
-        <table class="campaign-list-table">
-            <thead>
-                <tr>
-                    <th>Título</th><th>Tipo</th><th>Público</th><th>Enviados</th><th>Status</th><th>Data</th>
-                </tr>
-            </thead>
-            <tbody>
-            <?php foreach ($campaigns as $c): ?>
-            <tr>
-                <td style="font-weight:600;"><?= htmlspecialchars($c['title']) ?></td>
-                <td><?= strtoupper($c['type']) ?></td>
-                <td><?= ucfirst($c['target_group']) ?></td>
-                <td><?= number_format($c['sent_count']) ?></td>
-                <td>
-                    <?php if ($c['status'] === 'sent'): ?>
-                    <span class="sent-badge">Enviado</span>
-                    <?php elseif ($c['status'] === 'failed'): ?>
-                    <span class="failed-badge">Falhou</span>
-                    <?php else: ?>
-                    <span class="draft-badge">Rascunho</span>
-                    <?php endif; ?>
-                </td>
-                <td><?= $c['sent_at'] ? date('d/m/Y H:i', strtotime($c['sent_at'])) : date('d/m/Y', strtotime($c['created_at'])) ?></td>
-            </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table>
-        <?php endif; ?>
+        <div class="stat-icon">
+            <span class="material-icons-round">campaign</span>
+        </div>
+        <div class="stat-content">
+            <span class="stat-value"><?= $stats['total_campaigns'] ?></span>
+            <span class="stat-label">Campanhas Enviadas</span>
+        </div>
     </div>
 </div>
 
-<?php /* ══ TAB: GALERIA ════════════════════════════════════════════ */ ?>
-<?php else: ?>
-
-<div class="gallery-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:20px;">
-    <?php if (empty($highlightedMedia)): ?>
-    <div class="empty-state" style="grid-column:1/-1;">
-        <span class="material-icons-round">auto_awesome_motion</span>
-        Nenhuma mídia em destaque no Hub Público.
-        <p style="margin-top:8px; font-size:0.85rem;">Mídias destacadas durante as avaliações aparecerão aqui.</p>
+<!-- Main Navigation Tabs (Dashboard Styled) -->
+<div class="dashboard-card" style="margin-bottom: 2rem;">
+    <div class="dashboard-card-body" style="padding: 1rem;">
+        <nav class="hub-nav" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <?php 
+                $tabs = [
+                    'leads'     => ['icon' => 'group', 'label' => 'Leads'],
+                    'comentarios'  => ['icon' => 'forum', 'label' => 'Moderação'],
+                    'campanhas' => ['icon' => 'send', 'label' => 'Campanhas'],
+                    'galeria'   => ['icon' => 'photo_library', 'label' => 'Galeria'],
+                ];
+                foreach ($tabs as $id => $t):
+                    $active = ($tab === $id);
+            ?>
+                <a href="?tab=<?= $id ?>" class="btn <?= $active ? 'btn-primary' : 'btn-secondary' ?> btn-sm">
+                    <span class="material-icons-round" style="font-size: 18px;"><?= $t['icon'] ?></span>
+                    <?= $t['label'] ?>
+                </a>
+            <?php endforeach; ?>
+        </nav>
     </div>
-    <?php else: ?>
-    <?php foreach ($highlightedMedia as $media): ?>
-    <div class="media-highlight-card" id="media-<?= $media['id'] ?>" 
-         style="background:var(--bg-surface); border:1px solid var(--border-light); border-radius:18px; overflow:hidden; display:flex; flex-direction:column; transition:transform .2s;">
-        
-        <!-- Media Preview -->
-        <div style="aspect-ratio:16/9; background:#000; position:relative; overflow:hidden;">
-            <?php if ($media['thumbnail_url']): ?>
-                <img src="<?= htmlspecialchars($media['thumbnail_url']) ?>" style="width:100%; height:100%; object-fit:cover;">
-            <?php else: ?>
-                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.2);">
-                    <span class="material-icons-round" style="font-size:40px;">play_circle_outline</span>
-                </div>
-            <?php endif; ?>
-            <div style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); color:#fff; padding:4px 8px; border-radius:6px; font-size:0.65rem; font-weight:800; text-transform:uppercase;">
-                <?= htmlspecialchars($media['source_type'] === 'step' ? 'Missão' : 'Atividade') ?>
-            </div>
-        </div>
+</div>
 
-        <div style="padding:15px; flex:1; display:flex; flex-direction:column; gap:8px;">
-            <div style="font-weight:800; font-size:0.9rem; line-height:1.3;"><?= htmlspecialchars($media['source_title']) ?></div>
-            <div style="font-size:0.75rem; color:var(--text-secondary); display:flex; align-items:center; gap:5px;">
-                <span class="material-icons-round" style="font-size:14px;">person</span>
-                <?= htmlspecialchars($media['user_name']) ?>
+<div class="dashboard-grid" id="hub-content-area" style="grid-template-columns: 1fr;">
+    <?php if ($tab === 'leads'): ?>
+        <!-- LEADS SECTION -->
+        <section class="dashboard-card">
+            <div class="dashboard-card-header">
+                <span class="material-icons-round" style="color: var(--accent-purple);">people</span>
+                <h3>Gerenciamento de Leads</h3>
+                <div style="margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap;">
+                     <?php 
+                     $leadStatusFilter = $_GET['lead_status'] ?? 'new';
+                     foreach(['new' => 'Novos', 'contacting' => 'Em Contato', 'converted' => 'Convertidos', 'dismissed' => 'Arquivados'] as $sf => $sl): ?>
+                        <a href="?tab=leads&lead_status=<?= $sf ?>" class="btn btn-sm <?= ($leadStatusFilter === $sf) ? 'btn-primary' : 'btn-secondary' ?>" style="font-size: 11px; padding: 4px 10px;">
+                            <?= $sl ?> (<?= $leadCounts[$sf] ?>)
+                        </a>
+                     <?php endforeach; ?>
+                </div>
             </div>
             
-            <div style="margin-top:auto; padding-top:12px; border-top:1px solid var(--border-light); display:flex; gap:8px;">
-                <a href="<?= htmlspecialchars($media['media_url']) ?>" target="_blank" 
-                   style="flex:1; display:flex; align-items:center; justify-content:center; gap:5px; padding:8px; border-radius:10px; background:var(--bg-elevated); border:1px solid var(--border-light); color:var(--text-secondary); text-decoration:none; font-size:0.75rem; font-weight:700;">
-                    <span class="material-icons-round" style="font-size:16px;">visibility</span> Ver Link
-                </a>
-                <button onclick="unhighlightFromHub(<?= $media['id'] ?>, this)" 
-                        style="flex:1; display:flex; align-items:center; justify-content:center; gap:5px; padding:8px; border-radius:10px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#ef4444; border:none; cursor:pointer; font-size:0.75rem; font-weight:700;">
-                    <span class="material-icons-round" style="font-size:16px;">star_outline</span> Remover
-                </button>
+            <div class="dashboard-card-body">
+                <?php 
+                $filteredLeads = array_filter($leads, fn($l) => $l['status'] === $leadStatusFilter);
+                if (empty($filteredLeads)): ?>
+                    <div style="text-align: center; padding: 3rem; opacity: 0.5;">
+                        <span class="material-icons-round" style="font-size: 48px;">person_search</span>
+                        <p>Nenhum lead encontrado nesta categoria.</p>
+                    </div>
+                <?php else: ?>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+                        <?php foreach($filteredLeads as $lead): ?>
+                            <div class="dashboard-card" id="lead-<?= $lead['id'] ?>" style="box-shadow: none; border: 1px solid var(--border-color); background: var(--bg-hover); transform: none; animation: none;">
+                                <div class="dashboard-card-body">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                        <div>
+                                            <h4 style="margin: 0; font-size: 1rem; color: var(--text-dark);"><?= htmlspecialchars($lead['name']) ?></h4>
+                                            <span style="font-size: 0.75rem; opacity: 0.6; display: block; margin-top: 2px;">
+                                                <?= date('d/m/Y H:i', strtotime($lead['created_at'])) ?>
+                                            </span>
+                                        </div>
+                                        <span class="badge badge-<?= ($lead['status'] === 'new') ? 'info' : (($lead['status'] === 'converted') ? 'success' : 'warning') ?>" style="text-transform: capitalize;">
+                                            <?= $lead['status'] ?>
+                                        </span>
+                                    </div>
+
+                                    <?php if ($lead['message']): ?>
+                                        <div style="font-size: 0.85rem; background: var(--bg-card); padding: 10px; border-radius: 8px; border-left: 3px solid var(--primary); margin-bottom: 15px; font-style: italic;">
+                                            "<?= htmlspecialchars($lead['message']) ?>"
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+                                        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">
+                                            <span class="material-icons-round" style="font-size: 16px; color: var(--primary);">phone</span>
+                                            <a href="tel:<?= $lead['phone'] ?>" style="color: inherit; text-decoration: none;"><?= htmlspecialchars($lead['phone'] ?? 'N/A') ?></a>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">
+                                            <span class="material-icons-round" style="font-size: 16px; color: var(--primary);">email</span>
+                                            <span style="overflow: hidden; text-overflow: ellipsis;"><?= htmlspecialchars($lead['email'] ?? 'N/A') ?></span>
+                                        </div>
+                                    </div>
+
+                                    <div style="display: flex; gap: 8px; margin-top: auto;">
+                                        <?php if ($lead['phone']): ?>
+                                            <?php $waMsg = urlencode("Olá " . explode(' ', $lead['name'])[0] . "! Recebemos seu interesse em participar do Clube de Desbravadores. Vamos conversar?"); ?>
+                                            <a href="https://wa.me/<?= preg_replace('/\D/', '', $lead['phone']) ?>?text=<?= $waMsg ?>" target="_blank" onclick="markContacting(<?= $lead['id'] ?>)" class="btn btn-success btn-sm" style="flex: 1;">
+                                                <i class="fab fa-whatsapp"></i> WhatsApp
+                                            </a>
+                                        <?php endif; ?>
+                                        
+                                        <?php if ($lead['status'] !== 'converted'): ?>
+                                            <button onclick="updateLeadStatus(<?= $lead['id'] ?>, 'converted')" class="btn btn-primary btn-sm" style="flex: 1;">
+                                                <span class="material-icons-round" style="font-size: 16px;">verified</span> Converter
+                                            </button>
+                                        <?php endif; ?>
+
+                                        <button onclick="updateLeadStatus(<?= $lead['id'] ?>, 'dismissed')" class="btn btn-secondary btn-sm" title="Arquivar">
+                                            <span class="material-icons-round" style="font-size: 16px;">archive</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </div>
+        </section>
+
+    <?php elseif ($tab === 'comentarios'): ?>
+        <!-- COMMENTS SECTION -->
+        <section class="dashboard-card">
+            <div class="dashboard-card-header">
+                <span class="material-icons-round" style="color: var(--accent-amber);">forum</span>
+                <h3>Moderação de Comentários</h3>
+                <div style="margin-left: auto; display: flex; gap: 8px;">
+                    <a href="?tab=comentarios&comment_status=pending" class="btn btn-sm <?= ($commentStatusFilter === 'pending') ? 'btn-primary' : 'btn-secondary' ?>">Pendentes (<?= $commentCounts['pending'] ?>)</a>
+                    <a href="?tab=comentarios&comment_status=approved" class="btn btn-sm <?= ($commentStatusFilter === 'approved') ? 'btn-primary' : 'btn-secondary' ?>">Aprovados (<?= $commentCounts['approved'] ?>)</a>
+                </div>
+            </div>
+            
+            <div class="dashboard-card-body">
+                <?php if (empty($comments)): ?>
+                    <div style="text-align: center; padding: 3rem; opacity: 0.5;">
+                        <span class="material-icons-round" style="font-size: 48px;">chat_bubble_outline</span>
+                        <p>Nenhum comentário nesta fila.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="summary-list">
+                        <?php foreach($comments as $comment): ?>
+                            <div class="summary-item" id="comment-<?= $comment['id'] ?>" style="padding: 1.25rem 0; align-items: flex-start; gap: 1.5rem;">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 8px;">
+                                        <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--bg-dark); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: var(--primary); border: 1px solid var(--border-color);">
+                                            <?= strtoupper(substr($comment['author_name'], 0, 1)) ?>
+                                        </div>
+                                        <div>
+                                            <div style="font-weight: 700; color: var(--text-dark); font-size: 0.95rem;"><?= htmlspecialchars($comment['author_name']) ?></div>
+                                            <div style="font-size: 0.75rem; opacity: 0.6;"><?= date('d/m/Y H:i', strtotime($comment['created_at'])) ?></div>
+                                        </div>
+                                    </div>
+                                    <p style="margin: 0; font-size: 0.95rem; line-height: 1.6; color: var(--text-main); background: var(--bg-hover); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color);">
+                                        "<?= htmlspecialchars($comment['content']) ?>"
+                                    </p>
+                                    <div style="margin-top: 8px; font-size: 0.7rem; color: var(--text-muted); opacity: 0.8; padding-left: 4px;">
+                                        Origem: <?= htmlspecialchars($comment['source_type']) ?> #<?= $comment['source_id'] ?>
+                                    </div>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <?php if ($comment['status'] === 'pending'): ?>
+                                        <button onclick="moderateComment(<?= $comment['id'] ?>, 'approved')" class="btn btn-success btn-sm">
+                                            <span class="material-icons-round" style="font-size: 16px;">check</span> Aprovar
+                                        </button>
+                                        <button onclick="moderateComment(<?= $comment['id'] ?>, 'rejected')" class="btn btn-secondary btn-sm">
+                                            <span class="material-icons-round" style="font-size: 16px;">close</span> Rejeitar
+                                        </button>
+                                    <?php else: ?>
+                                        <span class="badge badge-<?= ($comment['status'] === 'approved') ? 'success' : 'danger' ?>">
+                                            <?= $comment['status'] === 'approved' ? 'Aprovado' : 'Rejeitado' ?>
+                                        </span>
+                                        <?php if ($comment['status'] === 'approved'): ?>
+                                            <button onclick="moderateComment(<?= $comment['id'] ?>, 'rejected')" class="btn btn-secondary btn-sm" style="margin-top: 4px; font-size: 10px;">Reverter</button>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+
+    <?php elseif ($tab === 'campanhas'): ?>
+        <!-- CAMPAIGNS SECTION -->
+        <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 1.5rem;">
+            <!-- New Campaign -->
+            <section class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <span class="material-icons-round" style="color: var(--accent-emerald);">campaign</span>
+                    <h3>Nova Campanha</h3>
+                </div>
+                <div class="dashboard-card-body">
+                    <form id="campaignForm" onsubmit="sendCampaign(event)">
+                        <div class="form-group">
+                            <label>Título da Campanha</label>
+                            <input type="text" name="title" class="form-control" placeholder="Título que aparecerá na notificação" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Conteúdo</label>
+                            <textarea name="content" class="form-control" style="min-height: 120px;" placeholder="Mensagem principal..." required></textarea>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div class="form-group">
+                                <label>Canal</label>
+                                <select name="type" class="form-control">
+                                    <option value="push">Push Notification</option>
+                                    <option value="email">E-mail</option>
+                                    <option value="blast" selected>Multicanal (Ambos)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Público</label>
+                                <select name="target_group" class="form-control">
+                                    <option value="members">Membros Ativos</option>
+                                    <option value="leads">Apenas Leads</option>
+                                    <option value="all">Públio Geral</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                            <span class="material-icons-round">rocket_launch</span> Disparar Campanha
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- History -->
+            <section class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <span class="material-icons-round" style="color: var(--accent-pink);">history</span>
+                    <h3>Histórico de Campanhas</h3>
+                </div>
+                <div class="dashboard-card-body" style="padding: 0;">
+                    <div class="table-container" style="border: none; border-radius: 0; box-shadow: none;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Criação</th>
+                                    <th>Campanha</th>
+                                    <th>Status</th>
+                                    <th style="text-align: right;">Envios</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($campaigns)): ?>
+                                    <tr><td colspan="4" style="text-align:center; padding: 2rem; opacity: 0.5;">Nenhuma campanha anterior.</td></tr>
+                                <?php endif; ?>
+                                <?php foreach($campaigns as $camp): ?>
+                                    <tr>
+                                        <td>
+                                            <div style="font-size: 0.85rem; font-weight: 600;"><?= date('d M', strtotime($camp['created_at'])) ?></div>
+                                            <div style="font-size: 0.7rem; opacity: 0.6;"><?= date('H:i', strtotime($camp['created_at'])) ?></div>
+                                        </td>
+                                        <td>
+                                            <div style="font-weight: 600; color: var(--text-dark);"><?= htmlspecialchars($camp['title']) ?></div>
+                                            <div style="font-size: 0.7rem; opacity: 0.6;">Tipo: <?= strtoupper($camp['type']) ?> • Por: <?= htmlspecialchars($camp['creator_name'] ?? 'Sistema') ?></div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-<?= ($camp['status'] === 'sent') ? 'success' : (($camp['status'] === 'failed') ? 'danger' : 'warning') ?>">
+                                                <?= $camp['status'] ?>
+                                            </span>
+                                        </td>
+                                        <td style="text-align: right;">
+                                            <span style="font-weight: 700; font-size: 1.1rem; color: var(--primary);"><?= $camp['sent_count'] ?></span>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
         </div>
-    </div>
-    <?php endforeach; ?>
+
+    <?php elseif ($tab === 'galeria'): ?>
+        <!-- GALLERY SECTION -->
+        <section class="dashboard-card">
+            <div class="dashboard-card-header">
+                <span class="material-icons-round" style="color: var(--accent-emerald);">photo_library</span>
+                <h3>Destaques Públicos (Galeria)</h3>
+                <div style="margin-left: auto;">
+                    <span class="badge badge-info"><?= count($highlightedMedia) ?> Itens Ativos</span>
+                </div>
+            </div>
+            <div class="dashboard-card-body">
+                <div style="background: var(--bg-hover); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 2rem; display: flex; align-items: center; gap: 10px;">
+                    <span class="material-icons-round" style="color: var(--primary);">info</span>
+                    <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">
+                        Estes itens são exibidos na página pública do clube. Mídias são adicionadas aqui a partir da revisão de provas (Botão "Destacar").
+                    </p>
+                </div>
+
+                <?php if (empty($highlightedMedia)): ?>
+                    <div style="text-align: center; padding: 4rem; opacity: 0.3;">
+                        <span class="material-icons-round" style="font-size: 64px;">filter_none</span>
+                        <p>Nenhuma mídia destacada no momento.</p>
+                    </div>
+                <?php else: ?>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                        <?php foreach($highlightedMedia as $media): 
+                            $rawUrl = $media['media_url'];
+                            $isJson = ($rawUrl && ($rawUrl[0] === '[' || $rawUrl[0] === '{'));
+                            $displayUrl = $isJson ? json_decode($rawUrl, true)[0] ?? '' : $rawUrl;
+                        ?>
+                            <div class="specialty-card" style="padding: 0; overflow: hidden; height: 100%;" id="media-<?= $media['id'] ?>">
+                                <div style="height: 180px; position: relative; background: #000;">
+                                    <img src="<?= $displayUrl ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/assets/images/placeholder-media.png'">
+                                    <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px;">
+                                        <a href="<?= $displayUrl ?>" target="_blank" class="btn btn-secondary btn-sm" style="padding: 6px; border-radius: 50%; min-width: 32px; height: 32px; background: rgba(255,255,255,0.9); border: none;">
+                                            <span class="material-icons-round" style="font-size: 18px; color: var(--text-dark);">visibility</span>
+                                        </a>
+                                        <button onclick="unhighlightMedia(<?= $media['id'] ?>)" class="btn btn-danger btn-sm" style="padding: 6px; border-radius: 50%; min-width: 32px; height: 32px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                                            <span class="material-icons-round" style="font-size: 18px;">close</span>
+                                        </button>
+                                    </div>
+                                    <div style="position: absolute; bottom: 10px; left: 10px;">
+                                        <span class="badge" style="background: var(--primary); color: white; border: none; padding: 4px 10px;"><?= strtoupper($media['source_type']) ?></span>
+                                    </div>
+                                </div>
+                                <div style="padding: 1.25rem;">
+                                    <h5 style="margin: 0 0 8px 0; font-size: 0.95rem; font-weight: 700; color: var(--text-dark); line-height: 1.5; height: 2.8em; overflow: hidden;"><?= htmlspecialchars($media['source_title']) ?></h5>
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 0.8rem; color: var(--text-muted); padding-top: 12px; border-top: 1px solid var(--border-color);">
+                                        <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--bg-dark); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700;">
+                                            <?= strtoupper(substr($media['user_name'] ?? 'M', 0, 1)) ?>
+                                        </div>
+                                        <span><?= htmlspecialchars($media['user_name'] ?? 'Membro') ?></span>
+                                        <span style="margin-left: auto; opacity: 0.6; font-size: 0.7rem;"><?= date('d/m/Y', strtotime($media['created_at'])) ?></span>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
     <?php endif; ?>
 </div>
 
-<?php endif; ?>
-
 <script>
-const HUB_BASE = '<?= base_url($tenantSlug . '/admin/comunicacao') ?>';
+/**
+ * Hub Actions
+ */
+const HUB_ENDPOINT = '<?= base_url($tenant['slug'] . '/admin/comunicacao') ?>';
 
-// ── Lead actions ──────────────────────────────────────────────────────────────
-function markContacting(id) {
-    fetch(`${HUB_BASE}/leads/${id}/update`, {
-        method: 'POST',
-        body: new URLSearchParams({ status: 'contacting', channel: 'whatsapp' })
-    });
-    const pill = document.querySelector(`#lead-${id} .lead-status-pill`);
-    if (pill) { pill.className = 'lead-status-pill contacting'; pill.textContent = 'Em Contato'; }
+async function markContacting(id) {
+    // Silently mark as contacting when starting WA chat
+    try {
+        const formData = new FormData();
+        formData.append('status', 'contacting');
+        formData.append('channel', 'whatsapp');
+        await fetch(`${HUB_ENDPOINT}/leads/${id}/update`, { method: 'POST', body: formData });
+        
+        // Update UI locally
+        const card = document.getElementById('lead-' + id);
+        if (card) {
+            const badge = card.querySelector('.badge');
+            if (badge) {
+                badge.className = 'badge badge-warning';
+                badge.textContent = 'contacting';
+            }
+        }
+    } catch (err) { console.error('Auto-contact log failed', err); }
 }
 
 async function updateLeadStatus(id, status) {
-    const card = document.getElementById('lead-' + id);
-    const res = await fetch(`${HUB_BASE}/leads/${id}/update`, {
-        method: 'POST',
-        body: new URLSearchParams({ status })
-    });
-    const data = await res.json();
-    if (data.success) {
-        card.style.transition = 'opacity .3s';
-        card.style.opacity = '0';
-        setTimeout(() => card.remove(), 320);
-    }
-}
-
-// ── Comment moderation ────────────────────────────────────────────────────────
-async function moderateComment(id, action, btn) {
-    btn.disabled = true; btn.style.opacity = '.6';
-    const fd = new FormData();
-    fd.append('action', action);
-    const res  = await fetch(`${HUB_BASE}/comentarios/${id}/update`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.success) {
-        const card = document.getElementById('comment-' + id);
-        card.style.transition = 'opacity .3s, transform .3s';
-        card.style.opacity    = '0';
-        card.style.transform  = 'translateX(20px)';
-        setTimeout(() => card.remove(), 320);
-    } else {
-        alert('Erro: ' + (data.error || 'Falha'));
-        btn.disabled = false; btn.style.opacity = '1';
-    }
-}
-
-// ── Campaign form ─────────────────────────────────────────────────────────────
-const campaignForm = document.getElementById('campaignForm');
-if (campaignForm) {
-    campaignForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = campaignForm.querySelector('[type="submit"]');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="material-icons-round" style="animation:spin 1s linear infinite;">sync</span> Enviando...';
-        const fd = new FormData(campaignForm);
-        try {
-            const res  = await fetch(`${HUB_BASE}/campanhas/enviar`, { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } });
-            const data = await res.json();
-            if (data.success) {
-                alert('✅ ' + data.message);
-                campaignForm.reset();
-                setTimeout(() => location.reload(), 800);
-            } else {
-                alert('❌ ' + (data.error || 'Erro ao enviar'));
-            }
-        } catch(err) {
-            alert('Erro de conexão.');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<span class="material-icons-round">send</span> Enviar Campanha';
-        }
-    });
-}
-// ── Gallery Management ───────────────────────────────────────────────────────
-async function unhighlightFromHub(id, btn) {
-    if (!confirm('Deseja remover esta mídia do Hub Público?')) return;
+    if (status === 'dismissed' && !confirm('Arquivar este lead permanentemente?')) return;
     
-    btn.disabled = true; btn.style.opacity = '.6';
     try {
-        const res  = await fetch(`${HUB_BASE}/galeria/${id}/unhighlight`, { method: 'POST' });
-        const data = await res.json();
+        const formData = new FormData();
+        formData.append('status', status);
+        
+        const response = await fetch(`${HUB_ENDPOINT}/leads/${id}/update`, { method: 'POST', body: formData });
+        const data = await response.json();
+        
         if (data.success) {
-            const card = document.getElementById('media-' + id);
-            card.style.transition = 'opacity .3s, transform .3s';
-            card.style.opacity    = '0';
-            card.style.transform  = 'scale(0.9)';
-            setTimeout(() => card.remove(), 320);
+            window.toast?.success('Lead atualizado com sucesso!');
+            const card = document.getElementById('lead-' + id);
+            card.style.transition = 'all 0.4s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.95)';
+            setTimeout(() => card.remove(), 400);
         } else {
-            alert('Erro: ' + (data.error || 'Falha'));
-            btn.disabled = false; btn.style.opacity = '1';
+            alert(data.error || 'Erro ao processar');
         }
-    } catch(err) {
-        alert('Erro de conexão.');
-        btn.disabled = false; btn.style.opacity = '1';
+    } catch (err) { console.error(err); }
+}
+
+async function moderateComment(id, action) {
+    try {
+        const formData = new FormData();
+        formData.append('action', action);
+        
+        const response = await fetch(`${HUB_ENDPOINT}/comentarios/${id}/update`, { method: 'POST', body: formData });
+        const data = await response.json();
+        
+        if (data.success) {
+            window.toast?.success(action === 'approved' ? 'Comentário publicado!' : 'Comentário removido.');
+            const item = document.getElementById('comment-' + id);
+            item.style.transition = 'all 0.4s ease';
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(20px)';
+            setTimeout(() => item.remove(), 400);
+        } else {
+            alert(data.error || 'Erro na moderação');
+        }
+    } catch (err) { console.error(err); }
+}
+
+async function sendCampaign(event) {
+    event.preventDefault();
+    const form = event.target;
+    const btn = form.querySelector('button[type="submit"]');
+    const originalContent = btn.innerHTML;
+    
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-icons-round rotating" style="font-size: 18px;">sync</span> Enviando...';
+        
+        const formData = new FormData(form);
+        const response = await fetch(`${HUB_ENDPOINT}/campanhas/enviar`, { method: 'POST', body: formData });
+        const data = await response.json();
+        
+        if (data.success) {
+            window.toast?.success(data.message);
+            form.reset();
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            alert(data.error || 'Erro ao enviar campanha');
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
+    } catch (err) {
+        console.error(err);
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
     }
+}
+
+async function unhighlightMedia(id) {
+    if (!confirm('Remover este item da galeria pública?')) return;
+    
+    try {
+        const response = await fetch(`${HUB_ENDPOINT}/galeria/${id}/unhighlight`, { method: 'POST' });
+        const data = await response.json();
+        if (data.success) {
+            window.toast?.success('Item removido da galeria.');
+            const card = document.getElementById('media-' + id);
+            card.style.transition = 'all 0.4s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.9)';
+            setTimeout(() => card.remove(), 400);
+        }
+    } catch (err) { console.error(err); }
 }
 </script>
+
 <style>
-@keyframes spin { 100% { transform: rotate(360deg); } }
+.rotating { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Fix stats grid for this page context */
+.stats-grid { margin-top: 0.5rem; }
+
+/* Custom pill hover for nav */
+.hub-nav .btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-color);
+}
+.hub-nav .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+.hub-nav .btn.btn-primary {
+    box-shadow: var(--shadow-cyan);
+}
 </style>

@@ -238,6 +238,11 @@ class ProgramController
             return;
         }
 
+        if (empty($categoryId)) {
+            $this->json(['error' => 'Categoria é obrigatória'], 400);
+            return;
+        }
+
         // Generate slug
         $slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $name));
 
@@ -366,6 +371,16 @@ class ProgramController
         if (empty($name)) {
             $this->json(['error' => 'Nome é obrigatório'], 400);
             return;
+        }
+
+        if (empty($categoryId) || (str_starts_with($categoryId, 'lc_') && empty(substr($categoryId, 3)))) {
+            $this->json(['error' => 'Categoria é obrigatória'], 400);
+            return;
+        }
+
+        // Handle prefixed IDs from UI (e.g. lc_123)
+        if ($categoryId && str_starts_with($categoryId, 'lc_')) {
+            $categoryId = substr($categoryId, 3);
         }
 
         try {

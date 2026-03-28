@@ -1169,21 +1169,20 @@ class SpecialtyController
         $xpReward = (int) ($_POST['xp_reward'] ?? 100);
         $description = trim($_POST['description'] ?? '');
 
-        if (empty($categoryId) || empty($name)) {
-            $this->json(['error' => 'Categoria e nome são obrigatórios'], 400);
+        if (empty($name)) {
+            $this->json(['error' => 'Nome é obrigatório'], 400);
             return;
         }
 
-        // Clean category ID (handle prefixes like lc_123 or strings)
+        // Clean category ID (handle prefixes like lc_123)
         $cleanCategoryId = $categoryId;
         if (str_starts_with($categoryId, 'lc_')) {
             $cleanCategoryId = substr($categoryId, 3);
-        } elseif (!is_numeric($categoryId)) {
-            // If it's a string ID (legacy), we might need to look it up or set null if migrating
-            // For now, assuming new architecture uses integer IDs for categories
-            // If it fails, we default to null or try to find by name? 
-            // Better to fail gracefully if category ID format is wrong
-             $cleanCategoryId = null; // Let it fail validation or insert as null?
+        }
+
+        if (empty($cleanCategoryId) || !is_numeric($cleanCategoryId)) {
+            $this->json(['error' => 'Uma categoria válida é obrigatória.'], 400);
+            return;
         }
 
         // Generate slug for learning_programs
@@ -1275,7 +1274,7 @@ class SpecialtyController
             // Create program instead of legacy specialty
             $programId = db_insert('learning_programs', [
                 'tenant_id' => $tenant['id'],
-                'category_id' => $categoryId ?: null,
+                'category_id' => (int)$categoryId,
                 'type' => 'specialty',
                 'name' => $name,
                 'slug' => $slug,
