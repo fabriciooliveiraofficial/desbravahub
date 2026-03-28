@@ -1287,8 +1287,18 @@ body { overflow-x: hidden; }
     .mobile-hero .club-motto   { margin-bottom: 8px; }
     .mobile-hero .club-stats   { justify-content: center; }
 
-    /* Reel feed */
-    .hub-feed { position: relative; }
+    /* Feed — padding lateral consistente em todo o conteúdo */
+    .hub-feed {
+        position: relative;
+        padding: 0 16px;
+    }
+    /* story-bar precisa scrollar de borda a borda, então compensa o padding do pai */
+    .story-bar {
+        margin-left: -16px;
+        margin-right: -16px;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
     .feed-toolbar { display: none; }
 
     /* Feed layout - simplified for modern look */
@@ -1296,7 +1306,7 @@ body { overflow-x: hidden; }
         display: flex;
         flex-direction: column;
         gap: 32px;
-        padding: 16px 16px;
+        padding: 16px 0;
         height: auto;
         overflow-y: visible;
         scroll-snap-type: none;
@@ -1367,128 +1377,167 @@ body { overflow-x: hidden; }
 /* ── Story Bubbles ──────────────────────────────────────────────────────────── */
 .story-bar {
     display: flex;
-    gap: 14px;
+    gap: 16px;
     overflow-x: auto;
-    padding: 4px 2px 14px;
-    margin-bottom: 16px;
+    padding: 6px 4px 16px;
+    margin-bottom: 8px;
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
 .story-bar::-webkit-scrollbar { display: none; }
+
 .story-bubble {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
     cursor: pointer;
     flex-shrink: 0;
     transition: transform 0.18s;
     -webkit-tap-highlight-color: transparent;
+    background: none;
+    border: none;
+    padding: 0;
 }
-.story-bubble:hover { transform: scale(1.09); }
-.story-bubble.active .story-ring {
-    background: linear-gradient(135deg, var(--accent-primary) 0%, #f43f5e 50%, #f97316 100%);
-}
+.story-bubble:hover  { transform: scale(1.07); }
+.story-bubble:active { transform: scale(0.96); }
+
+/* Anel inativo: borda sólida definida em vez de fundo semi-transparente imperceptível */
 .story-ring {
-    width: 58px;
-    height: 58px;
+    position: relative;          /* contexto para o badge */
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
-    padding: 2.5px;
-    background: rgba(255,255,255,0.14);
-    transition: background 0.3s;
+    padding: 3px;
+    background: rgba(255,255,255,0.0); /* sem fill — só borda via box-shadow */
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.22);
+    transition: box-shadow 0.25s, background 0.25s;
 }
+/* Anel ativo: gradiente colorido */
+.story-bubble.active .story-ring {
+    box-shadow: none;
+    background: linear-gradient(135deg, #00ccff 0%, #f43f5e 55%, #f97316 100%);
+}
+/* "Todos" sempre com gradiente suave */
+.story-bubble-all .story-ring {
+    box-shadow: none;
+    background: linear-gradient(135deg, #00ccff 0%, #7c3aed 100%);
+}
+
 .story-ring img,
 .story-ring .story-initials {
     width: 100%;
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid var(--bg-primary, #0a0a0a);
+    /* gap visual entre anel e avatar */
+    outline: 2.5px solid #07090f;
     display: block;
 }
 .story-initials {
-    background: linear-gradient(135deg, var(--accent-primary), #8b5cf6);
+    background: linear-gradient(135deg, #1a2a4a 0%, #0d1a2e 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     font-weight: 800;
-    color: white;
+    color: #e8f4ff;
     text-transform: uppercase;
-    border: 2px solid var(--bg-primary, #0a0a0a);
+    outline: 2.5px solid #07090f;
 }
+/* Ativo: iniciais ficam mais brilhantes */
+.story-bubble.active .story-initials,
+.story-bubble-all .story-initials {
+    background: rgba(0,204,255,0.18);
+    color: #00ccff;
+}
+
 .story-name {
-    font-size: 0.67rem;
-    color: rgba(255,255,255,0.65);
-    max-width: 62px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: rgba(232,244,255,0.72);
+    max-width: 64px;
     text-align: center;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    letter-spacing: 0.01em;
 }
-.story-bubble-all .story-ring {
-    background: linear-gradient(135deg, var(--accent-primary), #8b5cf6);
+.story-bubble.active .story-name {
+    color: #e8f4ff;
 }
 
-/* ── Story Bubble Count Badge ───────────────────────────────────────────────── */
+/* ── Badge de contagem ─────────────────────────────────────────────────────── */
 .story-bubble-badge {
     position: absolute;
-    top: -2px;
-    right: -2px;
-    background: var(--accent-primary, #00ccff);
+    top: -1px;
+    right: -1px;
+    background: #00ccff;
     color: #000;
-    font-size: 0.6rem;
-    font-weight: 800;
-    min-width: 16px;
-    height: 16px;
-    border-radius: 8px;
+    font-size: 0.58rem;
+    font-weight: 900;
+    min-width: 17px;
+    height: 17px;
+    border-radius: 9px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 3px;
+    padding: 0 4px;
     line-height: 1;
-    border: 1px solid rgba(7,9,15,0.8);
+    border: 2px solid #07090f;
     pointer-events: none;
+    z-index: 1;
 }
 
 /* ── Type Filter Bar ────────────────────────────────────────────────────────── */
 .type-filter-bar {
     display: flex;
-    gap: 6px;
+    gap: 7px;
     flex-wrap: wrap;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
 }
 .type-filter-btn {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 5px 13px;
+    padding: 6px 14px;
     border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.05);
-    color: rgba(255,255,255,0.6);
+    /* contraste suficiente para leitura sem ser pesado visualmente */
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.07);
+    color: rgba(232,244,255,0.75);
     font-size: 0.78rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.18s;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
     white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
 }
-.type-filter-btn:hover { border-color: rgba(0,204,255,0.4); color: #e8f4ff; }
+.type-filter-btn:hover {
+    border-color: rgba(0,204,255,0.45);
+    color: #e8f4ff;
+    background: rgba(0,204,255,0.08);
+}
 .type-filter-btn.active {
-    background: rgba(0,204,255,0.15);
-    border-color: rgba(0,204,255,0.55);
+    background: rgba(0,204,255,0.16);
+    border-color: #00ccff;
     color: #00ccff;
+    font-weight: 700;
 }
-.type-filter-btn .material-icons-round { font-size: 14px; }
+.type-filter-btn .material-icons-round { font-size: 14px; opacity: 0.85; }
+.type-filter-btn.active .material-icons-round { opacity: 1; }
+
 .type-filter-btn-count {
-    background: rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.14);
     border-radius: 10px;
-    padding: 0 5px;
+    padding: 1px 6px;
     font-size: 0.7rem;
-    margin-left: 2px;
+    font-weight: 700;
+    margin-left: 1px;
+    color: inherit;
 }
 .type-filter-btn.active .type-filter-btn-count {
-    background: rgba(0,204,255,0.25);
+    background: rgba(0,204,255,0.22);
 }
 
 /* ── Viewer Author Strip ─────────────────────────────────────────────────────── */
@@ -1843,31 +1892,37 @@ body { overflow-x: hidden; }
 }
 .view-toggle-group {
     display: flex;
-    gap: 4px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 20px;
+    gap: 2px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
     padding: 3px;
     border: 1px solid rgba(255,255,255,0.1);
+}
+/* Separador visual entre os dois grupos */
+.view-toggle-group + .view-toggle-group {
+    border-left: 1px solid rgba(255,255,255,0.1);
+    margin-left: 4px;
+    padding-left: 6px;
 }
 .view-toggle-btn {
     display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 5px 12px;
-    border-radius: 16px;
+    justify-content: center;
+    padding: 6px 10px;
+    border-radius: 9px;
     border: none;
     background: transparent;
-    color: rgba(255,255,255,0.55);
-    font-size: 0.78rem;
-    font-weight: 600;
+    color: rgba(232,244,255,0.45);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: color 0.15s, background 0.15s;
+    -webkit-tap-highlight-color: transparent;
 }
+.view-toggle-btn:hover { color: rgba(232,244,255,0.85); background: rgba(255,255,255,0.07); }
 .view-toggle-btn.active {
-    background: var(--accent-primary);
+    background: #00ccff;
     color: #000;
 }
-.view-toggle-btn .material-icons-round { font-size: 16px; }
+.view-toggle-btn .material-icons-round { font-size: 17px; }
 
 /* ── Feed Mode — vertical card list ────────────────────────────────────────── */
 .media-grid.feed-mode {
