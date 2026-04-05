@@ -110,7 +110,7 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
             <?php if (empty($questions)): ?>
                 <div style="margin-bottom: 24px;">
                     <label class="hud-stat-label" style="display: block; margin-bottom: 12px; color: #fff;">RELATÓRIO DE EXECUÇÃO</label>
-                    <textarea name="response_text" id="q-text-consolidated" class="hud-input" style="min-height: 120px; resize: none;"
+                    <textarea name="response_text" id="q-text-consolidated" class="hud-input <?= ($itemEvals['consolidated']['status'] ?? '') === 'rejected' ? 'input-rejected shake-alert' : '' ?>" style="min-height: 120px; resize: none;"
                         placeholder="Descreva detalhadamente como o requisito foi cumprido..."><?= htmlspecialchars($existingText) ?></textarea>
                     
                     <?php if (isset($itemEvals['consolidated'])): 
@@ -159,7 +159,7 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
                             </div>
                         <?php else: ?>
                             <i class="material-icons-round" style="position: absolute; left: 16px; top: 14px; color: var(--hud-text-dim); font-size: 1.2rem;">link</i>
-                            <input type="url" name="response_url" id="q-url-main" class="hud-input" style="padding-left: 48px;" placeholder="https://youtube.com/watch?v=..."
+                            <input type="url" name="response_url" id="q-url-main" class="hud-input <?= ($itemEvals['main_evidence']['status'] ?? '') === 'rejected' ? 'input-rejected shake-alert' : '' ?>" style="padding-left: 48px;" placeholder="https://youtube.com/watch?v=..."
                                 value="<?= htmlspecialchars((string)$existingUrl) ?>">
                         <?php endif; ?>
                     </div>
@@ -188,7 +188,7 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
 
                 <div style="margin-bottom: 24px;">
                     <label class="hud-stat-label" style="display: block; margin-bottom: 12px; color: #fff;">UPLOAD DE ARQUIVO</label>
-                    <div class="file-upload-zone" style="background: rgba(0,0,0,0.4); border: 1px dashed rgba(255,255,255,0.2); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                    <div class="file-upload-zone <?= ($itemEvals['file_upload']['status'] ?? '') === 'rejected' ? 'rejected shake-alert' : '' ?>" style="background: rgba(0,0,0,0.4); border: 1px dashed rgba(255,255,255,0.2); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s;">
                         <input type="file" name="response_file" onchange="this.parentElement.querySelector('.file-status').innerText = this.files[0].name" style="display: none;" id="file-input-modal">
                         <label for="file-input-modal" style="cursor: pointer; display: block;">
                             <i class="material-icons-round" style="font-size: 2.5rem; color: var(--accent-cyan); opacity: 0.5; margin-bottom: 8px;">cloud_upload</i>
@@ -240,7 +240,7 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
                                     <?php endif; ?>
                                 </div>
                             <?php else: ?>
-                                <textarea name="answers[<?= $q['id'] ?>]" id="q-text-<?= $q['id'] ?>" class="hud-input" style="min-height: 100px; resize: none;"
+                                <textarea name="answers[<?= $q['id'] ?>]" id="q-text-<?= $q['id'] ?>" class="hud-input <?= ($itemEvals[$idx]['status'] ?? '') === 'rejected' ? 'input-rejected shake-alert' : '' ?>" style="min-height: 100px; resize: none;"
                                     placeholder="Insira sua resposta..."><?= htmlspecialchars((string)$currentAnswer) ?></textarea>
                             <?php endif; ?>
 
@@ -257,7 +257,7 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
                                         <input type="<?= $q['type'] === 'single_choice' ? 'radio' : 'checkbox' ?>" 
                                                name="answers[<?= $q['id'] ?>]<?= $q['type'] === 'multiple_choice' ? '[]' : '' ?>" 
                                                value="<?= $optIdx ?>" <?= $checked ? 'checked' : '' ?> style="display: none;">
-                                        <div class="radio-tech-card">
+                                        <div class="radio-tech-card <?= ($itemEvals[$idx]['status'] ?? '') === 'rejected' ? 'rejected' : '' ?>">
                                             <div class="<?= $q['type'] === 'multiple_choice' ? 'checkbox-check' : 'radio-check' ?>"></div>
                                             <span><?= htmlspecialchars($opt) ?></span>
                                         </div>
@@ -284,7 +284,7 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
                             </div>
 
                         <?php elseif ($q['type'] === 'file_upload'): ?>
-                             <div class="file-upload-zone" style="background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer;">
+                             <div class="file-upload-zone <?= ($itemEvals[$idx]['status'] ?? '') === 'rejected' ? 'rejected shake-alert' : '' ?>" style="background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer;">
                                 <input type="file" name="response_file" onchange="this.parentElement.querySelector('.file-status').innerText = this.files[0].name" style="display: none;" id="file-q-<?= $q['id'] ?>">
                                 <label for="file-q-<?= $q['id'] ?>" style="cursor: pointer; display: block;">
                                     <i class="material-icons-round" style="font-size: 1.5rem; color: var(--accent-cyan); opacity: 0.5;">attach_file</i>
@@ -302,11 +302,11 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
                         <?php elseif ($q['type'] === 'url'): ?>
                             <div style="position: relative;">
                                 <i class="material-icons-round" style="position: absolute; left: 14px; top: 12px; color: var(--hud-text-dim); font-size: 1.1rem;">link</i>
-                                <input type="url" name="answers[<?= $q['id'] ?>]" id="q-url-<?= $q['id'] ?>" class="hud-input" placeholder="https://..." style="padding-left: 42px;"
+                                <input type="url" name="answers[<?= $q['id'] ?>]" id="q-url-<?= $q['id'] ?>" class="hud-input <?= ($itemEvals[$idx]['status'] ?? '') === 'rejected' ? 'input-rejected' : '' ?>" placeholder="https://..." style="padding-left: 42px;"
                                     value="<?= htmlspecialchars($currentAnswer) ?>">
                             </div>
                         <?php elseif ($q['type'] === 'manual'): ?>
-                            <textarea name="answers[<?= $q['id'] ?>]" id="q-manual-<?= $q['id'] ?>" class="hud-input" style="min-height: 80px; resize: none;"
+                            <textarea name="answers[<?= $q['id'] ?>]" id="q-manual-<?= $q['id'] ?>" class="hud-input <?= ($itemEvals[$idx]['status'] ?? '') === 'rejected' ? 'input-rejected shake-alert' : '' ?>" style="min-height: 80px; resize: none;"
                                 placeholder="Relatório de atividade prática..."><?= htmlspecialchars((string)$currentAnswer) ?></textarea>
                         <?php elseif ($q['type'] === 'structured'): ?>
                             <div style="display: flex; flex-direction: column; gap: 16px;">
@@ -316,7 +316,7 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
                                 foreach ($subQuestions as $sIdx => $subQ):
                                     $subAns = $structuredAnswers[$sIdx] ?? '';
                                 ?>
-                                    <div class="structured-sub-item" style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                                    <div class="structured-sub-item" style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; border: 1px solid <?= ($itemEvals[$idx]['status'] ?? '') === 'rejected' ? '#ef4444' : 'rgba(255,255,255,0.05)' ?>;">
                                         <div style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 700; margin-bottom: 8px;">
                                             <?= htmlspecialchars($subQ['label'] ?? '') ?>) <?= htmlspecialchars($subQ['text'] ?? '') ?>
                                         </div>
@@ -324,7 +324,7 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
                                         <?php 
                                         $subType = $subQ['type'] ?? 'text';
                                         if ($subType === 'file'): ?>
-                                            <div class="file-upload-zone" style="background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; text-align: center; cursor: pointer;">
+                                            <div class="file-upload-zone <?= ($itemEvals[$idx]['status'] ?? '') === 'rejected' ? 'rejected' : '' ?>" style="background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; text-align: center; cursor: pointer;">
                                                 <input type="file" name="file_answers[<?= $q['id'] ?>][<?= $sIdx ?>]" onchange="this.parentElement.querySelector('.file-status').innerText = this.files[0].name" style="display: none;" id="file-sq-<?= $q['id'] ?>-<?= $sIdx ?>">
                                                 <label for="file-sq-<?= $q['id'] ?>-<?= $sIdx ?>" style="cursor: pointer; display: block;">
                                                     <i class="material-icons-round" style="font-size: 1.3rem; color: var(--accent-cyan); opacity: 0.5;">attach_file</i>
@@ -341,11 +341,11 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
                                         <?php elseif ($subType === 'url'): ?>
                                             <div style="position: relative;">
                                                 <i class="material-icons-round" style="position: absolute; left: 12px; top: 10px; color: var(--hud-text-dim); font-size: 1rem;">link</i>
-                                                <input type="url" name="answers[<?= $q['id'] ?>][<?= $sIdx ?>]" id="q-structured-url-<?= $q['id'] ?>-<?= $sIdx ?>" class="hud-input" placeholder="https://youtube.com/..." style="padding-left: 38px; min-height: 40px;"
+                                                <input type="url" name="answers[<?= $q['id'] ?>][<?= $sIdx ?>]" id="q-structured-url-<?= $q['id'] ?>-<?= $sIdx ?>" class="hud-input <?= ($itemEvals[$idx]['status'] ?? '') === 'rejected' ? 'input-rejected' : '' ?>" placeholder="https://youtube.com/..." style="padding-left: 38px; min-height: 40px;"
                                                     value="<?= htmlspecialchars((string)$subAns) ?>">
                                             </div>
                                         <?php else: // text ?>
-                                            <textarea name="answers[<?= $q['id'] ?>][<?= $sIdx ?>]" id="q-structured-text-<?= $q['id'] ?>-<?= $sIdx ?>" class="hud-input" style="min-height: 80px; resize: none;"
+                                            <textarea name="answers[<?= $q['id'] ?>][<?= $sIdx ?>]" id="q-structured-text-<?= $q['id'] ?>-<?= $sIdx ?>" class="hud-input <?= ($itemEvals[$idx]['status'] ?? '') === 'rejected' ? 'input-rejected' : '' ?>" style="min-height: 80px; resize: none;"
                                                 placeholder="Sua resposta para o item <?= htmlspecialchars($subQ['label'] ?? '') ?>..."><?= htmlspecialchars((string)$subAns) ?></textarea>
                                         <?php endif; ?>
                                     </div>
@@ -496,6 +496,29 @@ if (str_starts_with($feedback, '[ITEM_EVAL]')) {
         background: rgba(255, 255, 255, 0.05) !important;
         border-color: var(--accent-cyan) !important;
     }
+    .input-rejected {
+        border-color: #ef4444 !important;
+        background: rgba(239, 68, 68, 0.05) !important;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+    }
+    .file-upload-zone.rejected {
+        border: 2px solid #ef4444 !important;
+        background: rgba(239, 68, 68, 0.08) !important;
+    }
+    .radio-tech-card.rejected {
+        border: 2px dashed #f87171 !important;
+        background: rgba(239, 68, 68, 0.05) !important;
+    }
+    .shake-alert {
+        animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+    @keyframes shake {
+        10%, 90% { transform: translate3d(-1px, 0, 0); }
+        20%, 80% { transform: translate3d(2px, 0, 0); }
+        30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+        40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+
     #modal-content-area::-webkit-scrollbar { width: 6px; }
     #modal-content-area::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
     #modal-content-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }

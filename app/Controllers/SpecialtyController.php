@@ -707,7 +707,7 @@ class SpecialtyController
         $notificationService = new NotificationService();
         $notificationService->send(
             (int) $assignment['user_id'],
-            'specialty_completed',
+            'achievement',
             '🎉 Especialidade Concluída!',
             $notifMessage,
             ['channels' => ['toast', 'push'], 'data' => $notifData]

@@ -138,11 +138,13 @@ $router->get('/{tenant}/api/notifications', [NotificationController::class, 'ind
 $router->get('/{tenant}/api/notifications/unread', [NotificationController::class, 'unread'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/api/notifications/{id}/read', [NotificationController::class, 'markRead'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/api/notifications/read-all', [NotificationController::class, 'markAllRead'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/api/notifications/bulk-read', [NotificationController::class, 'markBulk'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/api/notifications/preferences', [NotificationController::class, 'updatePreferences'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/api/notifications/broadcast', [NotificationController::class, 'broadcast'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/api/push/subscribe', [NotificationController::class, 'subscribe'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/api/push/unsubscribe', [NotificationController::class, 'unsubscribe'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/api/push/test', [NotificationController::class, 'testPush'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/api/debug/log', [NotificationController::class, 'logDebug'], [TenantMiddleware::class]);
 // Global (no tenant/auth) — called by Service Worker on pushsubscriptionchange
 $router->post('/api/push/resubscribe', [NotificationController::class, 'resubscribe']);
 
@@ -280,9 +282,12 @@ $router->get('/{tenant}/perfil', [DashboardController::class, 'profile'], [Tenan
 $router->post('/{tenant}/perfil/salvar', [DashboardController::class, 'saveProfile'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/perfil/avatar', [DashboardController::class, 'uploadAvatar'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/convite/enviar', [DashboardController::class, 'sendReferralInvite'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/convite/reenviar', [DashboardController::class, 'resendReferralInvite'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/convite/revogar', [DashboardController::class, 'revokeReferralInvite'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/convite/{token}', [DashboardController::class, 'handleInviteClick'], [TenantMiddleware::class]);
 
 $router->get('/{tenant}/provas', [DashboardController::class, 'proofs'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/avisos', [DashboardController::class, 'inbox'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/notificacoes', [DashboardController::class, 'notifications'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/notificacoes/limpar', [DashboardController::class, 'clearNotifications'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/classes', [DashboardController::class, 'classes'], [TenantMiddleware::class, AuthMiddleware::class]);
@@ -364,6 +369,7 @@ $router->get('/{tenant}/admin/convites/novo', [\App\Controllers\InvitationContro
 $router->post('/{tenant}/admin/convites/enviar', [\App\Controllers\InvitationController::class, 'store'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/convites/{id}/reenviar', [\App\Controllers\InvitationController::class, 'resend'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/convites/{id}/revogar', [\App\Controllers\InvitationController::class, 'revoke'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/admin/convites/recrutamento', [\App\Controllers\InvitationController::class, 'recruitmentIndex'], [TenantMiddleware::class, AuthMiddleware::class]);
 
 // Email routes (admin)
 $router->get('/{tenant}/admin/email/inbox', [\App\Controllers\EmailController::class, 'inbox'], [TenantMiddleware::class, AuthMiddleware::class]);

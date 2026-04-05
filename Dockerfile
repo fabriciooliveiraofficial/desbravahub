@@ -10,8 +10,9 @@ RUN apt-get update && apt-get install -y \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
     libonig-dev \
+    libgmp-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql zip intl mbstring gd
+    && docker-php-ext-install pdo_mysql zip intl mbstring gd bcmath gmp
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite

@@ -186,6 +186,13 @@ class AuthController
             'status' => 'active',
         ]);
 
+        // Referral System: Track conversion if this email was invited
+        try {
+            \App\Services\ReferralService::handleRegistration($userId, $email, $tenant['id']);
+        } catch (\Exception $e) {
+            error_log("Referral tracking error (register): " . $e->getMessage());
+        }
+
         // Auto-login
         $cookiePath = '/' . $tenant['slug'] . '/';
         $token = $this->authService->createSession($userId);

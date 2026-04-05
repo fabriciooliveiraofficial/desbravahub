@@ -88,6 +88,16 @@ class DashboardController
         // Conquistas recentes — achievements + especialidades + programas concluídos
         $recentAchievements = $this->progressionService->getRecentAccomplishments($user['id'], 4);
 
+        // HUD v3.2 — Hero Interceptor for unread Achievements/Specialties
+        $achievementHero = db_fetch_one(
+            "SELECT * FROM notifications 
+             WHERE user_id = ? AND tenant_id = ? 
+               AND type IN ('achievement', 'level_up') 
+               AND read_at IS NULL 
+             ORDER BY created_at DESC LIMIT 1",
+            [$user['id'], $tenant['id']]
+        );
+
         // Radar Data: cada eixo = uma especialidade/classe real do desbravador
         // Valor = progresso real (0–100%)
         $radarItems = [];
@@ -264,7 +274,8 @@ class DashboardController
             'insigniaCount' => $insigniaCount,
             'nextEvent' => $nextEvent,
             'radarItems' => $radarItems,
-            'activityFeed' => $activityFeed
+            'activityFeed' => $activityFeed,
+            'achievementHero' => $achievementHero
         ], 'member');
     }
 
@@ -1135,7 +1146,7 @@ class DashboardController
 
         $user = App::user();
         $input = json_decode(file_get_contents('php://input'), true);
-        $email = trim($input['email'] ?? '');
+        $email = strtolower(trim($input['email'] ?? ''));
 
         if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             echo json_encode(['success' => false, 'message' => 'Email inválido.']);
@@ -1143,6 +1154,46 @@ class DashboardController
         }
 
         $result = \App\Services\ReferralService::sendInvite($user['id'], $email);
+        echo json_encode($result);
+    }
+
+    /**
+     * Resend referral invite (API)
+     */
+    public function resendReferralInvite(): void
+    {
+        header('Content-Type: application/json');
+        $user = App::user();
+        
+        $input = json_decode(file_get_contents('php://input'), true);
+        $inviteId = (int) ($input['id'] ?? 0);
+
+        if (!$inviteId) {
+            echo json_encode(['success' => false, 'message' => 'ID do convite inválido.']);
+            return;
+        }
+
+        $result = \App\Services\ReferralService::resendInvite($user['id'], $inviteId);
+        echo json_encode($result);
+    }
+
+    /**
+     * Revoke/Delete referral invite (API)
+     */
+    public function revokeReferralInvite(): void
+    {
+        header('Content-Type: application/json');
+        $user = App::user();
+        
+        $input = json_decode(file_get_contents('php://input'), true);
+        $inviteId = (int) ($input['id'] ?? 0);
+
+        if (!$inviteId) {
+            echo json_encode(['success' => false, 'message' => 'ID do convite inválido.']);
+            return;
+        }
+
+        $result = \App\Services\ReferralService::revokeInvite($user['id'], $inviteId);
         echo json_encode($result);
     }
 
@@ -1163,5 +1214,36 @@ class DashboardController
 
         // Redirect to registration page with referral context
         header('Location: ' . base_url($tenant['slug'] . '/login'));
+    }
+
+    /**
+     * Central de Avisos (Inbox)
+     */
+    public function inbox(): void
+    {
+        $user = App::user();
+        $tenant = App::tenant();
+
+        // Get all notifications (not just limit 10)
+        $notifications = $this->notificationService->getAll($user['id'], 100);
+        
+        // Categorize for the view
+        $categories = [
+            'todos' => $notifications,
+            'conquistas' => array_filter($notifications, fn($n) => in_array($n['type'], ['achievement', 'level_up', 'mission_assigned'])),
+            'clube' => array_filter($notifications, fn($n) => in_array($n['type'], ['broadcast', 'event', 'sos_alert'])),
+        ];
+
+        // Mark all as read since the user is visiting the inbox
+        $this->notificationService->markAllAsRead($user['id']);
+        $unreadCount = 0;
+
+        View::render('dashboard/inbox', [
+            'user' => $user,
+            'tenant' => $tenant,
+            'notifications' => $notifications,
+            'categories' => $categories,
+            'unreadCount' => $unreadCount
+        ], 'member');
     }
 }

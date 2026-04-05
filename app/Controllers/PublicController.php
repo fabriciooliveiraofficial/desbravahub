@@ -487,6 +487,8 @@ class PublicController
                 cm.source_type,
                 cm.source_id,
                 cm.thumbnail_attempted,
+                cm.thumbnail_retries,
+                cm.thumbnail_retry_after,
                 -- Title: prefer stored caption, fallback to JOIN, fallback to 'Destaque'
                 COALESCE(cm.caption, ps.title, a.title, 'Destaque') as title,
                 'url' as media_type,
@@ -546,20 +548,51 @@ class PublicController
                 continue;
             }
 
-            // Only attempt thumbnail fetch if: no thumbnail yet AND not already attempted before
-            if (empty($media['thumbnail_url']) && empty($media['thumbnail_attempted'])) {
+            // ── Thumbnail fetch with smart retry & local caching ──────────
+            $needsFetch = false;
+            $retries    = (int)($media['thumbnail_retries'] ?? 0);
+            $retryAfter = $media['thumbnail_retry_after'] ?? null;
+            $maxRetries = 3;
+
+            if (empty($media['thumbnail_url'])) {
+                // Never attempted, or retry window has passed
+                if (empty($media['thumbnail_attempted'])) {
+                    $needsFetch = true;
+                } elseif ($retries < $maxRetries && $retryAfter && strtotime($retryAfter) <= time()) {
+                    $needsFetch = true;
+                }
+            } elseif (!empty($media['thumbnail_url']) && strpos($media['thumbnail_url'], 'uploads/thumbnails/') === false) {
+                // Has a remote URL (not cached locally) — try to cache it now
+                $localPath = cache_thumbnail_locally($media['thumbnail_url'], (int)$media['id']);
+                if ($localPath) {
+                    $media['thumbnail_url'] = $localPath;
+                    db_query(
+                        "UPDATE curated_media SET thumbnail_url = ? WHERE id = ?",
+                        [$localPath, $media['id']]
+                    );
+                }
+            }
+
+            if ($needsFetch) {
                 $fetched = fetch_media_thumbnail($content);
                 if ($fetched) {
-                    $media['thumbnail_url'] = $fetched;
+                    // Try to cache locally (prevents CDN expiration)
+                    $localPath = cache_thumbnail_locally($fetched, (int)$media['id']);
+                    $finalThumb = $localPath ?: $fetched;
+
+                    $media['thumbnail_url'] = $finalThumb;
                     db_query(
-                        "UPDATE curated_media SET thumbnail_url = ?, thumbnail_attempted = 1 WHERE id = ?",
-                        [$fetched, $media['id']]
+                        "UPDATE curated_media SET thumbnail_url = ?, thumbnail_attempted = 1, thumbnail_retries = 0, thumbnail_retry_after = NULL WHERE id = ?",
+                        [$finalThumb, $media['id']]
                     );
                 } else {
-                    // Mark as attempted so we don't retry on every page load
+                    // Failed — schedule retry with exponential backoff (6h, 24h, 72h)
+                    $newRetries = $retries + 1;
+                    $backoffHours = min(6 * pow(4, $retries), 72);
+                    $nextRetry = date('Y-m-d H:i:s', strtotime("+{$backoffHours} hours"));
                     db_query(
-                        "UPDATE curated_media SET thumbnail_attempted = 1 WHERE id = ?",
-                        [$media['id']]
+                        "UPDATE curated_media SET thumbnail_attempted = 1, thumbnail_retries = ?, thumbnail_retry_after = ? WHERE id = ?",
+                        [$newRetries, $nextRetry, $media['id']]
                     );
                 }
             }

@@ -354,31 +354,91 @@
                         <?php foreach($highlightedMedia as $media): 
                             $rawUrl = $media['media_url'];
                             $isJson = ($rawUrl && ($rawUrl[0] === '[' || $rawUrl[0] === '{'));
-                            $displayUrl = $isJson ? json_decode($rawUrl, true)[0] ?? '' : $rawUrl;
+                            $displayUrl = $isJson ? (json_decode($rawUrl, true)[0] ?? '') : $rawUrl;
+                            
+                            // ── Robust YouTube Detection ──────────────────
+                            $youtubeRegex = '/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/|live\/)|youtu\.be\/)([^"&?\/\s]{11})/i';
+                            $youtubeId = preg_match($youtubeRegex, $displayUrl, $m) ? $m[1] : '';
+                            
+                            $thumb = $media['thumbnail_url'] ?? '';
+                            // Filter out favicons
+                            if (!empty($thumb) && (strpos($thumb, 'favicon') !== false || strpos($thumb, 'google.com/s2/favicons') !== false)) {
+                                $thumb = '';
+                            }
+
+                            if ($youtubeId) {
+                                $thumb = "https://img.youtube.com/vi/{$youtubeId}/hqdefault.jpg";
+                            } elseif (empty($thumb)) {
+                                if (preg_match('/\.(jpg|jpeg|png|webp|gif|avif|svg)/i', $displayUrl)) {
+                                    $thumb = (strpos($displayUrl, 'storage/') === 0) ? base_url('/' . $displayUrl) : $displayUrl;
+                                } elseif (!empty($media['user_avatar'])) {
+                                    $thumb = $media['user_avatar'];
+                                }
+                            }
+                            
+                            // Check for local cached thumbnails
+                            if (!empty($thumb) && strpos($thumb, 'uploads/thumbnails/') !== false && strpos($thumb, 'http') !== 0) {
+                                $thumb = base_url('/' . $thumb);
+                            }
+
+                            $isVideo = ($youtubeId || preg_match('/\.(mp4|mov|webm|ogg)$/i', $displayUrl));
+                            
+                            // Author Initial/Name Logic
+                            $nameParts = explode(' ', trim($media['user_name'] ?? 'Membro'));
+                            $lastName = end($nameParts);
+                            $avatarFb = htmlspecialchars($media['user_avatar'] ?? '');
+                            $nameFb   = htmlspecialchars($media['user_name'] ?? 'Membro');
                         ?>
-                            <div class="specialty-card" style="padding: 0; overflow: hidden; height: 100%;" id="media-<?= $media['id'] ?>">
-                                <div style="height: 180px; position: relative; background: #000;">
-                                    <img src="<?= $displayUrl ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/assets/images/placeholder-media.png'">
-                                    <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px;">
-                                        <a href="<?= $displayUrl ?>" target="_blank" class="btn btn-secondary btn-sm" style="padding: 6px; border-radius: 50%; min-width: 32px; height: 32px; background: rgba(255,255,255,0.9); border: none;">
-                                            <span class="material-icons-round" style="font-size: 18px; color: var(--text-dark);">visibility</span>
-                                        </a>
+                            <div class="specialty-card" style="padding: 0; overflow: hidden; height: 100%; border: 1px solid var(--border-color); background: var(--bg-card);" id="media-<?= $media['id'] ?>">
+                                <div style="height: 180px; position: relative; background: #000; overflow: hidden;">
+                                    <?php if ($thumb): ?>
+                                        <img src="<?= $thumb ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <?php endif; ?>
+                                    
+                                    <div class="thumb-fallback" style="<?= ($thumb ? 'display:none;' : 'display:flex;') ?> position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; align-items: center; justify-content: center; flex-direction: column;">
+                                        <?php if ($avatarFb): ?>
+                                            <div style="position: absolute; inset: -20px; background-image:url('<?= $avatarFb ?>'); background-size: cover; background-position: center; filter: blur(18px) brightness(0.45); transform: scale(1.1);"></div>
+                                            <img src="<?= $avatarFb ?>" style="position: relative; z-index: 1; width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 8px 24px rgba(0,0,0,0.4);" onerror="this.style.display='none'">
+                                        <?php else: ?>
+                                            <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #0d1017, #1e293b);"></div>
+                                            <div style="position: relative; z-index: 1; font-size: 2.5rem; font-weight: 800; color: var(--primary); letter-spacing: -1px;"><?= htmlspecialchars($lastName) ?></div>
+                                        <?php endif; ?>
+                                        <div style="position: relative; z-index: 1; font-size: 0.7rem; opacity: 0.6; color: rgba(255,255,255,0.8); text-transform: uppercase; margin-top: 8px;"><?= $nameFb ?></div>
+                                    </div>
+                                    
+                                    <?php if ($isVideo): ?>
+                                        <div onclick="playVideo('<?= $displayUrl ?>')" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s;" class="play-overlay">
+                                            <span class="material-icons-round" style="font-size: 64px; color: white; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));">play_circle_filled</span>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 10;">
+                                        <button onclick="<?= $isVideo ? "playVideo('$displayUrl')" : "window.open('$displayUrl', '_blank')" ?>" class="btn btn-secondary btn-sm" style="padding: 6px; border-radius: 50%; min-width: 32px; height: 32px; background: rgba(255,255,255,0.9); border: none;">
+                                            <span class="material-icons-round" style="font-size: 18px; color: var(--text-dark);"><?= $isVideo ? 'play_arrow' : 'visibility' ?></span>
+                                        </button>
                                         <button onclick="unhighlightMedia(<?= $media['id'] ?>)" class="btn btn-danger btn-sm" style="padding: 6px; border-radius: 50%; min-width: 32px; height: 32px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
                                             <span class="material-icons-round" style="font-size: 18px;">close</span>
                                         </button>
                                     </div>
-                                    <div style="position: absolute; bottom: 10px; left: 10px;">
-                                        <span class="badge" style="background: var(--primary); color: white; border: none; padding: 4px 10px;"><?= strtoupper($media['source_type']) ?></span>
+                                    <div style="position: absolute; bottom: 10px; left: 10px; z-index: 10;">
+                                        <span class="badge" style="background: var(--primary); color: white; border: none; padding: 4px 10px; font-size: 10px;"><?= strtoupper($media['source_type']) ?></span>
                                     </div>
                                 </div>
                                 <div style="padding: 1.25rem;">
-                                    <h5 style="margin: 0 0 8px 0; font-size: 0.95rem; font-weight: 700; color: var(--text-dark); line-height: 1.5; height: 2.8em; overflow: hidden;"><?= htmlspecialchars($media['source_title']) ?></h5>
+                                    <h5 style="margin: 0 0 8px 0; font-size: 0.9rem; font-weight: 700; color: var(--text-dark); line-height: 1.5; height: 2.8em; overflow: hidden;"><?= htmlspecialchars($media['source_title']) ?></h5>
                                     <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 0.8rem; color: var(--text-muted); padding-top: 12px; border-top: 1px solid var(--border-color);">
-                                        <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--bg-dark); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700;">
-                                            <?= strtoupper(substr($media['user_name'] ?? 'M', 0, 1)) ?>
+                                        <div style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800;">
+                                            <?php if (!empty($media['user_avatar'])): ?>
+                                                <img src="<?= $media['user_avatar'] ?>" 
+                                                     style="width: 100%; height: 100%; object-fit: cover;"
+                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                <span class="avatar-fallback-initials" style="display:none;"><?= strtoupper(substr($media['user_name'] ?? 'U', 0, 1)) ?></span>
+                                            <?php else: ?>
+                                                <?= strtoupper(substr($media['user_name'] ?? 'U', 0, 1)) ?>
+                                            <?php endif; ?>
                                         </div>
-                                        <span><?= htmlspecialchars($media['user_name'] ?? 'Membro') ?></span>
-                                        <span style="margin-left: auto; opacity: 0.6; font-size: 0.7rem;"><?= date('d/m/Y', strtotime($media['created_at'])) ?></span>
+                                        <span style="font-weight: 600;"><?= htmlspecialchars($media['user_name'] ?? 'Membro') ?></span>
+                                        <span style="margin-left: auto; opacity: 0.6; font-size: 0.7rem;"><?= date('d/m/y', strtotime($media['created_at'])) ?></span>
                                     </div>
                                 </div>
                             </div>
@@ -506,6 +566,72 @@ async function unhighlightMedia(id) {
         }
     } catch (err) { console.error(err); }
 }
+
+/**
+ * Video Lightbox Engine
+ */
+function playVideo(url) {
+    let content = '';
+    const isYoutube = url.includes('youtube.com') || url.includes('youtu.be');
+    
+    if (isYoutube) {
+        let videoId = '';
+        if (url.includes('youtu.be/')) {
+            videoId = url.split('youtu.be/')[1].split('?')[0].split('/')[0];
+        } else if (url.includes('shorts/')) {
+            videoId = url.split('shorts/')[1].split('?')[0].split('/')[0];
+        } else if (url.includes('v=')) {
+            videoId = new URLSearchParams(new URL(url).search).get('v');
+        }
+        
+        content = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 16px;"></iframe>`;
+    } else {
+        content = `<video src="${url}" controls autoplay style="width: 100%; height: 100%; background: #000; border-radius: 16px;"></video>`;
+    }
+    
+    const modal = document.createElement('div');
+    modal.id = 'video-lightbox';
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); 
+        z-index: 100000; display: flex; align-items: center; justify-content: center;
+        opacity: 0; transition: opacity 0.3s ease;
+    `;
+    
+    const container = document.createElement('div');
+    container.style.cssText = `
+        position: relative; width: 90%; max-width: 960px; aspect-ratio: 16/9;
+        background: #000; border-radius: 20px; box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+        border: 1px solid rgba(255,255,255,0.1); transform: scale(0.9); transition: transform 0.3s ease;
+    `;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '<span class="material-icons-round">close</span>';
+    closeBtn.style.cssText = `
+        position: absolute; top: -50px; right: 0; background: none; border: none; 
+        color: white; cursor: pointer; display: flex; align-items: center; gap: 5px;
+        font-weight: 700; opacity: 0.7; transition: 0.2s;
+    `;
+    closeBtn.onclick = () => {
+        modal.style.opacity = '0';
+        container.style.transform = 'scale(0.9)';
+        setTimeout(() => modal.remove(), 300);
+    };
+    
+    container.innerHTML = content;
+    container.appendChild(closeBtn);
+    modal.appendChild(container);
+    document.body.appendChild(modal);
+    
+    // Trigger animations
+    requestAnimationFrame(() => {
+        modal.style.opacity = '1';
+        container.style.transform = 'scale(1)';
+    });
+    
+    // Close on click outside
+    modal.onclick = (e) => { if(e.target === modal) closeBtn.onclick(); };
+}
 </script>
 
 <style>
@@ -530,5 +656,20 @@ async function unhighlightMedia(id) {
 }
 .hub-nav .btn.btn-primary {
     box-shadow: var(--shadow-cyan);
+}
+
+.play-overlay:hover {
+    background: rgba(0,0,0,0.4) !important;
+}
+.play-overlay:hover span {
+    transform: scale(1.1);
+}
+
+.specialty-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.specialty-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
 }
 </style>

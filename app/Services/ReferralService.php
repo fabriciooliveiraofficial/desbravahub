@@ -44,6 +44,8 @@ class ReferralService
         // Generate unique token
         $token = bin2hex(random_bytes(24));
 
+        $email = strtolower(trim($email));
+
         // Insert invite record
         $inviteId = db_insert('referral_invites', [
             'tenant_id'   => $tenant['id'],
@@ -82,6 +84,89 @@ class ReferralService
     }
 
     /**
+     * Resend an existing invitation
+     */
+    public static function resendInvite(int $referrerId, int $inviteId): array
+    {
+        $tenant = App::tenant();
+        $user = App::user();
+
+        // Find the invite
+        $invite = db_fetch_one(
+            "SELECT * FROM referral_invites WHERE id = ? AND referrer_id = ? AND tenant_id = ?",
+            [$inviteId, $referrerId, $tenant['id']]
+        );
+
+        if (!$invite) {
+            return ['success' => false, 'message' => 'Convite não encontrado ou não pertence a você.'];
+        }
+
+        // Only allowed for non-converted ones
+        if (!in_array($invite['status'], ['pending', 'clicked'])) {
+            return ['success' => false, 'message' => 'Este convite já foi convertido ou não pode ser reenviado.'];
+        }
+
+        // Build invite link (reuse existing token)
+        $inviteLink = base_url($tenant['slug'] . '/convite/' . $invite['token']);
+
+        // Build email HTML
+        $referrerName = htmlspecialchars($user['name']);
+        $clubName = htmlspecialchars($tenant['name']);
+        $htmlBody = self::buildInviteEmail($referrerName, $clubName, $inviteLink);
+
+        // Send via EmailService
+        try {
+            $emailService = EmailService::getInstance();
+            $sent = $emailService->send(
+                $invite['email'],
+                "🏕️ REENVIADO: {$referrerName} te convidou para o {$clubName}!",
+                $htmlBody
+            );
+
+            if (!$sent) {
+                return ['success' => false, 'message' => 'Falha ao enviar o email. Verifique o SMTP.'];
+            }
+
+            // Update timestamp
+            db_query("UPDATE referral_invites SET updated_at = NOW() WHERE id = ?", [$inviteId]);
+
+        } catch (\Exception $e) {
+            error_log("ReferralService::resendInvite error: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Erro ao reenviar email: ' . $e->getMessage()];
+        }
+
+        return ['success' => true, 'message' => 'Convite reenviado com sucesso!'];
+    }
+
+    /**
+     * Revoke an invitation (Delete it)
+     */
+    public static function revokeInvite(int $referrerId, int $inviteId): array
+    {
+        $tenant = App::tenant();
+
+        // Check if exists and belongs to user
+        $invite = db_fetch_one(
+            "SELECT * FROM referral_invites WHERE id = ? AND referrer_id = ? AND tenant_id = ?",
+            [$inviteId, $referrerId, $tenant['id']]
+        );
+
+        if (!$invite) {
+            return ['success' => false, 'message' => 'Convite não encontrado.'];
+        }
+
+        // Only allow if not yet converted
+        if (!in_array($invite['status'], ['pending', 'clicked'])) {
+            return ['success' => false, 'message' => 'Não é possível revogar um convite que já foi registrado ou ativado.'];
+        }
+
+        // Physical delete to clean up the screen as requested
+        db_query("DELETE FROM referral_invites WHERE id = ?", [$inviteId]);
+
+        return ['success' => true, 'message' => 'Convite revogado com sucesso!'];
+    }
+
+    /**
      * Handle invite link click (track engagement)
      */
     public static function trackClick(string $token): ?array
@@ -107,7 +192,7 @@ class ReferralService
     {
         // Find the most recent invite for this email
         $invite = db_fetch_one(
-            "SELECT * FROM referral_invites WHERE email = ? AND tenant_id = ? AND status IN ('pending', 'clicked') ORDER BY created_at DESC LIMIT 1",
+            "SELECT * FROM referral_invites WHERE LOWER(email) = LOWER(?) AND tenant_id = ? AND status IN ('pending', 'clicked') ORDER BY created_at DESC LIMIT 1",
             [$email, $tenantId]
         );
 
@@ -136,6 +221,22 @@ class ReferralService
             "SELECT * FROM referral_invites WHERE converted_user_id = ? AND tenant_id = ? AND status = 'registered'",
             [$userId, $tenant['id']]
         );
+
+        // Fallback: If not found by ID, try finding by email if for some reason the link is missing
+        if (!$invite) {
+            $userRecord = db_fetch_one("SELECT email FROM users WHERE id = ?", [$userId]);
+            if ($userRecord) {
+                $invite = db_fetch_one(
+                    "SELECT * FROM referral_invites WHERE LOWER(email) = LOWER(?) AND tenant_id = ? AND status IN ('pending', 'clicked', 'registered')",
+                    [$userRecord['email'], $tenant['id']]
+                );
+                
+                // If found by email, perform a late link
+                if ($invite) {
+                    db_update('referral_invites', ['converted_user_id' => $userId], 'id = ?', [$invite['id']]);
+                }
+            }
+        }
 
         if (!$invite) return;
 
@@ -232,6 +333,74 @@ class ReferralService
              LIMIT ?",
             [$tenantId, $limit]
         );
+    }
+
+    /**
+     * Get ALL referral invites for a tenant (for admin overview)
+     */
+    public static function getAllInvitesForTenant(int $tenantId, int $limit = 500): array
+    {
+        $invites = db_fetch_all(
+            "SELECT ri.*, 
+                    u.name as referrer_name, u.email as referrer_email,
+                    u_conv.name as converted_name
+             FROM referral_invites ri
+             JOIN users u ON ri.referrer_id = u.id
+             LEFT JOIN users u_conv ON ri.converted_user_id = u_conv.id
+             WHERE ri.tenant_id = ?
+             ORDER BY ri.created_at DESC
+             LIMIT ?",
+            [$tenantId, $limit]
+        );
+
+        // AUTO-REPAIR: If an invite is pending/clicked but the user already exists, link them now
+        $hasRepairs = false;
+        foreach ($invites as &$invite) {
+            // Case A: Link pending/clicked invitations to existing users
+            if ($invite['status'] === 'pending' || $invite['status'] === 'clicked') {
+                $existingUser = db_fetch_one(
+                    "SELECT id, name FROM users WHERE LOWER(email) = LOWER(?) AND tenant_id = ? LIMIT 1",
+                    [$invite['email'], $tenantId]
+                );
+
+                if ($existingUser) {
+                    db_update('referral_invites', [
+                        'status'            => 'registered',
+                        'converted_user_id' => $existingUser['id'],
+                        'registered_at'     => date('Y-m-d H:i:s'),
+                    ], 'id = ?', [$invite['id']]);
+                    
+                    // Update local object
+                    $invite['status'] = 'registered';
+                    $invite['converted_user_id'] = $existingUser['id'];
+                    $invite['converted_name'] = $existingUser['name'];
+                    $hasRepairs = true;
+                }
+            }
+
+            // Case B: If registered but no XP yet, check if profile is complete to reward them
+            if ($invite['status'] === 'registered' && empty($invite['xp_rewarded']) && !empty($invite['converted_user_id'])) {
+                $hasProfile = db_fetch_one("SELECT 1 FROM user_profiles WHERE user_id = ? LIMIT 1", [$invite['converted_user_id']]);
+                if ($hasProfile) {
+                    try {
+                        self::checkAndActivate($invite['converted_user_id']);
+                        
+                        // Re-fetch the updated state for this invite
+                        $fresh = db_fetch_one("SELECT status, xp_rewarded, activated_at FROM referral_invites WHERE id = ?", [$invite['id']]);
+                        if ($fresh) {
+                            $invite['status'] = $fresh['status'];
+                            $invite['xp_rewarded'] = $fresh['xp_rewarded'];
+                            $invite['activated_at'] = $fresh['activated_at'];
+                            $hasRepairs = true;
+                        }
+                    } catch (\Exception $e) {
+                        error_log("XP Heal error for User {$invite['converted_user_id']}: " . $e->getMessage());
+                    }
+                }
+            }
+        }
+
+        return $invites;
     }
 
     /**

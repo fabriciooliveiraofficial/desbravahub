@@ -76,6 +76,24 @@ class NotificationController
     }
 
     /**
+     * Mark multiple notifications as read (Bulk)
+     */
+    public function markBulk(): void
+    {
+        $user = App::user();
+        $input = json_decode(file_get_contents('php://input'), true);
+        $ids = $input['ids'] ?? [];
+
+        if (empty($ids)) {
+            $this->jsonError('IDs are required', 400);
+            return;
+        }
+
+        $this->service->markMultipleAsRead($ids, (int) $user['id']);
+        $this->json(['success' => true]);
+    }
+
+    /**
      * Update notification preferences
      */
     public function updatePreferences(): void
@@ -296,9 +314,32 @@ class NotificationController
         echo json_encode($data);
     }
 
-    private function jsonError(string $message, int $code = 400): void
+    /**
+     * Diagnostic Log Receiver
+     * Captures frontend logs for the Dopamine Drop investigation.
+     */
+    public function logDebug(): void
     {
-        http_response_code($code);
-        $this->json(['error' => $message]);
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (!$input) {
+            $this->json(['status' => 'ignored']);
+            return;
+        }
+
+        $logPath = BASE_PATH . '/storage/logs/dopamine.log';
+        $logDir = dirname($logPath);
+        if (!is_dir($logDir)) mkdir($logDir, 0777, true);
+
+        $logEntry = sprintf(
+            "[%s] [%s] [%s] %s | DATA: %s\n",
+            $input['timestamp'] ?? date('c'),
+            $input['level'] ?? 'INFO',
+            $input['category'] ?? 'GENERIC',
+            $input['message'] ?? '-',
+            json_encode($input['data'] ?? [], JSON_UNESCAPED_UNICODE)
+        );
+
+        file_put_contents($logPath, $logEntry, FILE_APPEND);
+        $this->json(['status' => 'logged']);
     }
 }

@@ -36,8 +36,8 @@
     <meta property="twitter:url" content="http://localhost:8080/c/clube-demo">
     <meta property="twitter:title" content="Clube Demo - Desbravadores">
     <meta property="twitter:description" content="Busca atividades para seus filhos em Curitiba? O Clube de Desbravadores oferece acampamentos, civismo e valores cristãos para jovens de 10 a 15 anos. Venha faze">
-                <meta property="og:image" content="https://scontent-det1-1.cdninstagram.com/v/t51.71878-15/655856869_886141094458510_7343085378574349472_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&amp;_nc_cat=105&amp;ccb=7-5&amp;_nc_sid=18de74&amp;efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&amp;_nc_ohc=yCMQr4Tv8vAQ7kNvwGZS-6H&amp;_nc_oc=AdrzwR_NhCKsLoKHViYfSN0xozlTqHI3cenVja0X1CmAO6SN8m0aicjUVT11mNNkVqKyrPLb_y5LMc3a6EDiCu-T&amp;_nc_zt=23&amp;_nc_ht=scontent-det1-1.cdninstagram.com&amp;_nc_gid=7TD_9xCmp-5T5HtrBSwT9A&amp;_nc_ss=7a30f&amp;oh=00_AfxhKPPOObVwx65fXyUHJOH4b8hHyEJIwz1bkcKx03DN1Q&amp;oe=69CA04CE">
-        <meta property="twitter:image" content="https://scontent-det1-1.cdninstagram.com/v/t51.71878-15/655856869_886141094458510_7343085378574349472_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&amp;_nc_cat=105&amp;ccb=7-5&amp;_nc_sid=18de74&amp;efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&amp;_nc_ohc=yCMQr4Tv8vAQ7kNvwGZS-6H&amp;_nc_oc=AdrzwR_NhCKsLoKHViYfSN0xozlTqHI3cenVja0X1CmAO6SN8m0aicjUVT11mNNkVqKyrPLb_y5LMc3a6EDiCu-T&amp;_nc_zt=23&amp;_nc_ht=scontent-det1-1.cdninstagram.com&amp;_nc_gid=7TD_9xCmp-5T5HtrBSwT9A&amp;_nc_ss=7a30f&amp;oh=00_AfxhKPPOObVwx65fXyUHJOH4b8hHyEJIwz1bkcKx03DN1Q&amp;oe=69CA04CE">
+                <meta property="og:image" content="https://img.youtube.com/vi/P_1bxK2kFHc/hqdefault.jpg">
+        <meta property="twitter:image" content="https://img.youtube.com/vi/P_1bxK2kFHc/hqdefault.jpg">
     
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#00ccff">
@@ -1400,6 +1400,44 @@ body { overflow-x: hidden; }
     color: rgba(0, 204, 255, 0.4);
     pointer-events: none;
 }
+/* ── Avatar blur fallback (when no thumbnail available) ─────────── */
+.thumb-fallback {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    overflow: hidden; cursor: pointer;
+}
+.thumb-fallback__bg {
+    position: absolute; inset: -20px;
+    width: calc(100% + 40px); height: calc(100% + 40px);
+    background-size: cover; background-position: center;
+    filter: blur(18px) brightness(0.45) saturate(1.3);
+    transform: scale(1.1);
+}
+.thumb-fallback__bg--gradient {
+    position: absolute; inset: 0;
+    background: linear-gradient(145deg, #0a0f1a 0%, #0d1a2a 40%, #0a1a14 100%);
+}
+.thumb-fallback__avatar {
+    position: relative; z-index: 1;
+    width: 56px; height: 56px; border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(0, 204, 255, 0.5);
+    box-shadow: 0 0 20px rgba(0, 204, 255, 0.2);
+}
+.thumb-fallback__play {
+    position: relative; z-index: 1;
+    font-family: 'Material Icons Round'; font-size: 3rem;
+    color: rgba(0, 204, 255, 0.7);
+    text-shadow: 0 0 24px rgba(0, 204, 255, 0.3);
+}
+.thumb-fallback__name {
+    position: relative; z-index: 1;
+    font-size: 0.65rem; opacity: 0.6; color: #fff;
+    text-transform: uppercase; letter-spacing: 0.8px; margin-top: 8px;
+    max-width: 80%; text-align: center;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Glow ring when avatar is present */
+.thumb-fallback__avatar + .thumb-fallback__play { margin-top: 6px; font-size: 2.2rem; }
 
 /* Specific fix for Instagram/Social auto-sizing */
 .social-embed {
@@ -2439,7 +2477,7 @@ body { overflow-x: hidden; }
         <div class="club-stats">
         <div class="stat-chip">
             <span class="material-icons-round">groups</span>
-            23 membros
+            24 membros
         </div>
         <div class="stat-chip">
             <span class="material-icons-round">local_activity</span>
@@ -2458,7 +2496,7 @@ body { overflow-x: hidden; }
                         <div class="club-stats">
                 <div class="stat-chip">
                     <span class="material-icons-round">groups</span>
-                    23 membros
+                    24 membros
                 </div>
                 <div class="stat-chip">
                     <span class="material-icons-round">local_activity</span>
@@ -2485,12 +2523,22 @@ body { overflow-x: hidden; }
                 <span class="story-name">Todos</span>
             </button>
                         <button class="story-bubble"
-                    onclick="filterByAuthor("Erica Negrette da Silva", this)"
-                    aria-label="Erica Negrette da Silva">
+                    onclick="filterByAuthor("Fabricio Hotmail", this)"
+                    aria-label="Fabricio Hotmail">
                 <div class="story-ring" style="position:relative;">
-                                        <div class="story-initials">E</div>
-                                                        </div>
-                <span class="story-name">Erica</span>
+                                        <img src="https://cruzeirodosuljuveve.org/uploads/avatars/avatar_22_1774976309.jpg" alt="Fabricio Hotmail" loading="lazy">
+                                                            <span class="story-bubble-badge">4</span>
+                                    </div>
+                <span class="story-name">Fabricio</span>
+            </button>
+                        <button class="story-bubble"
+                    onclick="filterByAuthor("Louise Helena Monteiro Vargas", this)"
+                    aria-label="Louise Helena Monteiro Vargas">
+                <div class="story-ring" style="position:relative;">
+                                        <div class="story-initials">L</div>
+                                                            <span class="story-bubble-badge">2</span>
+                                    </div>
+                <span class="story-name">Louise</span>
             </button>
                         <button class="story-bubble"
                     onclick="filterByAuthor("Ana Julia de Souza Magalh\u00e3es", this)"
@@ -2499,15 +2547,6 @@ body { overflow-x: hidden; }
                                         <div class="story-initials">A</div>
                                                         </div>
                 <span class="story-name">Ana</span>
-            </button>
-                        <button class="story-bubble"
-                    onclick="filterByAuthor("Fabricio Hotmail", this)"
-                    aria-label="Fabricio Hotmail">
-                <div class="story-ring" style="position:relative;">
-                                        <img src="http://localhost:8080/uploads/avatars/avatar_22_1773258697.jpg" alt="Fabricio Hotmail" loading="lazy">
-                                                            <span class="story-bubble-badge">7</span>
-                                    </div>
-                <span class="story-name">Fabricio</span>
             </button>
                     </div>
         
@@ -2546,22 +2585,12 @@ body { overflow-x: hidden; }
             <button class="type-filter-btn active" data-media-filter="" onclick="filterByType('', this)">
                 <span class="material-icons-round">apps</span>
                 Tudo
-                <span class="type-filter-btn-count">12</span>
+                <span class="type-filter-btn-count">7</span>
             </button>
-                                                <button class="type-filter-btn" data-media-filter="reels" onclick="filterByType('reels', this)">
-                <span class="material-icons-round">photo_camera</span>
-                Reels
-                <span class="type-filter-btn-count">6</span>
-            </button>
-                                    <button class="type-filter-btn" data-media-filter="tiktok" onclick="filterByType('tiktok', this)">
-                <span class="material-icons-round">music_video</span>
-                TikTok
-                <span class="type-filter-btn-count">2</span>
-            </button>
-                                    <button class="type-filter-btn" data-media-filter="youtube" onclick="filterByType('youtube', this)">
+                                                                        <button class="type-filter-btn" data-media-filter="youtube" onclick="filterByType('youtube', this)">
                 <span class="material-icons-round">smart_display</span>
                 YouTube
-                <span class="type-filter-btn-count">4</span>
+                <span class="type-filter-btn-count">7</span>
             </button>
                     </div>
         
@@ -2569,80 +2598,276 @@ body { overflow-x: hidden; }
                 <div class="media-grid" id="mediaGrid">
                                     <div class="media-card"
                  data-source-type="step"
-                 data-source-id="20"
-                 data-url="https://www.instagram.com/reel/DWT97x1jUIE/?igsh=bXBzbXJyZ2JqN2Jr"
+                 data-source-id="23"
+                 data-url="https://youtube.com/shorts/P_1bxK2kFHc?si=PKwfXXfQ0YHVk_tr"
                  data-is-video="1"
                  data-like-count="1"
                  data-has-liked="1"
                  data-comment-count="0"
-                 data-view-count="3"
-                 data-title="Especialidade de Alívio da Fome"
-                 data-author="Erica Negrette da Silva"
-                 data-avatar=""
-                 data-media-type="reels"
-                 data-date="2026-03-25 14:59:46"
+                 data-view-count="1"
+                 data-title="Especialidade de Avaliação da Comunidade"
+                 data-author="Fabricio Hotmail"
+                 data-avatar="https://cruzeirodosuljuveve.org/uploads/avatars/avatar_22_1774976309.jpg"
+                 data-media-type="youtube"
+                 data-date="2026-04-04 19:32:45"
                  data-reactions="[]"
                  data-my-reaction=""
                  data-viewed="0">
 
                 <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
-                                        <img class="media-card__thumb" src="https://scontent-det1-1.cdninstagram.com/v/t51.71878-15/655856869_886141094458510_7343085378574349472_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&amp;_nc_cat=105&amp;ccb=7-5&amp;_nc_sid=18de74&amp;efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&amp;_nc_ohc=yCMQr4Tv8vAQ7kNvwGZS-6H&amp;_nc_oc=AdrzwR_NhCKsLoKHViYfSN0xozlTqHI3cenVja0X1CmAO6SN8m0aicjUVT11mNNkVqKyrPLb_y5LMc3a6EDiCu-T&amp;_nc_zt=23&amp;_nc_ht=scontent-det1-1.cdninstagram.com&amp;_nc_gid=7TD_9xCmp-5T5HtrBSwT9A&amp;_nc_ss=7a30f&amp;oh=00_AfxhKPPOObVwx65fXyUHJOH4b8hHyEJIwz1bkcKx03DN1Q&amp;oe=69CA04CE" alt="Especialidade de Alívio da Fome" loading="lazy">
-                                        <div class="media-card__gradient"></div>
+                                        <img class="media-card__thumb" src="https://img.youtube.com/vi/P_1bxK2kFHc/hqdefault.jpg" alt="Especialidade de Avaliação da Comunidade" loading="lazy" onerror="thumbFallback(this)">
+                                        <div class="thumb-fallback" style="display:none; align-items: center; justify-content: center; flex-direction: column;">
+                                                <div class="thumb-fallback__bg" style="background-image:url('https://cruzeirodosuljuveve.org/uploads/avatars/avatar_22_1774976309.jpg')"></div>
+                        <img class="thumb-fallback__avatar" src="https://cruzeirodosuljuveve.org/uploads/avatars/avatar_22_1774976309.jpg" alt="Fabricio Hotmail" onerror="this.style.display='none'">
+                                                <div class="thumb-fallback__play">play_circle</div>
+                        <div class="thumb-fallback__name">Fabricio Hotmail</div>
+                    </div>
+                    
+                    <div class="media-card__gradient"></div>
                     <div class="media-card__top">
                         <div class="media-type-badge">
-                            <span class="material-icons-round">photo_camera</span>
-                            Reels                        </div>
+                            <span class="material-icons-round">play_circle</span>
+                            Shorts                        </div>
                     </div>
                 </div>
 
                 <div class="media-card__body">
                     <div class="media-card__meta">
                         <div class="media-card__author">
-                                                        <span>Erica Negrette da Silva</span>
+                                                            <img src="https://cruzeirodosuljuveve.org/uploads/avatars/avatar_22_1774976309.jpg" alt="">
+                                                        <span>Fabricio Hotmail</span>
                         </div>
                                                 <div class="stat-chip" style="padding: 2px 8px; font-size: 0.7rem;">
                             <span class="material-icons-round" style="font-size: 14px;">visibility</span>
-                            3                        </div>
+                            1                        </div>
+                                            </div>
+
+                    <div class="media-card__title" onclick="openViewer(this.closest('.media-card'))">Especialidade de Avaliação da Comunidade</div>
+
+                    <div class="social-interaction-bar">
+                        <div class="reaction-picker-wrap" id="rxWrap_step_23">
+                            <div class="reaction-picker" id="rxPicker_step_23">
+                                                                <button class="reaction-btn "
+                                        onclick="sendReaction('step', 23, 'like', this); event.stopPropagation();"
+                                        title="like">
+                                    ❤️                                </button>
+                                                                <button class="reaction-btn "
+                                        onclick="sendReaction('step', 23, 'love', this); event.stopPropagation();"
+                                        title="love">
+                                    😍                                </button>
+                                                                <button class="reaction-btn "
+                                        onclick="sendReaction('step', 23, 'haha', this); event.stopPropagation();"
+                                        title="haha">
+                                    😂                                </button>
+                                                                <button class="reaction-btn "
+                                        onclick="sendReaction('step', 23, 'wow', this); event.stopPropagation();"
+                                        title="wow">
+                                    😮                                </button>
+                                                                <button class="reaction-btn "
+                                        onclick="sendReaction('step', 23, 'clap', this); event.stopPropagation();"
+                                        title="clap">
+                                    👏                                </button>
+                                                                <button class="reaction-btn "
+                                        onclick="sendReaction('step', 23, 'fire', this); event.stopPropagation();"
+                                        title="fire">
+                                    🔥                                </button>
+                                                            </div>
+                            <div class="interaction-item liked"
+                                 id="cardLike_step_23"
+                                 onclick="handleLike('step', 23)"
+                                 oncontextmenu="toggleReactionPicker('step',23); return false;"
+                                 ontouchstart="startReactionHold('step',23)"
+                                 ontouchend="clearReactionHold()">
+                                <span class="material-icons-round">favorite</span>
+                                <span id="cardLikeCount_step_23">1</span>
+                            </div>
+                        </div>
+                                                                        <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
+                            <span class="material-icons-round">chat_bubble_outline</span>
+                            <span></span>
+                        </div>
+                        <div class="interaction-item" onclick="shareMedia('http://localhost:8080/c/clube-demo', 'Especialidade de Avaliação da Comunidade')">
+                            <span class="material-icons-round">share</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                                    <div class="media-card"
+                 data-source-type="step"
+                 data-source-id="22"
+                 data-url="https://youtu.be/ZWuKBqkQ1Tg?si=7t8dd2HELeNzLpw9"
+                 data-is-video="1"
+                 data-like-count="1"
+                 data-has-liked="1"
+                 data-comment-count="0"
+                 data-view-count="2"
+                 data-title="Especialidade de Alívio da Fome"
+                 data-author="Louise Helena Monteiro Vargas"
+                 data-avatar=""
+                 data-media-type="youtube"
+                 data-date="2026-03-30 21:32:09"
+                 data-reactions="[]"
+                 data-my-reaction=""
+                 data-viewed="0">
+
+                <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
+                                        <img class="media-card__thumb" src="https://img.youtube.com/vi/ZWuKBqkQ1Tg/hqdefault.jpg" alt="Especialidade de Alívio da Fome" loading="lazy" onerror="thumbFallback(this)">
+                                        <div class="thumb-fallback" style="display:none; align-items: center; justify-content: center; flex-direction: column;">
+                                                <div class="thumb-fallback__bg thumb-fallback__bg--gradient"></div>
+                                                <div class="thumb-fallback__play">play_circle</div>
+                        <div class="thumb-fallback__name">Louise Helena Monteiro Vargas</div>
+                    </div>
+                    
+                    <div class="media-card__gradient"></div>
+                    <div class="media-card__top">
+                        <div class="media-type-badge">
+                            <span class="material-icons-round">smart_display</span>
+                            YouTube                        </div>
+                    </div>
+                </div>
+
+                <div class="media-card__body">
+                    <div class="media-card__meta">
+                        <div class="media-card__author">
+                                                        <span>Louise Helena Monteiro Vargas</span>
+                        </div>
+                                                <div class="stat-chip" style="padding: 2px 8px; font-size: 0.7rem;">
+                            <span class="material-icons-round" style="font-size: 14px;">visibility</span>
+                            2                        </div>
                                             </div>
 
                     <div class="media-card__title" onclick="openViewer(this.closest('.media-card'))">Especialidade de Alívio da Fome</div>
 
                     <div class="social-interaction-bar">
-                        <div class="reaction-picker-wrap" id="rxWrap_step_20">
-                            <div class="reaction-picker" id="rxPicker_step_20">
+                        <div class="reaction-picker-wrap" id="rxWrap_step_22">
+                            <div class="reaction-picker" id="rxPicker_step_22">
                                                                 <button class="reaction-btn "
-                                        onclick="sendReaction('step', 20, 'like', this); event.stopPropagation();"
+                                        onclick="sendReaction('step', 22, 'like', this); event.stopPropagation();"
                                         title="like">
                                     ❤️                                </button>
                                                                 <button class="reaction-btn "
-                                        onclick="sendReaction('step', 20, 'love', this); event.stopPropagation();"
+                                        onclick="sendReaction('step', 22, 'love', this); event.stopPropagation();"
                                         title="love">
                                     😍                                </button>
                                                                 <button class="reaction-btn "
-                                        onclick="sendReaction('step', 20, 'haha', this); event.stopPropagation();"
+                                        onclick="sendReaction('step', 22, 'haha', this); event.stopPropagation();"
                                         title="haha">
                                     😂                                </button>
                                                                 <button class="reaction-btn "
-                                        onclick="sendReaction('step', 20, 'wow', this); event.stopPropagation();"
+                                        onclick="sendReaction('step', 22, 'wow', this); event.stopPropagation();"
                                         title="wow">
                                     😮                                </button>
                                                                 <button class="reaction-btn "
-                                        onclick="sendReaction('step', 20, 'clap', this); event.stopPropagation();"
+                                        onclick="sendReaction('step', 22, 'clap', this); event.stopPropagation();"
                                         title="clap">
                                     👏                                </button>
                                                                 <button class="reaction-btn "
-                                        onclick="sendReaction('step', 20, 'fire', this); event.stopPropagation();"
+                                        onclick="sendReaction('step', 22, 'fire', this); event.stopPropagation();"
                                         title="fire">
                                     🔥                                </button>
                                                             </div>
                             <div class="interaction-item liked"
-                                 id="cardLike_step_20"
-                                 onclick="handleLike('step', 20)"
-                                 oncontextmenu="toggleReactionPicker('step',20); return false;"
-                                 ontouchstart="startReactionHold('step',20)"
+                                 id="cardLike_step_22"
+                                 onclick="handleLike('step', 22)"
+                                 oncontextmenu="toggleReactionPicker('step',22); return false;"
+                                 ontouchstart="startReactionHold('step',22)"
                                  ontouchend="clearReactionHold()">
                                 <span class="material-icons-round">favorite</span>
-                                <span id="cardLikeCount_step_20">1</span>
+                                <span id="cardLikeCount_step_22">1</span>
+                            </div>
+                        </div>
+                                                                        <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
+                            <span class="material-icons-round">chat_bubble_outline</span>
+                            <span></span>
+                        </div>
+                        <div class="interaction-item" onclick="shareMedia('http://localhost:8080/c/clube-demo', 'Especialidade de Alívio da Fome')">
+                            <span class="material-icons-round">share</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                                    <div class="media-card"
+                 data-source-type="step"
+                 data-source-id="22"
+                 data-url="https://youtu.be/UMIfn4aXKx4?si=V0_h1EX1msUvn0Me"
+                 data-is-video="1"
+                 data-like-count="1"
+                 data-has-liked="1"
+                 data-comment-count="0"
+                 data-view-count="2"
+                 data-title="Especialidade de Alívio da Fome"
+                 data-author="Louise Helena Monteiro Vargas"
+                 data-avatar=""
+                 data-media-type="youtube"
+                 data-date="2026-03-30 21:31:55"
+                 data-reactions="[]"
+                 data-my-reaction=""
+                 data-viewed="0">
+
+                <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
+                                        <img class="media-card__thumb" src="https://img.youtube.com/vi/UMIfn4aXKx4/hqdefault.jpg" alt="Especialidade de Alívio da Fome" loading="lazy" onerror="thumbFallback(this)">
+                                        <div class="thumb-fallback" style="display:none; align-items: center; justify-content: center; flex-direction: column;">
+                                                <div class="thumb-fallback__bg thumb-fallback__bg--gradient"></div>
+                                                <div class="thumb-fallback__play">play_circle</div>
+                        <div class="thumb-fallback__name">Louise Helena Monteiro Vargas</div>
+                    </div>
+                    
+                    <div class="media-card__gradient"></div>
+                    <div class="media-card__top">
+                        <div class="media-type-badge">
+                            <span class="material-icons-round">smart_display</span>
+                            YouTube                        </div>
+                    </div>
+                </div>
+
+                <div class="media-card__body">
+                    <div class="media-card__meta">
+                        <div class="media-card__author">
+                                                        <span>Louise Helena Monteiro Vargas</span>
+                        </div>
+                                                <div class="stat-chip" style="padding: 2px 8px; font-size: 0.7rem;">
+                            <span class="material-icons-round" style="font-size: 14px;">visibility</span>
+                            2                        </div>
+                                            </div>
+
+                    <div class="media-card__title" onclick="openViewer(this.closest('.media-card'))">Especialidade de Alívio da Fome</div>
+
+                    <div class="social-interaction-bar">
+                        <div class="reaction-picker-wrap" id="rxWrap_step_22">
+                            <div class="reaction-picker" id="rxPicker_step_22">
+                                                                <button class="reaction-btn "
+                                        onclick="sendReaction('step', 22, 'like', this); event.stopPropagation();"
+                                        title="like">
+                                    ❤️                                </button>
+                                                                <button class="reaction-btn "
+                                        onclick="sendReaction('step', 22, 'love', this); event.stopPropagation();"
+                                        title="love">
+                                    😍                                </button>
+                                                                <button class="reaction-btn "
+                                        onclick="sendReaction('step', 22, 'haha', this); event.stopPropagation();"
+                                        title="haha">
+                                    😂                                </button>
+                                                                <button class="reaction-btn "
+                                        onclick="sendReaction('step', 22, 'wow', this); event.stopPropagation();"
+                                        title="wow">
+                                    😮                                </button>
+                                                                <button class="reaction-btn "
+                                        onclick="sendReaction('step', 22, 'clap', this); event.stopPropagation();"
+                                        title="clap">
+                                    👏                                </button>
+                                                                <button class="reaction-btn "
+                                        onclick="sendReaction('step', 22, 'fire', this); event.stopPropagation();"
+                                        title="fire">
+                                    🔥                                </button>
+                                                            </div>
+                            <div class="interaction-item liked"
+                                 id="cardLike_step_22"
+                                 onclick="handleLike('step', 22)"
+                                 oncontextmenu="toggleReactionPicker('step',22); return false;"
+                                 ontouchstart="startReactionHold('step',22)"
+                                 ontouchend="clearReactionHold()">
+                                <span class="material-icons-round">favorite</span>
+                                <span id="cardLikeCount_step_22">1</span>
                             </div>
                         </div>
                                                                         <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
@@ -2663,7 +2888,7 @@ body { overflow-x: hidden; }
                  data-like-count="1"
                  data-has-liked="1"
                  data-comment-count="0"
-                 data-view-count="3"
+                 data-view-count="5"
                  data-title="Especialidade de Alívio da Fome"
                  data-author="Ana Julia de Souza Magalhães"
                  data-avatar=""
@@ -2674,8 +2899,14 @@ body { overflow-x: hidden; }
                  data-viewed="0">
 
                 <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
-                                        <img class="media-card__thumb" src="https://img.youtube.com/vi/L1d4Uao8zwk/hqdefault.jpg" alt="Especialidade de Alívio da Fome" loading="lazy">
-                                        <div class="media-card__gradient"></div>
+                                        <img class="media-card__thumb" src="https://img.youtube.com/vi/L1d4Uao8zwk/hqdefault.jpg" alt="Especialidade de Alívio da Fome" loading="lazy" onerror="thumbFallback(this)">
+                                        <div class="thumb-fallback" style="display:none; align-items: center; justify-content: center; flex-direction: column;">
+                                                <div class="thumb-fallback__bg thumb-fallback__bg--gradient"></div>
+                                                <div class="thumb-fallback__play">play_circle</div>
+                        <div class="thumb-fallback__name">Ana Julia de Souza Magalhães</div>
+                    </div>
+                    
+                    <div class="media-card__gradient"></div>
                     <div class="media-card__top">
                         <div class="media-type-badge">
                             <span class="material-icons-round">smart_display</span>
@@ -2690,7 +2921,7 @@ body { overflow-x: hidden; }
                         </div>
                                                 <div class="stat-chip" style="padding: 2px 8px; font-size: 0.7rem;">
                             <span class="material-icons-round" style="font-size: 14px;">visibility</span>
-                            3                        </div>
+                            5                        </div>
                                             </div>
 
                     <div class="media-card__title" onclick="openViewer(this.closest('.media-card'))">Especialidade de Alívio da Fome</div>
@@ -2746,367 +2977,11 @@ body { overflow-x: hidden; }
                                     <div class="media-card"
                  data-source-type="step"
                  data-source-id="18"
-                 data-url="https://www.tiktok.com/@sofia.camposgs/video/7513531478559493382?is_from_webapp=1&amp;sender_device=pc&amp;web_id=7613831863434200597"
-                 data-is-video="1"
-                 data-like-count="2"
-                 data-has-liked="1"
-                 data-comment-count="0"
-                 data-view-count="7"
-                 data-title="AD-004"
-                 data-author="Fabricio Hotmail"
-                 data-avatar="http://localhost:8080/uploads/avatars/avatar_22_1773258697.jpg"
-                 data-media-type="tiktok"
-                 data-date="2026-03-13 17:56:44"
-                 data-reactions="[]"
-                 data-my-reaction=""
-                 data-viewed="0">
-
-                <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
-                                        <img class="media-card__thumb" src="https://p16-sign-va.tiktokcdn.com/tos-maliva-p-0068/ocrBAd5fBF10igA4EZPvIbtBoi3CEOA6iPInIA~tplv-tiktokx-origin.image?dr=14575&amp;x-expires=1773604800&amp;x-signature=ecorurDMwiZ1mnv16Ah3hIdVsek%3D&amp;t=4d5b0474&amp;ps=13740610&amp;shp=81f88b70&amp;shcp=43f4a2f9&amp;idc=my2" alt="AD-004" loading="lazy">
-                                        <div class="media-card__gradient"></div>
-                    <div class="media-card__top">
-                        <div class="media-type-badge">
-                            <span class="material-icons-round">music_video</span>
-                            TikTok                        </div>
-                    </div>
-                </div>
-
-                <div class="media-card__body">
-                    <div class="media-card__meta">
-                        <div class="media-card__author">
-                                                            <img src="http://localhost:8080/uploads/avatars/avatar_22_1773258697.jpg" alt="">
-                                                        <span>Fabricio Hotmail</span>
-                        </div>
-                                                <div class="stat-chip" style="padding: 2px 8px; font-size: 0.7rem;">
-                            <span class="material-icons-round" style="font-size: 14px;">visibility</span>
-                            7                        </div>
-                                            </div>
-
-                    <div class="media-card__title" onclick="openViewer(this.closest('.media-card'))">AD-004</div>
-
-                    <div class="social-interaction-bar">
-                        <div class="reaction-picker-wrap" id="rxWrap_step_18">
-                            <div class="reaction-picker" id="rxPicker_step_18">
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'like', this); event.stopPropagation();"
-                                        title="like">
-                                    ❤️                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'love', this); event.stopPropagation();"
-                                        title="love">
-                                    😍                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'haha', this); event.stopPropagation();"
-                                        title="haha">
-                                    😂                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'wow', this); event.stopPropagation();"
-                                        title="wow">
-                                    😮                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'clap', this); event.stopPropagation();"
-                                        title="clap">
-                                    👏                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'fire', this); event.stopPropagation();"
-                                        title="fire">
-                                    🔥                                </button>
-                                                            </div>
-                            <div class="interaction-item liked"
-                                 id="cardLike_step_18"
-                                 onclick="handleLike('step', 18)"
-                                 oncontextmenu="toggleReactionPicker('step',18); return false;"
-                                 ontouchstart="startReactionHold('step',18)"
-                                 ontouchend="clearReactionHold()">
-                                <span class="material-icons-round">favorite</span>
-                                <span id="cardLikeCount_step_18">2</span>
-                            </div>
-                        </div>
-                                                                        <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
-                            <span class="material-icons-round">chat_bubble_outline</span>
-                            <span></span>
-                        </div>
-                        <div class="interaction-item" onclick="shareMedia('http://localhost:8080/c/clube-demo', 'AD-004')">
-                            <span class="material-icons-round">share</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-                                    <div class="media-card"
-                 data-source-type="step"
-                 data-source-id="18"
-                 data-url="https://www.tiktok.com/@geraldosot/video/7552200519033343288?is_from_webapp=1&amp;sender_device=pc&amp;web_id=7613831863434200597"
-                 data-is-video="1"
-                 data-like-count="2"
-                 data-has-liked="1"
-                 data-comment-count="0"
-                 data-view-count="7"
-                 data-title="AD-004"
-                 data-author="Fabricio Hotmail"
-                 data-avatar="http://localhost:8080/uploads/avatars/avatar_22_1773258697.jpg"
-                 data-media-type="tiktok"
-                 data-date="2026-03-13 17:56:43"
-                 data-reactions="[]"
-                 data-my-reaction=""
-                 data-viewed="0">
-
-                <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
-                                        <img class="media-card__thumb" src="https://p16-sign-va.tiktokcdn.com/tos-maliva-p-0068/okzAUBEsmaDrRdQA5dZ5FGOBf0JEfoQEz3IcIi~tplv-tiktokx-origin.image?dr=14575&amp;x-expires=1773604800&amp;x-signature=atfHxM9wVXtVC9XhkUkPCB6%2BrvU%3D&amp;t=4d5b0474&amp;ps=13740610&amp;shp=81f88b70&amp;shcp=43f4a2f9&amp;idc=my2" alt="AD-004" loading="lazy">
-                                        <div class="media-card__gradient"></div>
-                    <div class="media-card__top">
-                        <div class="media-type-badge">
-                            <span class="material-icons-round">music_video</span>
-                            TikTok                        </div>
-                    </div>
-                </div>
-
-                <div class="media-card__body">
-                    <div class="media-card__meta">
-                        <div class="media-card__author">
-                                                            <img src="http://localhost:8080/uploads/avatars/avatar_22_1773258697.jpg" alt="">
-                                                        <span>Fabricio Hotmail</span>
-                        </div>
-                                                <div class="stat-chip" style="padding: 2px 8px; font-size: 0.7rem;">
-                            <span class="material-icons-round" style="font-size: 14px;">visibility</span>
-                            7                        </div>
-                                            </div>
-
-                    <div class="media-card__title" onclick="openViewer(this.closest('.media-card'))">AD-004</div>
-
-                    <div class="social-interaction-bar">
-                        <div class="reaction-picker-wrap" id="rxWrap_step_18">
-                            <div class="reaction-picker" id="rxPicker_step_18">
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'like', this); event.stopPropagation();"
-                                        title="like">
-                                    ❤️                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'love', this); event.stopPropagation();"
-                                        title="love">
-                                    😍                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'haha', this); event.stopPropagation();"
-                                        title="haha">
-                                    😂                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'wow', this); event.stopPropagation();"
-                                        title="wow">
-                                    😮                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'clap', this); event.stopPropagation();"
-                                        title="clap">
-                                    👏                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'fire', this); event.stopPropagation();"
-                                        title="fire">
-                                    🔥                                </button>
-                                                            </div>
-                            <div class="interaction-item liked"
-                                 id="cardLike_step_18"
-                                 onclick="handleLike('step', 18)"
-                                 oncontextmenu="toggleReactionPicker('step',18); return false;"
-                                 ontouchstart="startReactionHold('step',18)"
-                                 ontouchend="clearReactionHold()">
-                                <span class="material-icons-round">favorite</span>
-                                <span id="cardLikeCount_step_18">2</span>
-                            </div>
-                        </div>
-                                                                        <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
-                            <span class="material-icons-round">chat_bubble_outline</span>
-                            <span></span>
-                        </div>
-                        <div class="interaction-item" onclick="shareMedia('http://localhost:8080/c/clube-demo', 'AD-004')">
-                            <span class="material-icons-round">share</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-                                    <div class="media-card"
-                 data-source-type="step"
-                 data-source-id="18"
-                 data-url="https://www.instagram.com/reel/DVYwoamEXv3/?utm_source=ig_web_copy_link&amp;igsh=MzRlODBiNWFlZA=="
-                 data-is-video="1"
-                 data-like-count="2"
-                 data-has-liked="1"
-                 data-comment-count="0"
-                 data-view-count="7"
-                 data-title="AD-004"
-                 data-author="Fabricio Hotmail"
-                 data-avatar="http://localhost:8080/uploads/avatars/avatar_22_1773258697.jpg"
-                 data-media-type="reels"
-                 data-date="2026-03-13 17:56:36"
-                 data-reactions="[]"
-                 data-my-reaction=""
-                 data-viewed="0">
-
-                <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
-                                        <img class="media-card__thumb" src="https://scontent.cdninstagram.com/v/t51.71878-15/643627968_1591918265933007_6166900583329494122_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&amp;_nc_cat=108&amp;ccb=7-5&amp;_nc_sid=18de74&amp;efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&amp;_nc_ohc=aFzQkqkWJa8Q7kNvwEEtxL0&amp;_nc_oc=Adm2f7pyVyKC0X9wPvakqDJeGa7O3VtB_yVWv4igQbNFYO0nwo7JqAeyudRNEx4ipt0&amp;_nc_zt=23&amp;_nc_ht=scontent.cdninstagram.com&amp;_nc_gid=La8urB0lNBwUWpENOkcAbA&amp;_nc_ss=8&amp;oh=00_Afx0DSKydDhJtFm4bcSRG_tzp3Mji56Y_v0KXqqR9uuISA&amp;oe=69BB9B31" alt="AD-004" loading="lazy">
-                                        <div class="media-card__gradient"></div>
-                    <div class="media-card__top">
-                        <div class="media-type-badge">
-                            <span class="material-icons-round">photo_camera</span>
-                            Reels                        </div>
-                    </div>
-                </div>
-
-                <div class="media-card__body">
-                    <div class="media-card__meta">
-                        <div class="media-card__author">
-                                                            <img src="http://localhost:8080/uploads/avatars/avatar_22_1773258697.jpg" alt="">
-                                                        <span>Fabricio Hotmail</span>
-                        </div>
-                                                <div class="stat-chip" style="padding: 2px 8px; font-size: 0.7rem;">
-                            <span class="material-icons-round" style="font-size: 14px;">visibility</span>
-                            7                        </div>
-                                            </div>
-
-                    <div class="media-card__title" onclick="openViewer(this.closest('.media-card'))">AD-004</div>
-
-                    <div class="social-interaction-bar">
-                        <div class="reaction-picker-wrap" id="rxWrap_step_18">
-                            <div class="reaction-picker" id="rxPicker_step_18">
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'like', this); event.stopPropagation();"
-                                        title="like">
-                                    ❤️                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'love', this); event.stopPropagation();"
-                                        title="love">
-                                    😍                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'haha', this); event.stopPropagation();"
-                                        title="haha">
-                                    😂                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'wow', this); event.stopPropagation();"
-                                        title="wow">
-                                    😮                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'clap', this); event.stopPropagation();"
-                                        title="clap">
-                                    👏                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'fire', this); event.stopPropagation();"
-                                        title="fire">
-                                    🔥                                </button>
-                                                            </div>
-                            <div class="interaction-item liked"
-                                 id="cardLike_step_18"
-                                 onclick="handleLike('step', 18)"
-                                 oncontextmenu="toggleReactionPicker('step',18); return false;"
-                                 ontouchstart="startReactionHold('step',18)"
-                                 ontouchend="clearReactionHold()">
-                                <span class="material-icons-round">favorite</span>
-                                <span id="cardLikeCount_step_18">2</span>
-                            </div>
-                        </div>
-                                                                        <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
-                            <span class="material-icons-round">chat_bubble_outline</span>
-                            <span></span>
-                        </div>
-                        <div class="interaction-item" onclick="shareMedia('http://localhost:8080/c/clube-demo', 'AD-004')">
-                            <span class="material-icons-round">share</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-                                    <div class="media-card"
-                 data-source-type="step"
-                 data-source-id="18"
-                 data-url="https://www.instagram.com/reel/DVmLWOVCvTc/?utm_source=ig_web_copy_link&amp;igsh=MzRlODBiNWFlZA=="
-                 data-is-video="1"
-                 data-like-count="2"
-                 data-has-liked="1"
-                 data-comment-count="0"
-                 data-view-count="7"
-                 data-title="AD-004"
-                 data-author="Fabricio Hotmail"
-                 data-avatar="http://localhost:8080/uploads/avatars/avatar_22_1773258697.jpg"
-                 data-media-type="reels"
-                 data-date="2026-03-13 17:56:34"
-                 data-reactions="[]"
-                 data-my-reaction=""
-                 data-viewed="0">
-
-                <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
-                                        <img class="media-card__thumb" src="https://scontent.cdninstagram.com/v/t51.71878-15/649232482_1358597696288213_5001423731811957891_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&amp;_nc_cat=111&amp;ccb=7-5&amp;_nc_sid=18de74&amp;efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&amp;_nc_ohc=ZPTksyfWjR4Q7kNvwEX_XDH&amp;_nc_oc=AdmeevjV5T9pup3GKybkLfxqsYmZvdQPEfvC-qyk-yrYYuLqSI8MR6c_NH3n7jV9Uuc&amp;_nc_zt=23&amp;_nc_ht=scontent.cdninstagram.com&amp;_nc_gid=50cTsozwr3a5EjooUtdG7A&amp;_nc_ss=8&amp;oh=00_AfzXpuJqXz3y3PM26MbavpLm02jG2MpbmbLpgrb81ELqxg&amp;oe=69BBA8ED" alt="AD-004" loading="lazy">
-                                        <div class="media-card__gradient"></div>
-                    <div class="media-card__top">
-                        <div class="media-type-badge">
-                            <span class="material-icons-round">photo_camera</span>
-                            Reels                        </div>
-                    </div>
-                </div>
-
-                <div class="media-card__body">
-                    <div class="media-card__meta">
-                        <div class="media-card__author">
-                                                            <img src="http://localhost:8080/uploads/avatars/avatar_22_1773258697.jpg" alt="">
-                                                        <span>Fabricio Hotmail</span>
-                        </div>
-                                                <div class="stat-chip" style="padding: 2px 8px; font-size: 0.7rem;">
-                            <span class="material-icons-round" style="font-size: 14px;">visibility</span>
-                            7                        </div>
-                                            </div>
-
-                    <div class="media-card__title" onclick="openViewer(this.closest('.media-card'))">AD-004</div>
-
-                    <div class="social-interaction-bar">
-                        <div class="reaction-picker-wrap" id="rxWrap_step_18">
-                            <div class="reaction-picker" id="rxPicker_step_18">
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'like', this); event.stopPropagation();"
-                                        title="like">
-                                    ❤️                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'love', this); event.stopPropagation();"
-                                        title="love">
-                                    😍                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'haha', this); event.stopPropagation();"
-                                        title="haha">
-                                    😂                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'wow', this); event.stopPropagation();"
-                                        title="wow">
-                                    😮                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'clap', this); event.stopPropagation();"
-                                        title="clap">
-                                    👏                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 18, 'fire', this); event.stopPropagation();"
-                                        title="fire">
-                                    🔥                                </button>
-                                                            </div>
-                            <div class="interaction-item liked"
-                                 id="cardLike_step_18"
-                                 onclick="handleLike('step', 18)"
-                                 oncontextmenu="toggleReactionPicker('step',18); return false;"
-                                 ontouchstart="startReactionHold('step',18)"
-                                 ontouchend="clearReactionHold()">
-                                <span class="material-icons-round">favorite</span>
-                                <span id="cardLikeCount_step_18">2</span>
-                            </div>
-                        </div>
-                                                                        <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
-                            <span class="material-icons-round">chat_bubble_outline</span>
-                            <span></span>
-                        </div>
-                        <div class="interaction-item" onclick="shareMedia('http://localhost:8080/c/clube-demo', 'AD-004')">
-                            <span class="material-icons-round">share</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-                                    <div class="media-card"
-                 data-source-type="step"
-                 data-source-id="18"
                  data-url="https://youtube.com/shorts/JjDIq-5fi1c?si=KOZnYNw7ewwaUcYK"
                  data-is-video="1"
                  data-like-count="2"
                  data-has-liked="1"
-                 data-comment-count="0"
+                 data-comment-count="1"
                  data-view-count="7"
                  data-title="AD-004"
                  data-author="Fabricio Hotmail"
@@ -3118,8 +2993,15 @@ body { overflow-x: hidden; }
                  data-viewed="0">
 
                 <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
-                                        <img class="media-card__thumb" src="https://img.youtube.com/vi/JjDIq-5fi1c/hqdefault.jpg" alt="AD-004" loading="lazy">
-                                        <div class="media-card__gradient"></div>
+                                        <img class="media-card__thumb" src="https://img.youtube.com/vi/JjDIq-5fi1c/hqdefault.jpg" alt="AD-004" loading="lazy" onerror="thumbFallback(this)">
+                                        <div class="thumb-fallback" style="display:none; align-items: center; justify-content: center; flex-direction: column;">
+                                                <div class="thumb-fallback__bg" style="background-image:url('http://localhost:8080/uploads/avatars/avatar_22_1773258697.jpg')"></div>
+                        <img class="thumb-fallback__avatar" src="http://localhost:8080/uploads/avatars/avatar_22_1773258697.jpg" alt="Fabricio Hotmail" onerror="this.style.display='none'">
+                                                <div class="thumb-fallback__play">play_circle</div>
+                        <div class="thumb-fallback__name">Fabricio Hotmail</div>
+                    </div>
+                    
+                    <div class="media-card__gradient"></div>
                     <div class="media-card__top">
                         <div class="media-type-badge">
                             <span class="material-icons-round">play_circle</span>
@@ -3180,7 +3062,7 @@ body { overflow-x: hidden; }
                         </div>
                                                                         <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
                             <span class="material-icons-round">chat_bubble_outline</span>
-                            <span></span>
+                            <span>1</span>
                         </div>
                         <div class="interaction-item" onclick="shareMedia('http://localhost:8080/c/clube-demo', 'AD-004')">
                             <span class="material-icons-round">share</span>
@@ -3195,7 +3077,7 @@ body { overflow-x: hidden; }
                  data-is-video="1"
                  data-like-count="2"
                  data-has-liked="1"
-                 data-comment-count="0"
+                 data-comment-count="1"
                  data-view-count="7"
                  data-title="AD-004"
                  data-author="Fabricio Hotmail"
@@ -3207,8 +3089,15 @@ body { overflow-x: hidden; }
                  data-viewed="0">
 
                 <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
-                                        <img class="media-card__thumb" src="https://img.youtube.com/vi/-deT0UCUDUQ/hqdefault.jpg" alt="AD-004" loading="lazy">
-                                        <div class="media-card__gradient"></div>
+                                        <img class="media-card__thumb" src="https://img.youtube.com/vi/-deT0UCUDUQ/hqdefault.jpg" alt="AD-004" loading="lazy" onerror="thumbFallback(this)">
+                                        <div class="thumb-fallback" style="display:none; align-items: center; justify-content: center; flex-direction: column;">
+                                                <div class="thumb-fallback__bg" style="background-image:url('http://localhost:8080/uploads/avatars/avatar_22_1773258697.jpg')"></div>
+                        <img class="thumb-fallback__avatar" src="http://localhost:8080/uploads/avatars/avatar_22_1773258697.jpg" alt="Fabricio Hotmail" onerror="this.style.display='none'">
+                                                <div class="thumb-fallback__play">play_circle</div>
+                        <div class="thumb-fallback__name">Fabricio Hotmail</div>
+                    </div>
+                    
+                    <div class="media-card__gradient"></div>
                     <div class="media-card__top">
                         <div class="media-type-badge">
                             <span class="material-icons-round">smart_display</span>
@@ -3269,7 +3158,7 @@ body { overflow-x: hidden; }
                         </div>
                                                                         <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
                             <span class="material-icons-round">chat_bubble_outline</span>
-                            <span></span>
+                            <span>1</span>
                         </div>
                         <div class="interaction-item" onclick="shareMedia('http://localhost:8080/c/clube-demo', 'AD-004')">
                             <span class="material-icons-round">share</span>
@@ -3284,7 +3173,7 @@ body { overflow-x: hidden; }
                  data-is-video="1"
                  data-like-count="2"
                  data-has-liked="1"
-                 data-comment-count="0"
+                 data-comment-count="1"
                  data-view-count="7"
                  data-title="AD-004"
                  data-author="Fabricio Hotmail"
@@ -3296,8 +3185,15 @@ body { overflow-x: hidden; }
                  data-viewed="0">
 
                 <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
-                                        <img class="media-card__thumb" src="https://img.youtube.com/vi/AsfRVHZvoHY/hqdefault.jpg" alt="AD-004" loading="lazy">
-                                        <div class="media-card__gradient"></div>
+                                        <img class="media-card__thumb" src="https://img.youtube.com/vi/AsfRVHZvoHY/hqdefault.jpg" alt="AD-004" loading="lazy" onerror="thumbFallback(this)">
+                                        <div class="thumb-fallback" style="display:none; align-items: center; justify-content: center; flex-direction: column;">
+                                                <div class="thumb-fallback__bg" style="background-image:url('http://localhost:8080/uploads/avatars/avatar_22_1773258697.jpg')"></div>
+                        <img class="thumb-fallback__avatar" src="http://localhost:8080/uploads/avatars/avatar_22_1773258697.jpg" alt="Fabricio Hotmail" onerror="this.style.display='none'">
+                                                <div class="thumb-fallback__play">play_circle</div>
+                        <div class="thumb-fallback__name">Fabricio Hotmail</div>
+                    </div>
+                    
+                    <div class="media-card__gradient"></div>
                     <div class="media-card__top">
                         <div class="media-type-badge">
                             <span class="material-icons-round">play_circle</span>
@@ -3358,7 +3254,7 @@ body { overflow-x: hidden; }
                         </div>
                                                                         <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
                             <span class="material-icons-round">chat_bubble_outline</span>
-                            <span></span>
+                            <span>1</span>
                         </div>
                         <div class="interaction-item" onclick="shareMedia('http://localhost:8080/c/clube-demo', 'AD-004')">
                             <span class="material-icons-round">share</span>
@@ -3366,276 +3262,8 @@ body { overflow-x: hidden; }
                     </div>
                 </div>
             </div>
-                                    <div class="media-card"
-                 data-source-type="step"
-                 data-source-id="16"
-                 data-url="https://www.instagram.com/p/DFQc86RRziG/"
-                 data-is-video="1"
-                 data-like-count="2"
-                 data-has-liked="1"
-                 data-comment-count="0"
-                 data-view-count="7"
-                 data-title="Destaque"
-                 data-author=""
-                 data-avatar=""
-                 data-media-type="reels"
-                 data-date="2026-03-12 21:23:12"
-                 data-reactions="[]"
-                 data-my-reaction=""
-                 data-viewed="0">
-
-                <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
-                                        <img class="media-card__thumb" src="http://localhost:8080/assets/images/video_placeholder.png" alt="Destaque" loading="lazy">
-                                        <div class="media-card__gradient"></div>
-                    <div class="media-card__top">
-                        <div class="media-type-badge">
-                            <span class="material-icons-round">photo_camera</span>
-                            Reels                        </div>
-                    </div>
-                </div>
-
-                <div class="media-card__body">
-                    <div class="media-card__meta">
-                        <div class="media-card__author">
-                                                        <span></span>
-                        </div>
-                                                <div class="stat-chip" style="padding: 2px 8px; font-size: 0.7rem;">
-                            <span class="material-icons-round" style="font-size: 14px;">visibility</span>
-                            7                        </div>
-                                            </div>
-
-                    <div class="media-card__title" onclick="openViewer(this.closest('.media-card'))">Destaque</div>
-
-                    <div class="social-interaction-bar">
-                        <div class="reaction-picker-wrap" id="rxWrap_step_16">
-                            <div class="reaction-picker" id="rxPicker_step_16">
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'like', this); event.stopPropagation();"
-                                        title="like">
-                                    ❤️                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'love', this); event.stopPropagation();"
-                                        title="love">
-                                    😍                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'haha', this); event.stopPropagation();"
-                                        title="haha">
-                                    😂                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'wow', this); event.stopPropagation();"
-                                        title="wow">
-                                    😮                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'clap', this); event.stopPropagation();"
-                                        title="clap">
-                                    👏                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'fire', this); event.stopPropagation();"
-                                        title="fire">
-                                    🔥                                </button>
-                                                            </div>
-                            <div class="interaction-item liked"
-                                 id="cardLike_step_16"
-                                 onclick="handleLike('step', 16)"
-                                 oncontextmenu="toggleReactionPicker('step',16); return false;"
-                                 ontouchstart="startReactionHold('step',16)"
-                                 ontouchend="clearReactionHold()">
-                                <span class="material-icons-round">favorite</span>
-                                <span id="cardLikeCount_step_16">2</span>
-                            </div>
-                        </div>
-                                                                        <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
-                            <span class="material-icons-round">chat_bubble_outline</span>
-                            <span></span>
-                        </div>
-                        <div class="interaction-item" onclick="shareMedia('http://localhost:8080/c/clube-demo', 'Destaque')">
-                            <span class="material-icons-round">share</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-                                    <div class="media-card"
-                 data-source-type="step"
-                 data-source-id="16"
-                 data-url="https://www.instagram.com/p/DUjpd_BjYX_/"
-                 data-is-video="1"
-                 data-like-count="2"
-                 data-has-liked="1"
-                 data-comment-count="0"
-                 data-view-count="7"
-                 data-title="Destaque"
-                 data-author=""
-                 data-avatar=""
-                 data-media-type="reels"
-                 data-date="2026-03-12 21:23:06"
-                 data-reactions="[]"
-                 data-my-reaction=""
-                 data-viewed="0">
-
-                <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
-                                        <img class="media-card__thumb" src="http://localhost:8080/assets/images/video_placeholder.png" alt="Destaque" loading="lazy">
-                                        <div class="media-card__gradient"></div>
-                    <div class="media-card__top">
-                        <div class="media-type-badge">
-                            <span class="material-icons-round">photo_camera</span>
-                            Reels                        </div>
-                    </div>
-                </div>
-
-                <div class="media-card__body">
-                    <div class="media-card__meta">
-                        <div class="media-card__author">
-                                                        <span></span>
-                        </div>
-                                                <div class="stat-chip" style="padding: 2px 8px; font-size: 0.7rem;">
-                            <span class="material-icons-round" style="font-size: 14px;">visibility</span>
-                            7                        </div>
-                                            </div>
-
-                    <div class="media-card__title" onclick="openViewer(this.closest('.media-card'))">Destaque</div>
-
-                    <div class="social-interaction-bar">
-                        <div class="reaction-picker-wrap" id="rxWrap_step_16">
-                            <div class="reaction-picker" id="rxPicker_step_16">
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'like', this); event.stopPropagation();"
-                                        title="like">
-                                    ❤️                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'love', this); event.stopPropagation();"
-                                        title="love">
-                                    😍                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'haha', this); event.stopPropagation();"
-                                        title="haha">
-                                    😂                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'wow', this); event.stopPropagation();"
-                                        title="wow">
-                                    😮                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'clap', this); event.stopPropagation();"
-                                        title="clap">
-                                    👏                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'fire', this); event.stopPropagation();"
-                                        title="fire">
-                                    🔥                                </button>
-                                                            </div>
-                            <div class="interaction-item liked"
-                                 id="cardLike_step_16"
-                                 onclick="handleLike('step', 16)"
-                                 oncontextmenu="toggleReactionPicker('step',16); return false;"
-                                 ontouchstart="startReactionHold('step',16)"
-                                 ontouchend="clearReactionHold()">
-                                <span class="material-icons-round">favorite</span>
-                                <span id="cardLikeCount_step_16">2</span>
-                            </div>
-                        </div>
-                                                                        <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
-                            <span class="material-icons-round">chat_bubble_outline</span>
-                            <span></span>
-                        </div>
-                        <div class="interaction-item" onclick="shareMedia('http://localhost:8080/c/clube-demo', 'Destaque')">
-                            <span class="material-icons-round">share</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-                                    <div class="media-card"
-                 data-source-type="step"
-                 data-source-id="16"
-                 data-url="https://www.instagram.com/p/DU1jnSwEXPB/"
-                 data-is-video="1"
-                 data-like-count="2"
-                 data-has-liked="1"
-                 data-comment-count="0"
-                 data-view-count="7"
-                 data-title="Destaque"
-                 data-author=""
-                 data-avatar=""
-                 data-media-type="reels"
-                 data-date="2026-03-12 21:23:05"
-                 data-reactions="[]"
-                 data-my-reaction=""
-                 data-viewed="0">
-
-                <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
-                                        <img class="media-card__thumb" src="http://localhost:8080/assets/images/video_placeholder.png" alt="Destaque" loading="lazy">
-                                        <div class="media-card__gradient"></div>
-                    <div class="media-card__top">
-                        <div class="media-type-badge">
-                            <span class="material-icons-round">photo_camera</span>
-                            Reels                        </div>
-                    </div>
-                </div>
-
-                <div class="media-card__body">
-                    <div class="media-card__meta">
-                        <div class="media-card__author">
-                                                        <span></span>
-                        </div>
-                                                <div class="stat-chip" style="padding: 2px 8px; font-size: 0.7rem;">
-                            <span class="material-icons-round" style="font-size: 14px;">visibility</span>
-                            7                        </div>
-                                            </div>
-
-                    <div class="media-card__title" onclick="openViewer(this.closest('.media-card'))">Destaque</div>
-
-                    <div class="social-interaction-bar">
-                        <div class="reaction-picker-wrap" id="rxWrap_step_16">
-                            <div class="reaction-picker" id="rxPicker_step_16">
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'like', this); event.stopPropagation();"
-                                        title="like">
-                                    ❤️                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'love', this); event.stopPropagation();"
-                                        title="love">
-                                    😍                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'haha', this); event.stopPropagation();"
-                                        title="haha">
-                                    😂                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'wow', this); event.stopPropagation();"
-                                        title="wow">
-                                    😮                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'clap', this); event.stopPropagation();"
-                                        title="clap">
-                                    👏                                </button>
-                                                                <button class="reaction-btn "
-                                        onclick="sendReaction('step', 16, 'fire', this); event.stopPropagation();"
-                                        title="fire">
-                                    🔥                                </button>
-                                                            </div>
-                            <div class="interaction-item liked"
-                                 id="cardLike_step_16"
-                                 onclick="handleLike('step', 16)"
-                                 oncontextmenu="toggleReactionPicker('step',16); return false;"
-                                 ontouchstart="startReactionHold('step',16)"
-                                 ontouchend="clearReactionHold()">
-                                <span class="material-icons-round">favorite</span>
-                                <span id="cardLikeCount_step_16">2</span>
-                            </div>
-                        </div>
-                                                                        <div class="interaction-item" onclick="openViewer(this.closest('.media-card'), true)">
-                            <span class="material-icons-round">chat_bubble_outline</span>
-                            <span></span>
-                        </div>
-                        <div class="interaction-item" onclick="shareMedia('http://localhost:8080/c/clube-demo', 'Destaque')">
-                            <span class="material-icons-round">share</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
                     </div>
 
-                <div id="loadSentinel" class="load-sentinel"></div>
-        <div id="loadSpinner" class="load-spinner" style="display:none;">
-            <div class="spin"></div> Carregando mais...
-        </div>
         
             </main>
 
@@ -3673,7 +3301,13 @@ body { overflow-x: hidden; }
                 <div class="ticker-track" id="tickerTrack">
                                         <div class="ticker-item">
                         <span class="material-icons-round">star</span>
-                        Erica Negrette da Si                    </div>
+                        Fabricio Hotmail                    </div>
+                                        <div class="ticker-item">
+                        <span class="material-icons-round">star</span>
+                        Louise Helena Montei                    </div>
+                                        <div class="ticker-item">
+                        <span class="material-icons-round">star</span>
+                        Louise Helena Montei                    </div>
                                         <div class="ticker-item">
                         <span class="material-icons-round">star</span>
                         Ana Julia de Souza M                    </div>
@@ -3691,25 +3325,13 @@ body { overflow-x: hidden; }
                         Fabricio Hotmail                    </div>
                                         <div class="ticker-item">
                         <span class="material-icons-round">star</span>
-                        Fabricio Hotmail                    </div>
+                        Louise Helena Montei                    </div>
                                         <div class="ticker-item">
                         <span class="material-icons-round">star</span>
-                        Fabricio Hotmail                    </div>
-                                        <div class="ticker-item">
-                        <span class="material-icons-round">star</span>
-                        Erica Negrette da Si                    </div>
+                        Louise Helena Montei                    </div>
                                         <div class="ticker-item">
                         <span class="material-icons-round">star</span>
                         Ana Julia de Souza M                    </div>
-                                        <div class="ticker-item">
-                        <span class="material-icons-round">star</span>
-                        Fabricio Hotmail                    </div>
-                                        <div class="ticker-item">
-                        <span class="material-icons-round">star</span>
-                        Fabricio Hotmail                    </div>
-                                        <div class="ticker-item">
-                        <span class="material-icons-round">star</span>
-                        Fabricio Hotmail                    </div>
                                         <div class="ticker-item">
                         <span class="material-icons-round">star</span>
                         Fabricio Hotmail                    </div>
@@ -3799,7 +3421,7 @@ body { overflow-x: hidden; }
 </div>
 
 
-<link rel="preconnect" href="https://www.instagram.com"><link rel="preconnect" href="https://www.tiktok.com">
+
 <script>
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -3808,10 +3430,19 @@ const MEDIA_URL    = 'http://localhost:8080/c/clube-demo/media';
 const COMMENT_BASE = 'http://localhost:8080/c/clube-demo/media';
 const CLUB_SLUG    = 'clube-demo';
 
+// ── Thumbnail fallback handler ───────────────────────────────────────────────
+function thumbFallback(img) {
+    img.style.display = 'none';
+    const fb = img.nextElementSibling;
+    if (fb && fb.classList.contains('thumb-fallback')) {
+        fb.style.display = 'flex';
+    }
+}
+
 // ── Infinite scroll state ────────────────────────────────────────────────────
 let currentPage = 1;
 let isLoading   = false;
-let hasMore     = true;
+let hasMore     = false;
 let currentViewerCard = null;
 
 // ── Embed Engine ─────────────────────────────────────────────────────────────
@@ -3989,7 +3620,8 @@ function openViewer(card, forceComments = false) {
         // Count posts by this author visible in the grid
         const authorPostCount = document.querySelectorAll(`#mediaGrid .media-card[data-author="${CSS.escape(author)}"]`).length;
         const avatarHtml = avatar
-            ? `<img src="${escapeHtml(avatar)}" alt="${escapeHtml(author)}">`
+            ? `<img src="${escapeHtml(avatar)}" alt="${escapeHtml(author)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+               <div class="viewer-author-strip-initials" style="display:none;">${escapeHtml(author.charAt(0).toUpperCase())}</div>`
             : `<div class="viewer-author-strip-initials">${escapeHtml(author.charAt(0).toUpperCase())}</div>`;
         authorStrip.innerHTML = `
             ${avatarHtml}
@@ -4271,7 +3903,7 @@ function buildCardElement(item) {
     const likes     = parseInt(item.like_count) || 0;
     const comCount  = parseInt(item.comment_count) || 0;
     const views     = parseInt(item.view_count) || 0;
-    const thumb     = item.thumbnail_url || buildThumbJs(item);
+    const thumb     = buildThumbJs(item);
     const title     = escapeHtml(item.title || '');
     const author    = escapeHtml(item.user_name || '');
     const avatar    = item.avatar_url || '';
@@ -4283,7 +3915,7 @@ function buildCardElement(item) {
         if (/tiktok\.com/i.test(u)) return 'tiktok';
         if (/instagram\.com/i.test(u)) return 'reels';
         if (/\.(mp4|webm|mov)/i.test(u)) return 'video';
-        if (/\.(jpg|jpeg|png|webp|gif)/i.test(u)) return 'photo';
+        if (/\.(jpg|jpeg|png|webp|gif|avif|svg)/i.test(u)) return 'photo';
         return 'other';
     }
     const mediaType = _getTypeKey(url);
@@ -4308,9 +3940,20 @@ function buildCardElement(item) {
     div.setAttribute('onclick', 'openViewer(this)');
     div.setAttribute('ondblclick', 'doubleTapLike(event, this)');
 
+    const nameParts = (author || 'Membro').trim().split(' ');
+    const lastName = nameParts[nameParts.length - 1];
+    
     div.innerHTML = `
-        <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))">
-            ${thumb ? `<img class="media-card__thumb" src="${escapeHtml(thumb)}" alt="${title}" loading="lazy">` : '<div class="media-card__thumb-placeholder"></div>'}
+        <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
+            ${thumb ? `<img class="media-card__thumb" src="${escapeHtml(thumb)}" alt="${title}" loading="lazy" onerror="thumbFallback(this)">` : ''}
+
+            <div class="thumb-fallback" style="${thumb ? 'display:none;' : 'display:flex;'} align-items: center; justify-content: center; flex-direction: column;">
+                ${avatar ? `<div class="thumb-fallback__bg" style="background-image:url('${escapeHtml(avatar)}')"></div>
+                <img class="thumb-fallback__avatar" src="${escapeHtml(avatar)}" alt="${escapeHtml(author)}" onerror="this.style.display='none'">` : `<div class="thumb-fallback__bg thumb-fallback__bg--gradient"></div>`}
+                <div class="thumb-fallback__play">play_circle</div>
+                <div class="thumb-fallback__name">${escapeHtml(author)}</div>
+            </div>
+
             <div class="media-card__gradient"></div>
             <div class="media-card__top">
                 <div class="media-type-badge">
@@ -4347,10 +3990,15 @@ function buildCardElement(item) {
 
 function buildThumbJs(item) {
     const url = item.media_content || '';
-    if (item.thumbnail_url) return item.thumbnail_url;
+    if (item.thumbnail_url) {
+        if (item.thumbnail_url.indexOf('uploads/thumbnails/') !== -1 && item.thumbnail_url.indexOf('http') !== 0) {
+            return 'http://localhost:8080/' + item.thumbnail_url;
+        }
+        return item.thumbnail_url;
+    }
     const yt = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/i);
     if (yt) return `https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg`;
-    return 'http://localhost:8080/assets/images/video_placeholder.png';
+    return ''; // Empty triggers avatar blur fallback
 }
 
 // ── Double-tap like ───────────────────────────────────────────────────────────

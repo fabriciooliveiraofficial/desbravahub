@@ -501,9 +501,12 @@ if ($isProgram) {
             <div class="student-chip">
                 <div class="student-avatar">
                     <?php if ($userAvatar): ?>
-                        <img src="<?= htmlspecialchars((string)$userAvatar) ?>" style="width:100%; height:100%; object-fit:cover;">
+                        <img src="<?= htmlspecialchars((string)$userAvatar) ?>" 
+                             style="width:100%; height:100%; object-fit:cover;"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <span class="avatar-fallback-initials" style="display:none;"><?= strtoupper(substr((string)($userName ?? ''), 0, 1)) ?></span>
                     <?php else: ?>
-                        <?= substr((string)($userName ?? ''), 0, 1) ?>
+                        <?= strtoupper(substr((string)($userName ?? ''), 0, 1)) ?>
                     <?php endif; ?>
                 </div>
                 <div class="student-info">

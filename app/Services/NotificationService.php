@@ -128,13 +128,22 @@ class NotificationService
     {
         $tenantId = App::tenantId();
 
+        // Strictly return only UNREAD notifications (specific or broadcast)
+        // This ensures the "Bell" center works as a persistent task/alert list.
         return db_fetch_all(
-            "SELECT * FROM notifications 
-             WHERE tenant_id = ? AND (user_id = ? OR user_id IS NULL)
-               AND channels LIKE '%\"toast\"%'
-             ORDER BY created_at DESC
+            "SELECT n.*, 1 as is_unread
+             FROM notifications n
+             LEFT JOIN notification_reads nr ON nr.notification_id = n.id AND nr.user_id = ?
+             WHERE n.tenant_id = ? 
+               AND (n.user_id = ? OR n.user_id IS NULL)
+               AND n.channels LIKE '%\"toast\"%'
+               AND (
+                   (n.user_id IS NOT NULL AND n.read_at IS NULL) OR
+                   (n.user_id IS NULL AND nr.id IS NULL)
+               )
+             ORDER BY n.created_at DESC
              LIMIT ?",
-            [$tenantId, $userId, $limit]
+            [$userId, $tenantId, $userId, $limit]
         );
     }
 
@@ -165,6 +174,45 @@ class NotificationService
      * User-specific notifications: update read_at on the row.
      * Broadcast notifications: insert into notification_reads for this user.
      */
+    /**
+     * Mark multiple notifications as read for a specific user
+     */
+    public function markMultipleAsRead(array $ids, int $userId): void
+    {
+        if (empty($ids)) return;
+        
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        
+        // 1. Process individual notifications directly
+        db_query(
+            "UPDATE notifications SET read_at = NOW() 
+             WHERE id IN ($placeholders) AND user_id = ? AND read_at IS NULL",
+            [...$ids, $userId]
+        );
+        
+        // 2. Process broadcast notifications (shared)
+        $broadcastIds = db_fetch_all(
+            "SELECT id FROM notifications WHERE id IN ($placeholders) AND user_id IS NULL",
+            $ids
+        );
+
+        foreach ($broadcastIds as $row) {
+            $id = $row['id'];
+            $exists = db_fetch_column(
+                "SELECT id FROM notification_reads WHERE notification_id = ? AND user_id = ?",
+                [$id, $userId]
+            );
+
+            if (!$exists) {
+                db_insert('notification_reads', [
+                    'notification_id' => $id,
+                    'user_id' => $userId,
+                    'read_at' => date('Y-m-d H:i:s')
+                ]);
+            }
+        }
+    }
+
     public function markAllAsRead(int $userId): void
     {
         $tenantId = App::tenantId();

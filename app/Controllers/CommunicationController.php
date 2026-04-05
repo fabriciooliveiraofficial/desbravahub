@@ -67,6 +67,7 @@ class CommunicationController
         $allCuratedMedia = db_fetch_all("
             SELECT cm.*,
                    u.name as user_name,
+                   u.avatar_url as user_avatar,
                    COALESCE(ps.title, a.title, 'Destaque') as source_title
             FROM curated_media cm
             LEFT JOIN user_step_responses usr ON cm.source_type = 'step' AND cm.source_id = usr.id

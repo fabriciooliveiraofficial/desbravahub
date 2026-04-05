@@ -59,6 +59,14 @@
         font-weight: 700;
         font-size: 1.1rem;
         flex-shrink: 0;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .member-avatar-lg img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
     .member-details {
@@ -129,7 +137,12 @@
 
                 <div class="member-info">
                     <div class="member-avatar-lg">
-                        <?= strtoupper(substr($member['name'], 0, 1)) ?>
+                        <?php if (!empty($member['avatar_url'])): ?>
+                            <img src="<?= htmlspecialchars($member['avatar_url']) ?>" alt="<?= htmlspecialchars($member['name']) ?>" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <span style="display:none;"><?= strtoupper(substr($member['name'], 0, 1)) ?></span>
+                        <?php else: ?>
+                            <?= strtoupper(substr($member['name'], 0, 1)) ?>
+                        <?php endif; ?>
                     </div>
                     <div class="member-details">
                         <h3>

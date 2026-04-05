@@ -197,6 +197,48 @@
         flex-shrink: 0;
     }
 
+    .invite-actions {
+        display: flex;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .btn-invite-action {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--hud-text-dim);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-invite-action:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .btn-invite-action.resend:hover {
+        color: var(--accent-cyan);
+        border-color: rgba(0, 217, 255, 0.3);
+        background: rgba(0, 217, 255, 0.08);
+    }
+
+    .btn-invite-action.revoke:hover {
+        color: #f87171;
+        border-color: rgba(248, 113, 113, 0.3);
+        background: rgba(248, 113, 113, 0.08);
+    }
+
+    .btn-invite-action i {
+        font-size: 1.1rem;
+    }
+
     /* Send Invite Form */
     .invite-form-card {
         background: linear-gradient(135deg, rgba(0, 217, 255, 0.06), rgba(34, 197, 94, 0.06));
@@ -419,6 +461,18 @@
                 ?>
             </div>
             <span class="invite-status <?= $st[1] ?>"><?= $st[0] ?></span>
+            
+            <?php if (in_array($invite['status'], ['pending', 'clicked'])): ?>
+                <div class="invite-actions">
+                    <button class="btn-invite-action resend" onclick="resendInvite(<?= $invite['id'] ?>)" title="Reenviar Convite">
+                        <i class="material-icons-round">refresh</i>
+                    </button>
+                    <button class="btn-invite-action revoke" onclick="revokeInvite(<?= $invite['id'] ?>)" title="Revogar Convite">
+                        <i class="material-icons-round">delete_outline</i>
+                    </button>
+                </div>
+            <?php endif; ?>
+
             <?php if ($invite['xp_rewarded'] > 0): ?>
                 <span class="invite-xp">+<?= $invite['xp_rewarded'] ?> XP</span>
             <?php endif; ?>
@@ -458,20 +512,79 @@ async function sendInvite() {
         if (data.success) {
             msgDiv.style.color = '#22c55e';
             msgDiv.textContent = '✅ ' + data.message;
+            if (window.toast) window.toast.success('Sucesso', data.message);
             emailInput.value = '';
             // Reload after 1.5s to update stats
-            setTimeout(() => location.reload(), 1500);
+            setTimeout(() => location.reload(), 2000);
         } else {
             msgDiv.style.color = '#ef4444';
             msgDiv.textContent = '❌ ' + data.message;
+            if (window.toast) window.toast.error('Erro', data.message);
         }
     } catch (err) {
         msgDiv.style.display = 'block';
         msgDiv.style.color = '#ef4444';
         msgDiv.textContent = 'Erro de conexão.';
+        if (window.toast) window.toast.error('Erro', 'Erro de conexão.');
     } finally {
         btn.disabled = false;
         btn.textContent = 'ENVIAR';
+    }
+}
+
+async function resendInvite(id) {
+    const confirmed = window.toast 
+        ? await window.toast.confirm('Reenviar Convite', 'Deseja reenviar este convite?', { confirmText: 'Reenviar' })
+        : confirm('Deseja reenviar este convite?');
+
+    if (!confirmed) return;
+
+    try {
+        const res = await fetch('<?= base_url($tenant['slug'] . '/convite/reenviar') ?>', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            if (window.toast) window.toast.success('Sucesso', data.message);
+            else alert('✅ ' + data.message);
+        } else {
+            if (window.toast) window.toast.error('Erro', data.message);
+            else alert('❌ ' + data.message);
+        }
+    } catch (err) {
+        if (window.toast) window.toast.error('Erro', 'Erro ao reenviar convite.');
+        else alert('Erro ao reenviar convite.');
+    }
+}
+
+async function revokeInvite(id) {
+    const confirmed = window.toast 
+        ? await window.toast.confirm('Revogar Convite', 'Deseja revogar (excluir) este convite? Esta ação não pode ser desfeita.', { confirmText: 'Revogar', confirmBg: '#ef4444' })
+        : confirm('Deseja revogar (excluir) este convite? Esta ação não pode ser desfeita.');
+
+    if (!confirmed) return;
+
+    try {
+        const res = await fetch('<?= base_url($tenant['slug'] . '/convite/revogar') ?>', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            if (window.toast) window.toast.success('Revogado', 'O convite foi revogado com sucesso.');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            if (window.toast) window.toast.error('Erro', data.message);
+            else alert('❌ ' + data.message);
+        }
+    } catch (err) {
+        if (window.toast) window.toast.error('Erro', 'Erro ao revogar convite.');
+        else alert('Erro ao revogar convite.');
     }
 }
 </script>

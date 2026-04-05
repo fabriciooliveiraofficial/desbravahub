@@ -61,6 +61,15 @@ class Router
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $uri = rtrim($uri, '/') ?: '/';
 
+        // Handle OPTIONS preflight for modern fetch/headers
+        if ($method === 'OPTIONS') {
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+            header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Background-Request');
+            http_response_code(204);
+            exit;
+        }
+
         // Strip /public/ from the beginning if it exists (common for misconfigured document roots)
         if ($uri === '/public') {
             $uri = '/';

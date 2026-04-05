@@ -3,6 +3,10 @@
  * Notification Bell — abre o Notification Center popover
  * Requires: $tenant (array), $unreadCount (int, optional)
  */
+if (!isset($unreadCount)) {
+    $notifService = new \App\Services\NotificationService();
+    $unreadCount = $notifService->getUnreadCount(\App\Core\App::user()['id'] ?? 0);
+}
 $bellUnreadCount = $unreadCount ?? 0;
 
 // Rota de destino contextual (admin vs member)
@@ -13,6 +17,7 @@ $tenantSlug  = $tenant['slug'] ?? '';
 $ncApiUrl      = base_url($tenantSlug . '/api/notifications');
 $ncUnreadUrl   = base_url($tenantSlug . '/api/notifications/unread');
 $ncReadAllUrl  = base_url($tenantSlug . '/api/notifications/read-all');
+$ncBulkReadUrl = base_url($tenantSlug . '/api/notifications/bulk-read');
 $ncAllNotifUrl = base_url($tenantSlug . $notifPath);
 ?>
 
@@ -82,6 +87,27 @@ $ncAllNotifUrl = base_url($tenantSlug . $notifPath);
     to   { transform: scale(1); }
 }
 
+/* ── Pulsing Animation for Unread ── */
+.hud-notification-badge.pulse {
+    animation: badgePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+               badgePulse 2s infinite;
+}
+
+@keyframes badgePulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+        transform: scale(1);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+        transform: scale(1.1);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+        transform: scale(1);
+    }
+}
+
 /* ── Bell Button — Member HUD ── */
 .hud-top-bar .notification-bell-btn,
 .hud-top-bar-v3 .notification-bell-btn,
@@ -125,6 +151,8 @@ $ncAllNotifUrl = base_url($tenantSlug . $notifPath);
 .notification-bell-btn .material-icons-round { font-size: 24px; }
 </style>
 
+<script src="<?= asset_url('js/nc-debug-pro.js') ?>"></script>
+<script src="<?= asset_url('js/dopamine-drop.js') ?>"></script>
 <script src="<?= asset_url('js/notification-center.js') ?>"></script>
 <script>
 (function () {
@@ -145,6 +173,7 @@ $ncAllNotifUrl = base_url($tenantSlug . $notifPath);
             apiUrl:       '<?= $ncApiUrl ?>',
             unreadUrl:    '<?= $ncUnreadUrl ?>',
             readAllUrl:   '<?= $ncReadAllUrl ?>',
+            bulkReadUrl:  '<?= $ncBulkReadUrl ?>',
             allNotifUrl:  '<?= $ncAllNotifUrl ?>',
             pollInterval: 30000,
             initialCount: <?= (int) $bellUnreadCount ?>,

@@ -301,3 +301,83 @@ function fetch_media_thumbnail(string $url): ?string
     // The frontend buildThumbJs handles this, but we can set a default relative path here too
     return null;
 }
+
+/**
+ * Download a remote thumbnail image and cache it locally.
+ * Returns the local relative path (e.g. "uploads/thumbnails/42.jpg") or null on failure.
+ *
+ * This prevents CDN token expiration issues (TikTok, Instagram) by keeping
+ * a permanent local copy — the same strategy used by YouTube, Pinterest, etc.
+ *
+ * @param string $remoteUrl  The remote thumbnail URL
+ * @param int    $mediaId    The curated_media.id (used as filename)
+ * @return string|null       Local relative path or null on failure
+ */
+function cache_thumbnail_locally(string $remoteUrl, int $mediaId): ?string
+{
+    if (empty($remoteUrl) || !filter_var($remoteUrl, FILTER_VALIDATE_URL)) {
+        return null;
+    }
+
+    // Don't re-download if it's already a local path
+    if (strpos($remoteUrl, 'uploads/thumbnails/') !== false) {
+        return $remoteUrl;
+    }
+
+    // Don't cache YouTube thumbnails — they never expire
+    if (strpos($remoteUrl, 'img.youtube.com') !== false || strpos($remoteUrl, 'i.ytimg.com') !== false) {
+        return null;
+    }
+
+    $thumbDir = rtrim($_SERVER['DOCUMENT_ROOT'] ?? __DIR__ . '/../public', '/') . '/uploads/thumbnails';
+    if (!is_dir($thumbDir)) {
+        @mkdir($thumbDir, 0755, true);
+    }
+
+    try {
+        $ctx = stream_context_create([
+            'http' => [
+                'timeout' => 5,
+                'header'  => "User-Agent: Mozilla/5.0 (compatible; DesbravaHub/1.0)\r\nAccept: image/*\r\n",
+                'follow_location' => 1,
+            ],
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+            ],
+        ]);
+
+        $imageData = @file_get_contents($remoteUrl, false, $ctx);
+        if (!$imageData || strlen($imageData) < 1000) {
+            return null; // Too small = likely an error page, not an image
+        }
+
+        // Detect format from content, default to jpg
+        $ext = 'jpg';
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mime  = $finfo->buffer($imageData);
+        $mimeMap = [
+            'image/png'  => 'png',
+            'image/webp' => 'webp',
+            'image/gif'  => 'gif',
+            'image/jpeg' => 'jpg',
+        ];
+        if (isset($mimeMap[$mime])) {
+            $ext = $mimeMap[$mime];
+        } elseif (strpos($mime, 'image/') !== 0) {
+            return null; // Not an image
+        }
+
+        $filename = "thumb_{$mediaId}.{$ext}";
+        $fullPath = $thumbDir . '/' . $filename;
+
+        if (file_put_contents($fullPath, $imageData) === false) {
+            return null;
+        }
+
+        return "uploads/thumbnails/{$filename}";
+    } catch (\Exception $e) {
+        error_log("cache_thumbnail_locally failed for media #{$mediaId}: " . $e->getMessage());
+        return null;
+    }
+}

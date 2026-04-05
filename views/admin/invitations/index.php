@@ -30,6 +30,12 @@
             <span class="material-icons-round" style="font-size: 18px;">groups</span>
             Membros
         </a>
+        <a href="<?= base_url($tenant['slug'] . '/admin/convites/recrutamento') ?>" 
+           class="btn btn-sm"
+           style="border-radius: 9999px; <?= str_contains($_SERVER['REQUEST_URI'], '/recrutamento') ? 'background: var(--primary); color: white;' : 'background: transparent; color: var(--text-muted);' ?>">
+            <span class="material-icons-round" style="font-size: 18px;">campaign</span>
+            Recrutamento
+        </a>
     </div>
 
     <!-- Actions -->

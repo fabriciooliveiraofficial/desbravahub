@@ -91,7 +91,10 @@ $uniqueUnits = count(array_unique(array_column($pendingQueue, 'unit_name')));
                                     <div class="table-identity">
                                         <div class="table-avatar">
                                             <?php if ($q['avatar_url']): ?>
-                                                <img src="<?= $q['avatar_url'] ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                                                <img src="<?= $q['avatar_url'] ?>" 
+                                                     style="width: 100%; height: 100%; object-fit: cover;"
+                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                <span class="avatar-fallback-initials" style="display:none;"><?= strtoupper(substr($q['user_name'] ?? 'U', 0, 1)) ?></span>
                                             <?php else: ?>
                                                 <?= strtoupper(substr($q['user_name'] ?? 'U', 0, 1)) ?>
                                             <?php endif; ?>

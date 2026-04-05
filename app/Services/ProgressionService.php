@@ -8,6 +8,7 @@
 namespace App\Services;
 
 use App\Core\App;
+use App\Services\NotificationService;
 
 class ProgressionService
 {
@@ -41,6 +42,25 @@ class ProgressionService
 
         // Check for achievements
         $this->checkAchievements($userId, $newXp, $newLevel['level_number']);
+
+        if ($leveledUp) {
+            $notificationService = new NotificationService();
+            $notificationService->send(
+                $userId,
+                'level_up',
+                "🔝 Novo Nível: {$newLevel['name']}",
+                "Parabéns! Você alcançou o nível {$newLevel['level_number']}.",
+                [
+                    'channels' => ['toast', 'push'],
+                    'priority' => 'high',
+                    'data' => [
+                        'level_number' => $newLevel['level_number'],
+                        'level_name' => $newLevel['name'],
+                        'xp' => $newXp
+                    ]
+                ]
+            );
+        }
 
         return [
             'success' => true,
@@ -231,7 +251,7 @@ class ProgressionService
             'user_id' => $userId,
             'achievement_id' => $achievement['id'],
             'tenant_id' => $tenantId,
-            'notified' => 0,
+            'notified' => 1, // Set to 1 because we are sending the notification now
         ]);
 
         // Award bonus XP if applicable
@@ -241,6 +261,24 @@ class ProgressionService
                 [$achievement['xp_reward'], $userId]
             );
         }
+
+        // Trigger the "Dopamine Drop" Notification
+        $notificationService = new NotificationService();
+        $notificationService->send(
+            $userId,
+            'achievement',
+            "🏆 Nova Conquista: {$achievement['name']}",
+            $achievement['description'] ?? "Você desbloqueou uma nova insígnia épica!",
+            [
+                'channels' => ['toast', 'push'],
+                'priority' => 'high',
+                'data' => [
+                    'achievement_id' => $achievement['id'],
+                    'xp_reward' => $achievement['xp_reward'],
+                    'icon' => $achievement['icon'] ?? '🏆'
+                ]
+            ]
+        );
     }
 
     /**

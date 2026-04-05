@@ -87,7 +87,7 @@ class LearningNotificationService
         $service = new NotificationService();
         $service->send(
             $userId,
-            'step_approved',
+            'achievement',
             $title,
             $message,
             [
@@ -95,6 +95,7 @@ class LearningNotificationService
                     'link' => "/{$tenantSlug}/aprendizado/{$program['id']}",
                     'url' => "/{$tenantSlug}/aprendizado/{$program['id']}",
                     'icon' => '✅',
+                    'xp_reward' => $program['xp_reward'] ?? 0,
                     'program_name' => $program['name'],
                     'step_name' => $step['title']
                 ],
@@ -149,7 +150,7 @@ class LearningNotificationService
         $service = new NotificationService();
         $service->send(
             $userId,
-            'program_completed',
+            'achievement',
             $title,
             "Parabéns! Você completou {$program['icon']} {$program['name']}!",
             [

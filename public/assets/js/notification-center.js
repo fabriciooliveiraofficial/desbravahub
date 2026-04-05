@@ -1,643 +1,479 @@
 /**
- * DesbravaHub — Notification Center
- *
- * Glass-morphism popover with:
- *  - On-demand fetch when opened (latest 10 notifications)
- *  - Silent 30s background polling for unread badge count
- *  - Sound plays ONLY when unread count increases
- *  - Optimistic mark-as-read (single + all)
- *  - Relative timestamps in pt-BR
+ * Notification Center JS - ELITE EDITION (V9.1)
+ * 
+ * Performance & UX Upgrades:
+ * - Single-Request Bulk Actions
+ * - ACTIVE DOM Desintegration (rows are destroyed to free memory)
+ * - Anti-Ghost-Checks (only unread items are selectable)
+ * - HTMX-Resistant Endpoint Fallbacks
  */
-
-// Guard: prevent "Identifier already declared" on HTMX re-navigation
 if (typeof window.NotificationCenter === 'undefined') {
-
-window.NotificationCenter = class NotificationCenter {
-    /**
-     * @param {Object}  opts
-     * @param {string}  opts.buttonId      - ID do botão da sineta
-     * @param {string}  opts.badgeId       - ID do span do badge
-     * @param {string}  opts.soundId       - ID do elemento <audio>
-     * @param {string}  opts.apiUrl        - ex: /slug/api/notifications
-     * @param {string}  opts.unreadUrl     - ex: /slug/api/notifications/unread
-     * @param {string}  opts.readAllUrl    - ex: /slug/api/notifications/read-all
-     * @param {string}  opts.allNotifUrl   - ex: /slug/notificacoes
-     * @param {number}  opts.pollInterval  - ms entre polls silenciosos (default 30000)
-     * @param {number}  opts.initialCount  - contagem inicial vinda do PHP
-     */
+window.NotificationCenter = class {
     constructor(opts = {}) {
-        this._api        = opts.apiUrl      || '';
-        this._unreadUrl  = opts.unreadUrl   || '';
-        this._readAllUrl = opts.readAllUrl  || '';
-        this._allUrl     = opts.allNotifUrl || '#';
-        this._interval   = opts.pollInterval || 30000;
+        this._opts        = opts;
+        this._api         = opts.apiUrl;
+        this._unreadUrl   = opts.unreadUrl;
+        this._readAllUrl  = opts.readAllUrl;
+        // Se o HTMX não injetou a bulkReadUrl a tempo, monta a URL caindo para a _api base:
+        this._bulkUrl     = opts.bulkReadUrl || (this._api + '/bulk-read');
+        this._tenant      = opts.tenant || '';
+        
+        this._btn         = document.getElementById(opts.buttonId || 'notificationBtn');
+        this._badge       = document.getElementById(opts.badgeId || 'notif-badge');
+        this._popover     = null;
+        this._pollTimer   = null;
+        this._initialCount = opts.initialCount || 0;
 
-        this._isOpen     = false;
-        this._loading    = false;
-        this._pollTimer  = null;
-        this._lastCount  = opts.initialCount ?? -1;
-
-        this._btn     = null;
-        this._badge   = null;
-        this._sound   = null;
-        this._popover = null;
-
-        if (opts.buttonId) {
-            this._init(opts.buttonId, opts.badgeId, opts.soundId);
-        }
+        // Persistence: save celebrated IDs so we don't repeat across page loads
+        this._celebratedKey = `nc_celebrated_${this._tenant}`;
+        try {
+            const saved = localStorage.getItem(this._celebratedKey);
+            this._celebratedIds = new Set(JSON.parse(saved || '[]'));
+        } catch(e) { this._celebratedIds = new Set(); }
+        
+        console.log('[NC V9.2] Elite + Dopamine Drop Engine Active');
+        this._init();
+        this._unlockAudio();
     }
 
-    // ── Bootstrap ──────────────────────────────────────────────────────────────
+    _unlockAudio() {
+        const unlock = () => {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            if (ctx.state === 'suspended') ctx.resume();
+            document.removeEventListener('click', unlock);
+            document.removeEventListener('keydown', unlock);
+        };
+        document.addEventListener('click', unlock, { once: true });
+        document.addEventListener('keydown', unlock, { once: true });
+    }
 
-    _init(buttonId, badgeId, soundId) {
-        this._btn   = document.getElementById(buttonId);
-        this._badge = document.getElementById(badgeId);
-        this._sound = document.getElementById(soundId);
+    _saveCelebrated(id) {
+        this._celebratedIds.add(id);
+        try {
+            const arr = Array.from(this._celebratedIds).slice(-100);
+            localStorage.setItem(this._celebratedKey, JSON.stringify(arr));
+        } catch(e) {}
+    }
+
+    _init() {
         if (!this._btn) return;
+        this._ensurePopover();
 
-        this._injectStyles();
-        this._buildPopover();
-        this._attachEvents();
-        this._startPolling();
-    }
+        // Apply any initial count from PHP immediately
+        if (this._initialCount > 0) {
+            this._updateBadge(this._initialCount);
+        }
 
-    // ── Popover DOM ────────────────────────────────────────────────────────────
-
-    _buildPopover() {
-        this._popover = document.createElement('div');
-        this._popover.id        = 'nc-popover';
-        this._popover.className = 'nc-popover nc-hidden';
-        this._popover.setAttribute('role', 'dialog');
-        this._popover.setAttribute('aria-label', 'Central de Notificações');
-
-        this._popover.innerHTML = `
-            <div class="nc-header">
-                <span class="nc-title">
-                    <span class="material-icons-round nc-title-icon">notifications</span>
-                    Notificações
-                </span>
-            </div>
-            <div class="nc-body">
-                <div class="nc-loading" id="nc-loading">
-                    ${[0, 1, 2].map(() => `
-                        <div class="nc-skeleton">
-                            <div class="nc-sk-icon"></div>
-                            <div class="nc-sk-lines">
-                                <div class="nc-sk-line nc-sk-title"></div>
-                                <div class="nc-sk-line nc-sk-sub"></div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-                <div class="nc-list" id="nc-list"></div>
-                <div class="nc-empty nc-hidden" id="nc-empty">
-                    <span class="material-icons-round nc-empty-icon">notifications_none</span>
-                    <p>Tudo em dia! Sem notificações.</p>
-                </div>
-            </div>
-            <div class="nc-footer">
-                <a class="nc-view-all" href="${this._allUrl}">
-                    Ver todas as notificações
-                    <span class="material-icons-round" style="font-size:14px;vertical-align:middle;margin-left:4px;">arrow_forward</span>
-                </a>
-            </div>
-        `;
-
-        const container = this._btn.closest('.bell-container') || this._btn.parentElement;
-        container.appendChild(this._popover);
-
-    }
-
-    // ── Events ─────────────────────────────────────────────────────────────────
-
-    _attachEvents() {
         this._btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this._toggle();
+            e.preventDefault(); e.stopPropagation();
+            this.toggle();
         });
 
         document.addEventListener('click', (e) => {
-            if (this._isOpen && !this._popover.contains(e.target) && e.target !== this._btn) {
-                this._close();
+            if (this._popover?.classList.contains('active')) {
+                if (!this._popover.contains(e.target) && !this._btn.contains(e.target)) {
+                    this.hide();
+                }
             }
         });
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this._isOpen) this._close();
+        // ELITE DELEGATION
+        this._popover.addEventListener('click', (e) => {
+            const t = e.target;
+            
+            // X CLOSE
+            if (t.id === 'nc-close-btn' || t.closest('#nc-close-btn')) {
+                e.stopPropagation(); this.hide(); return;
+            }
+
+            // MARK ALL
+            if (t.id === 'nc-mark-all-btn' || t.closest('#nc-mark-all-btn')) {
+                e.stopPropagation(); this._markAllRead(); return;
+            }
+
+            // BULK READ
+            if (t.id === 'nc-bulk-read-btn' || t.closest('#nc-bulk-read-btn')) {
+                e.stopPropagation(); this._markSelectedRead(); return;
+            }
+
+            // SELECT ALL TOGGLE
+            if (t.id === 'nc-select-all-check') {
+                this._popover.querySelectorAll('.nc-check-input').forEach(c => c.checked = t.checked);
+                this._updateBulkHeader(); return;
+            }
+
+            // CHECKBOX CLICK
+            if (t.classList.contains('nc-check-input')) {
+                this._updateBulkHeader(); return;
+            }
+
+            // UNREAD DOT (Instant Read)
+            const dot = t.closest('.nc-unread-indicator');
+            if (dot) {
+                e.stopPropagation(); this._handleMarkAsRead(dot.closest('.nc-item')); return;
+            }
+
+            // ITEM NAV
+            const item = t.closest('.nc-item');
+            if (item) {
+                e.preventDefault(); this._handleItemClick(item);
+            }
         });
+
+        this._updateBadge(this._initialCount);
+        this._startPolling();
+        this._injectStyles();
     }
 
-    // ── Open / Close ───────────────────────────────────────────────────────────
-
-    _toggle() { this._isOpen ? this._close() : this._open(); }
-
-    _open() {
-        this._popover.classList.remove('nc-hidden');
-        // Position with fixed coords so it never clips out of viewport.
-        // Compute popWidth in JS (mirrors the CSS clamp) because offsetWidth is 0
-        // at this point (element transitions from display:none before nc-visible is set).
-        requestAnimationFrame(() => {
-            const rect     = this._btn.getBoundingClientRect();
-            const margin   = 10;
-            const popWidth = Math.round(Math.min(380, Math.max(300, window.innerWidth * 0.9)));
-            // Align right edge of popover to right edge of button, then clamp to viewport
-            let left = rect.right - popWidth;
-            left = Math.max(margin, Math.min(left, window.innerWidth - popWidth - margin));
-            this._popover.style.top   = (rect.bottom + margin) + 'px';
-            this._popover.style.left  = left + 'px';
-            this._popover.style.width = popWidth + 'px';
-            this._popover.classList.add('nc-visible');
-        });
-        this._isOpen = true;
-        this._btn.setAttribute('aria-expanded', 'true');
-        this._loadNotifications();
+    _ensurePopover() {
+        let pop = document.getElementById('notification-popover');
+        if (!pop) {
+            pop = document.createElement('div');
+            pop.id = 'notification-popover';
+            pop.className = 'notification-popover-v9';
+            (document.getElementById('notif-bell-container') || this._btn.parentElement).appendChild(pop);
+        }
+        this._popover = pop;
     }
 
-    _close() {
-        this._popover.classList.remove('nc-visible');
-        this._popover.addEventListener('transitionend', () => {
-            if (!this._isOpen) this._popover.classList.add('nc-hidden');
-        }, { once: true });
-        this._isOpen = false;
-        this._btn.setAttribute('aria-expanded', 'false');
-    }
+    toggle() { this._popover.classList.contains('active') ? this.hide() : this.show(); }
+    show() { this._popover.classList.add('active'); this._btn.classList.add('active'); this.fetchNotifications(); }
+    hide() { this._popover.classList.remove('active'); this._btn.classList.remove('active'); }
 
-    // ── Fetch Notifications ────────────────────────────────────────────────────
-
-    async _loadNotifications() {
-        if (!this._api || this._loading) return;
-        this._loading = true;
-        this._showLoading(true);
-
+    async fetchNotifications() {
+        this._popover.innerHTML = '<div class="nc-loading"><i class="fas fa-circle-notch fa-spin"></i> Otimizando...</div>';
         try {
-            const res = await fetch(`${this._api}?limit=10`, {
-                credentials: 'include',
-                headers: { 'Accept': 'application/json', 'X-Background-Request': '1' },
-            });
-            if (!res.ok) return;
-
+            const res = await fetch(this._api);
             const data = await res.json();
-            this._updateBadge(data.unread_count || 0);
-            this._lastCount = data.unread_count || 0;
             this._render(data.notifications || []);
-        } catch (_) {
-            // Silent fail
-        } finally {
-            this._loading = false;
-            this._showLoading(false);
-        }
+            if (typeof data.unread_count !== 'undefined') this._updateBadge(data.unread_count);
+        } catch (e) { this._popover.innerHTML = '<div class="nc-error">Erro na conexão 📡</div>'; }
     }
 
-    // ── Render ─────────────────────────────────────────────────────────────────
-
-    _render(notifications) {
-        const list  = document.getElementById('nc-list');
-        const empty = document.getElementById('nc-empty');
-        if (!list || !empty) return;
-
-        if (notifications.length === 0) {
-            list.innerHTML = '';
-            list.classList.add('nc-hidden');
-            empty.classList.remove('nc-hidden');
-            return;
-        }
-
-        list.classList.remove('nc-hidden');
-        empty.classList.add('nc-hidden');
-        list.innerHTML = notifications.map(n => this._renderItem(n)).join('');
-
-        list.querySelectorAll('.nc-item').forEach(el => {
-            el.addEventListener('click', () => this._handleItemClick(el));
-        });
-    }
-
-    _renderItem(n) {
-        const isUnread = !n.read_at;
-        const data     = this._parseData(n.data);
-        const url      = data.link || data.url || '';
-        const icon     = this._typeIcon(n.type);
-        const time     = this._formatTime(n.created_at);
-
+    _buildHeader() {
         return `
-            <div class="nc-item${isUnread ? ' nc-item--unread' : ''}"
-                 data-id="${n.id}"
-                 data-url="${this._esc(url)}"
-                 ${n.read_at ? 'data-read="1"' : ''}
-                 role="button" tabindex="0">
-                <div class="nc-item-icon${isUnread ? ' nc-item-icon--unread' : ''}">
-                    <span class="material-icons-round">${icon}</span>
+            <div class="nc-v9-header">
+                <div class="nc-v9-top">
+                    <span class="nc-v9-tag">CENTRAL DESBRAVAHUB</span>
+                    <button class="nc-v9-x" id="nc-close-btn">&times;</button>
                 </div>
-                <div class="nc-item-body">
-                    <div class="nc-item-hd">
-                        <span class="nc-item-title">${this._esc(n.title)}</span>
-                        ${isUnread ? '<span class="nc-dot"></span>' : ''}
-                    </div>
-                    <p class="nc-item-msg">${this._linkify(this._esc(n.message))}</p>
-                    <span class="nc-item-time">${time}</span>
+                <div class="nc-v9-title-row">
+                    <span class="nc-v9-title">Avisos</span>
+                    <button class="nc-v9-clean" id="nc-mark-all-btn">Limpar Tudo</button>
+                </div>
+                <div class="nc-v9-bulk-bar" id="nc-bulk-actions" style="display: none;">
+                    <label class="nc-v9-all-label">
+                        <input type="checkbox" id="nc-select-all-check"> Selecionar Todos
+                    </label>
+                    <button class="nc-v9-bulk-btn" id="nc-bulk-read-btn">Marcar Lidos</button>
                 </div>
             </div>
         `;
     }
 
-    _handleItemClick(el) {
-        const id  = el.dataset.id;
-        const url = el.dataset.url;
-        if (id && !el.dataset.read) this._markAsRead(id, el);
-        if (url) window.location.href = url;
+    _render(notifications) {
+        if (notifications.length === 0) {
+            this._popover.innerHTML = this._buildHeader() + '<div class="nc-empty"><i class="fas fa-check-circle"></i> Sem novos avisos!</div>';
+            return;
+        }
+
+        let listHtml = '<div class="nc-v9-list">';
+        notifications.forEach(n => {
+            const isUnread = n.is_unread == 1 || n.is_unread === true;
+            
+            // Fix: Parse data if it's a string from the API
+            let meta = n.data;
+            if (typeof meta === 'string') {
+                try { meta = JSON.parse(meta); } catch(e) { meta = {}; }
+            }
+
+            listHtml += `
+                <div class="nc-v9-row ${isUnread ? 'nc-unread' : ''}" data-id="${n.id}">
+                    <div class="nc-v9-check-track">
+                        <input type="checkbox" class="nc-check-input" data-id="${n.id}">
+                    </div>
+                    <div class="nc-item" data-id="${n.id}" data-url="${meta?.link || '#'}" data-is-unread="${isUnread ? '1' : '0'}">
+                        <div class="nc-v9-icon">${meta?.icon || '🔔'}</div>
+                        <div class="nc-v9-body">
+                            <div class="nc-v9-subj">${n.title}</div>
+                            <div class="nc-v9-msg">${n.message}</div>
+                            <div class="nc-v9-time">${this._formatTime(n.created_at)}</div>
+                        </div>
+                        ${isUnread ? `<div class="nc-unread-indicator"></div>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        listHtml += '</div>';
+        this._popover.innerHTML = this._buildHeader() + listHtml;
+        this._updateBulkHeader();
     }
 
-    // ── Mark as Read ───────────────────────────────────────────────────────────
+    async _handleItemClick(el) {
+        const url = el.dataset.url;
+        if (el.dataset.isUnread === '1') await this._handleMarkAsRead(el);
+        if (url && url !== '#' && !url.includes('javascript:')) window.location.href = url;
+    }
 
-    async _markAsRead(id, el) {
-        // Optimistic UI
-        el.classList.remove('nc-item--unread');
-        el.dataset.read = '1';
-        el.querySelector('.nc-dot')?.remove();
-        el.querySelector('.nc-item-icon')?.classList.remove('nc-item-icon--unread');
-
-        const cur = this._badgeCount();
-        if (cur > 0) this._updateBadge(cur - 1);
+    async _handleMarkAsRead(el) {
+        if (!el) return;
+        const row = el.closest('.nc-v9-row');
+        
+        // ELITE OPTIMISTIC: DOM DESINTEGRATION
+        if (row && row.classList.contains('nc-unread')) {
+            row.classList.add('nc-v9-row--removing');
+            setTimeout(() => {
+                row.remove();
+                // If this was the last notification, show empty state immediately
+                if (this._popover && this._popover.querySelectorAll('.nc-v9-row').length === 0) {
+                    this._render([]);
+                }
+            }, 350); 
+            
+            const cur = this._badgeCount();
+            this._updateBadge(Math.max(0, cur - 1));
+        }
 
         try {
-            await fetch(`${this._api}/${id}/read`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'X-Background-Request': '1' },
-            });
-        } catch (_) {}
+            fetch(`${this._api}/${el.dataset.id}/read`, { method: 'POST', headers: { 'X-Background-Request': '1' } });
+        } catch (e) {}
     }
 
     async _markAllRead() {
-        // Optimistic UI — remove unread state instantly
-        this._popover.querySelectorAll('.nc-item--unread').forEach(el => {
-            el.classList.remove('nc-item--unread');
-            el.dataset.read = '1';
-            el.querySelector('.nc-dot')?.remove();
-            el.querySelector('.nc-item-icon')?.classList.remove('nc-item-icon--unread');
+        this._popover.querySelectorAll('.nc-v9-row').forEach(row => {
+            row.classList.add('nc-v9-row--removing');
         });
-        this._updateBadge(0);
+        
+        setTimeout(() => {
+            if (this._popover) this._popover.innerHTML = ''; // Fast clear
+            this._render([]); // Show empty state correctly
+        }, 350);
 
-        try {
-            await fetch(this._readAllUrl, {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'X-Background-Request': '1' },
-            });
-            // Refresh list to confirm server state
-            this._loadNotifications();
-        } catch (_) {}
+        const selAll = document.getElementById('nc-select-all-check');
+        if (selAll) selAll.checked = false;
+
+        this._updateBadge(0);
+        this._updateBulkHeader();
+        
+        try { fetch(this._readAllUrl, { method: 'POST', headers: { 'X-Background-Request': '1' } }); } catch (e) {}
     }
 
-    // ── Badge ──────────────────────────────────────────────────────────────────
+    async _markSelectedRead() {
+        const checked = [...this._popover.querySelectorAll('.nc-check-input:checked')];
+        if (checked.length === 0) return;
+
+        const ids = checked.map(c => c.dataset.id);
+        let removedCount = 0;
+
+        checked.forEach(chk => {
+            const row = chk.closest('.nc-v9-row');
+            if (row) {
+                // Conta apenas os que eram não lidos para abater do badge
+                if (row.classList.contains('nc-unread')) {
+                    removedCount++;
+                }
+                // Desintegra a linha independentemente do status
+                row.classList.add('nc-v9-row--removing'); 
+                setTimeout(() => row.remove(), 350);     
+            }
+            // Cleanup visually
+            chk.checked = false;
+        });
+
+        const selAll = document.getElementById('nc-select-all-check');
+        if (selAll) selAll.checked = false;
+
+        this._updateBadge(Math.max(0, this._badgeCount() - removedCount));
+        this._updateBulkHeader(); // This hides the blue action bar immediately
+
+        try {
+            await fetch(this._bulkUrl, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', 'X-Background-Request': '1' },
+                body: JSON.stringify({ ids })
+            });
+        } catch (e) {
+            console.error('[NC] Bulk mark final fail:', e);
+        }
+    }
+
+    _updateBulkHeader() {
+        const bulk = document.getElementById('nc-bulk-actions');
+        if (!bulk) return;
+        const count = this._popover.querySelectorAll('.nc-check-input:checked').length;
+        bulk.style.display = count > 0 ? 'flex' : 'none';
+        bulk.classList.toggle('active', count > 0);
+    }
 
     _updateBadge(count) {
         if (!this._badge) return;
-        if (count > 0) {
-            this._badge.textContent = count > 9 ? '9+' : count;
-            this._badge.style.removeProperty('display');
-        } else {
-            this._badge.style.display = 'none';
-        }
-        this._lastCount = count;
+        this._badge.style.display = count <= 0 ? 'none' : 'flex';
+        this._badge.textContent = count > 9 ? '9+' : count;
     }
 
     _badgeCount() {
-        if (!this._badge || this._badge.style.display === 'none') return 0;
-        const raw = this._badge.textContent.trim();
-        return raw === '9+' ? 9 : (parseInt(raw, 10) || 0);
+        const t = this._badge?.textContent || '0';
+        return t === '9+' ? 10 : (parseInt(t) || 0);
     }
 
-    // ── Silent Background Polling ──────────────────────────────────────────────
+    _formatTime(s) {
+        if (!s) return '';
+        const d = new Date(s.replace(' ', 'T')), n = new Date();
+        const diff = Math.floor((n - d) / 1000);
+        if (diff < 60) return 'Agora';
+        if (diff < 3600) return `Há ${Math.floor(diff / 60)} min`;
+        if (diff < 86400) return `Há ${Math.floor(diff / 3600)} h`;
+        return d.toLocaleDateString();
+    }
 
     _startPolling() {
         if (this._pollTimer) clearInterval(this._pollTimer);
-        this._pollTimer = setInterval(() => this._silentPoll(), this._interval);
+
+        // INITIAL CHECK: Trigger Dopamine Drop for any existing hero notifications
+        this._checkForHeroNotifications();
+
+        this._pollTimer = setInterval(async () => {
+            try {
+                const res = await fetch(this._unreadUrl);
+                const data = await res.json();
+                const newCount = data.count;
+                const oldCount = this._badgeCount();
+
+                if (newCount !== oldCount && !this._popover.classList.contains('active')) {
+                    this._updateBadge(newCount);
+                }
+
+                // If count increased, check for hero-worthy notifications
+                if (newCount > oldCount) {
+                    this._checkForHeroNotifications();
+                }
+            } catch (e) {}
+        }, 30000);
     }
 
-    async _silentPoll() {
-        if (!this._unreadUrl) return;
+    async _checkForHeroNotifications() {
+        if (!window.DopamineDrop) return;
         try {
-            const res = await fetch(this._unreadUrl, {
-                credentials: 'include',
-                headers: { 'Accept': 'application/json', 'X-Background-Request': '1' },
-            });
-            if (!res.ok) return;
+            const res = await fetch(this._api);
+            const data = await res.json();
+            const notifications = data.notifications || [];
 
-            const data  = await res.json();
-            const count = data.count ?? 0;
+            for (const n of notifications) {
+                // Only trigger for achievement/level_up types
+                const isHero = n.type === 'achievement' || n.type === 'level_up';
+                if (!isHero) continue;
+                if (this._celebratedIds.has(String(n.id))) continue;
 
-            // Play sound only when count goes UP
-            if (this._lastCount >= 0 && count > this._lastCount) {
-                this._playSound();
+                // Allow celebrating if UNREAD or if it's VERY RECENT (within 5 mins)
+                const isUnread = n.read_at === null || n.is_unread == 1 || n.is_unread === true;
+                let isRecent = false;
+                try {
+                    const created = new Date(n.created_at.replace(' ', 'T')).getTime();
+                    const now = new Date().getTime();
+                    isRecent = (now - created) < 5 * 60 * 1000;
+                } catch(e) {}
+
+                if (isUnread || isRecent) {
+                    let meta = n.data;
+                    if (typeof meta === 'string') {
+                        try { meta = JSON.parse(meta); } catch(e) { meta = {}; }
+                    }
+
+                    if (!window.DopamineDrop.isActive()) {
+                        console.log('[Dopamine] Triggering for ID:', n.id);
+                        this._saveCelebrated(String(n.id));
+
+                        window.DopamineDrop.trigger({
+                            title: n.title || '🏆 Nova Conquista!',
+                            message: n.message || '',
+                            xpReward: meta?.xp_reward || meta?.xp || 0,
+                            notifId: n.id,
+                            readUrl: this._api,
+                            type: n.type
+                        });
+                        break; // Only one per poll
+                    }
+                }
             }
-
-            this._updateBadge(count);
-
-            // Refresh list if popover is currently open
-            if (this._isOpen) this._loadNotifications();
-        } catch (_) {}
-    }
-
-    _playSound() {
-        if (!this._sound) return;
-        this._sound.currentTime = 0;
-        this._sound.play().catch(() => {});
-    }
-
-    // ── Helpers ────────────────────────────────────────────────────────────────
-
-    _showLoading(show) {
-        const loading = document.getElementById('nc-loading');
-        const list    = document.getElementById('nc-list');
-        if (!loading) return;
-        if (show) {
-            loading.classList.remove('nc-hidden');
-            list?.classList.add('nc-hidden');
-        } else {
-            loading.classList.add('nc-hidden');
+        } catch (e) {
+            console.error('[NC] Hero check failed:', e);
         }
     }
 
-    _parseData(raw) {
-        if (!raw) return {};
-        if (typeof raw === 'object') return raw;
-        try { return JSON.parse(raw); } catch (_) { return {}; }
+    // Exposed for external callers (e.g. after hero modal dismiss)
+    async _silentPoll() {
+        try {
+            const res = await fetch(this._unreadUrl);
+            const data = await res.json();
+            this._updateBadge(data.count || 0);
+        } catch(e) {}
     }
-
-    _typeIcon(type) {
-        const map = {
-            sos_alert:        'emergency',
-            mission_assigned: 'military_tech',
-            mission_removed:  'remove_circle',
-            broadcast:        'campaign',
-            level_up:         'trending_up',
-            achievement:      'emoji_events',
-            event:            'event',
-            test_push:        'science',
-        };
-        return map[type] || 'notifications';
-    }
-
-    _formatTime(dateStr) {
-        if (!dateStr) return '';
-        const date = new Date(dateStr);
-        const diff = (Date.now() - date.getTime()) / 1000;
-        if (diff < 60)      return 'Agora há pouco';
-        if (diff < 3600)    return `Há ${Math.floor(diff / 60)} min`;
-        if (diff < 86400)   return `Há ${Math.floor(diff / 3600)} h`;
-        if (diff < 604800)  return `Há ${Math.floor(diff / 86400)} d`;
-        return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-    }
-
-    _esc(str) {
-        if (!str) return '';
-        const d = document.createElement('div');
-        d.textContent = str;
-        return d.innerHTML;
-    }
-
-    _linkify(text) {
-        if (!text) return '';
-        return text.replace(/(https?:\/\/[^\s<>"]+)/g,
-            url => `<a href="${url}" target="_blank" rel="noopener noreferrer" class="nc-link" onclick="event.stopPropagation()">${url}</a>`
-        );
-    }
-
-    // ── CSS Injection ──────────────────────────────────────────────────────────
 
     _injectStyles() {
-        if (document.getElementById('nc-styles')) return;
-        const s = document.createElement('style');
-        s.id = 'nc-styles';
+        const id = 'nc-styles-v9'; if (document.getElementById(id)) return;
+        const s = document.createElement('style'); s.id = id;
         s.textContent = `
-        /* ── Notification Center — alinhado ao design system do painel ── */
-        .nc-popover {
-            position: fixed;
-            width: clamp(300px, 90vw, 380px);
-            max-width: calc(100vw - 20px);
-            font-family: var(--font-body, 'Nunito', -apple-system, sans-serif);
-            background: rgba(20, 30, 48, 0.92);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--panel-border, rgba(255, 255, 255, 0.08));
-            border-radius: 20px;
-            box-shadow:
-                0 20px 60px rgba(0, 0, 0, 0.5),
-                0 0 0 1px rgba(6, 182, 212, 0.07),
-                inset 0 1px 0 rgba(255, 255, 255, 0.05);
-            z-index: 9998;
-            display: flex;
-            flex-direction: column;
-            max-height: 520px;
-            overflow: hidden;
-            transform-origin: top right;
-            transition: opacity 0.18s ease, transform 0.18s ease;
-        }
-        .nc-popover.nc-hidden  { opacity: 0; transform: scale(0.95) translateY(-6px); pointer-events: none; display: none; }
-        .nc-popover.nc-visible { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; display: flex; }
+            .notification-popover-v9 {
+                position: absolute; top: calc(100% + 15px); right: 0; width: 380px;
+                background: rgba(13, 20, 30, 0.98); backdrop-filter: blur(28px);
+                border-radius: 24px; border: 1px solid rgba(0, 217, 255, 0.2);
+                box-shadow: 0 40px 100px rgba(0,0,0,0.8); opacity: 0; visibility: hidden;
+                transform: translateY(20px) scale(0.96); transition: all 0.4s cubic-bezier(0.1, 0.9, 0.1, 1); 
+                z-index: 100000; overflow: hidden;
+            }
+            .notification-popover-v9.active { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+            
+            @media (max-width: 480px) {
+                .notification-popover-v9 { position: fixed; top: 12px; left: 12px; right: 12px; bottom: 12px; width: auto; height: auto; }
+                .nc-v9-list { max-height: none !important; flex: 1; }
+                .notification-popover-v9.active { display: flex; flex-direction: column; }
+            }
 
-        /* Header */
-        .nc-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--panel-border, rgba(255, 255, 255, 0.08));
-            flex-shrink: 0;
-        }
-        .nc-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.88rem;
-            font-weight: 800;
-            color: var(--text-bright, #f8fafc);
-            letter-spacing: 0.03em;
-            text-transform: uppercase;
-        }
-        .nc-title-icon {
-            font-size: 18px !important;
-            color: var(--neon-cyan, var(--accent-cyan, #06b6d4));
-        }
-        .nc-mark-all {
-            background: none;
-            border: none;
-            color: var(--neon-cyan, var(--accent-cyan, #06b6d4));
-            font-family: var(--font-body, 'Nunito', sans-serif);
-            font-size: 0.7rem;
-            font-weight: 700;
-            cursor: pointer;
-            padding: 4px 10px;
-            border-radius: 8px;
-            transition: background 0.2s;
-            white-space: nowrap;
-        }
-        .nc-mark-all:hover { background: rgba(6, 182, 212, 0.12); }
+            .nc-v9-header { background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.08); }
+            .nc-v9-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 18px; background: rgba(0,0,0,0.2); }
+            .nc-v9-tag { font-size: 0.6rem; font-weight: 900; letter-spacing: 2.5px; color: #58a6ff; opacity: 0.8; }
+            .nc-v9-x { background: none; border: none; color: #fff; font-size: 1.6rem; cursor: pointer; opacity: 0.5; transition: 0.2s; padding: 0; line-height: 1; }
+            .nc-v9-x:hover { opacity: 1; color: #ff7b72; transform: scale(1.2); }
 
-        /* Body */
-        .nc-body {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            scrollbar-width: thin;
-            scrollbar-color: var(--panel-border, rgba(255, 255, 255, 0.08)) transparent;
-        }
-        .nc-body::-webkit-scrollbar { width: 4px; }
-        .nc-body::-webkit-scrollbar-thumb {
-            background: var(--panel-border, rgba(255, 255, 255, 0.08));
-            border-radius: 2px;
-        }
+            .nc-v9-title-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 18px; }
+            .nc-v9-title { font-weight: 800; font-size: 1.2rem; color: #f0f6fc; }
+            .nc-v9-clean { background: none; border: none; color: #00d9ff; font-weight: 800; font-size: 0.8rem; cursor: pointer; transition: 0.2s; border-bottom: 1px solid transparent; }
+            .nc-v9-clean:hover { border-color: #00d9ff; }
 
-        /* Item */
-        .nc-item {
-            display: flex;
-            gap: 12px;
-            padding: 12px 18px;
-            border-bottom: 1px solid var(--panel-border, rgba(255, 255, 255, 0.06));
-            cursor: pointer;
-            transition: background 0.15s;
-            align-items: flex-start;
-        }
-        .nc-item:last-child { border-bottom: none; }
-        .nc-item:hover { background: rgba(255, 255, 255, 0.04); }
-        .nc-item--unread { background: rgba(6, 182, 212, 0.05); }
-        .nc-item--unread:hover { background: rgba(6, 182, 212, 0.09); }
+            .nc-v9-bulk-bar { padding: 12px 18px; background: #00d9ff; display: flex; justify-content: space-between; align-items: center; animation: ncSlideIn 0.3s ease; }
+            @keyframes ncSlideIn { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+            .nc-v9-all-label { font-size: 0.75rem; color: #0d1117; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+            .nc-v9-bulk-btn { background: #0d1117; color: #00d9ff; border: none; padding: 6px 14px; border-radius: 12px; font-weight: 900; font-size: 0.75rem; cursor: pointer; }
 
-        .nc-item-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--panel-border, rgba(255, 255, 255, 0.08));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            color: var(--text-dim, #94a3b8);
-        }
-        .nc-item-icon--unread {
-            background: rgba(6, 182, 212, 0.1);
-            border-color: rgba(6, 182, 212, 0.25);
-            color: var(--neon-cyan, #06b6d4);
-        }
-        .nc-item-icon .material-icons-round { font-size: 16px !important; }
+            .nc-v9-list { max-height: 480px; overflow-y: auto; scrollbar-width: thin; }
+            .nc-v9-list::-webkit-scrollbar { width: 4px; }
+            .nc-v9-list::-webkit-scrollbar-thumb { background: rgba(0, 217, 255, 0.2); }
 
-        .nc-item-body { flex: 1; min-width: 0; }
-        .nc-item-hd {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 6px;
-            margin-bottom: 3px;
-        }
-        .nc-item-title {
-            font-size: 0.78rem;
-            font-weight: 800;
-            color: var(--text-bright, #f8fafc);
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .nc-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: var(--neon-cyan, #06b6d4);
-            flex-shrink: 0;
-            box-shadow: 0 0 7px rgba(6, 182, 212, 0.7);
-        }
-        .nc-item-msg {
-            margin: 0;
-            font-size: 0.72rem;
-            color: var(--text-dim, #94a3b8);
-            line-height: 1.45;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-        }
-        .nc-item-time {
-            font-size: 0.67rem;
-            color: rgba(148, 163, 184, 0.6);
-            margin-top: 5px;
-            display: block;
-        }
-        .nc-link {
-            color: var(--neon-cyan, #06b6d4);
-            text-decoration: none;
-        }
+            .nc-v9-row { display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.04); transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.35s ease; overflow: hidden; padding: 0 18px; }
+            /* This is the key fixed rule: removing standard properties smoothly before DOM deletion */
+            .nc-v9-row--removing { max-height: 0 !important; opacity: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; pointer-events: none; border-bottom-color: transparent !important; }
+            
+            .nc-v9-row:hover { background: rgba(0, 217, 255, 0.03); }
+            .nc-unread { background: rgba(0, 217, 255, 0.05); }
 
-        /* Skeleton */
-        .nc-skeleton { display: flex; gap: 12px; padding: 12px 18px; align-items: flex-start; }
-        .nc-sk-icon {
-            width: 36px; height: 36px; border-radius: 10px;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid var(--panel-border, rgba(255,255,255,0.08));
-            flex-shrink: 0;
-            animation: ncShimmer 1.4s ease-in-out infinite;
-        }
-        .nc-sk-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
-        .nc-sk-line {
-            height: 9px; border-radius: 4px;
-            background: rgba(255,255,255,0.05);
-            animation: ncShimmer 1.4s ease-in-out infinite;
-        }
-        .nc-sk-title { width: 58%; }
-        .nc-sk-sub   { width: 80%; animation-delay: 0.15s; }
-        @keyframes ncShimmer {
-            0%, 100% { opacity: 0.3; }
-            50%       { opacity: 0.75; }
-        }
+            .nc-v9-check-track { width: 35px; min-width: 35px; display: flex; align-items: center; justify-content: flex-start; }
+            .nc-check-input { width: 20px; height: 20px; cursor: pointer; accent-color: #00d9ff; margin: 0; }
+            
+            .nc-item { flex: 1; display: flex; gap: 18px; padding: 18px 0; cursor: pointer; }
+            .nc-v9-icon { width: 44px; height: 44px; min-width: 44px; border-radius: 14px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border: 1px solid rgba(255,255,255,0.03); }
+            .nc-unread .nc-v9-icon { border-color: rgba(0, 217, 255, 0.25); background: rgba(0, 217, 255, 0.08); color: #00d9ff; }
+            
+            .nc-v9-body { flex: 1; min-width: 0; }
+            .nc-v9-subj { font-weight: 800; font-size: 0.92rem; color: #f1f5f9; margin-bottom: 3px; }
+            .nc-v9-msg { font-size: 0.82rem; color: #8b949e; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+            .nc-v9-time { font-size: 0.72rem; color: #57606a; margin-top: 6px; font-weight: 800; }
+            
+            .nc-unread-indicator { width: 12px; height: 12px; min-width: 12px; border-radius: 50%; background: #00d9ff; box-shadow: 0 0 12px #00d9ff; margin-left: 15px; align-self: center; transition: 0.3s; cursor: pointer; }
+            .nc-unread-indicator:hover { transform: scale(1.4); background: #ff4d4d; box-shadow: 0 0 15px #ff4d4d; }
 
-        /* Empty state */
-        .nc-empty {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 36px 20px;
-            color: var(--text-dim, #94a3b8);
-            gap: 8px;
-        }
-        .nc-empty-icon { font-size: 2.5rem !important; opacity: 0.35; }
-        .nc-empty p { font-size: 0.78rem; margin: 0; }
-
-        /* Footer */
-        .nc-footer {
-            padding: 10px 18px;
-            border-top: 1px solid var(--panel-border, rgba(255, 255, 255, 0.08));
-            flex-shrink: 0;
-        }
-        .nc-view-all {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.73rem;
-            font-weight: 700;
-            color: var(--neon-cyan, var(--accent-cyan, #06b6d4));
-            text-decoration: none;
-            padding: 7px;
-            border-radius: 10px;
-            transition: background 0.2s;
-            letter-spacing: 0.02em;
-        }
-        .nc-view-all:hover { background: rgba(6, 182, 212, 0.08); }
-
-        /* Utility */
-        .nc-hidden { display: none !important; }
-
-        /* Mobile */
-        @media (max-width: 480px) {
-            .nc-popover { width: calc(100vw - 20px); }
-        }
+            .nc-v9-footer { display: flex; align-items: center; justify-content: center; padding: 18px; color: #58a6ff; font-weight: 800; font-size: 0.85rem; text-decoration: none; border-top: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.1); }
         `;
         document.head.appendChild(s);
     }
 }
-
-} // end if NotificationCenter undefined
-
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = window.NotificationCenter;
 }

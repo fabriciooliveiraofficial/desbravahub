@@ -347,6 +347,13 @@ class InvitationController
             'email_verified_at' => date('Y-m-d H:i:s')
         ]);
 
+        // Referral System: Track conversion if this email was invited
+        try {
+            \App\Services\ReferralService::handleRegistration($userId, $invitation['email'], $tenant['id']);
+        } catch (\Exception $e) {
+            error_log("Referral tracking error (leadership): " . $e->getMessage());
+        }
+
         // Mark invitation as accepted
         db_update('leadership_invitations', [
             'accepted_at' => date('Y-m-d H:i:s')
@@ -791,6 +798,27 @@ class InvitationController
 
         $_SESSION['flash_success'] = 'Bem-vindo ao Clube!';
         header('Location: ' . base_url($tenant['slug'] . '/dashboard'));
+    }
+
+    /**
+     * List all RECRUITMENT invitations (sent by members)
+     */
+    public function recruitmentIndex(): void
+    {
+        $this->requireLeadership();
+
+        $tenant = App::tenant();
+        $user = App::user();
+
+        $invitations = \App\Services\ReferralService::getAllInvitesForTenant($tenant['id']);
+
+        \App\Core\View::render('admin/invitations/recruitment', [
+            'tenant' => $tenant,
+            'user' => $user,
+            'invitations' => $invitations,
+            'pageTitle' => 'Convites de Recrutamento',
+            'pageIcon' => 'campaign'
+        ]);
     }
 
 }

@@ -58,6 +58,14 @@ class CurationService
             if (!in_array('thumbnail_attempted', $cols)) {
                 db_query("ALTER TABLE curated_media ADD COLUMN `thumbnail_attempted` TINYINT(1) NOT NULL DEFAULT 0 AFTER `thumbnail_url`");
             }
+            if (!in_array('thumbnail_retries', $cols)) {
+                db_query("ALTER TABLE curated_media ADD COLUMN `thumbnail_retries` TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER `thumbnail_attempted`");
+            }
+            if (!in_array('thumbnail_retry_after', $cols)) {
+                db_query("ALTER TABLE curated_media ADD COLUMN `thumbnail_retry_after` DATETIME NULL AFTER `thumbnail_retries`");
+                // One-time migration: reset old failed thumbnails so the new retry system can attempt them
+                db_query("UPDATE curated_media SET thumbnail_attempted = 0, thumbnail_retries = 0 WHERE thumbnail_url IS NULL AND thumbnail_attempted = 1 AND thumbnail_retry_after IS NULL");
+            }
 
             if ($needsBackfill) {
                 self::backfillDisplayData();

@@ -1070,6 +1070,44 @@ body { overflow-x: hidden; }
     color: rgba(0, 204, 255, 0.4);
     pointer-events: none;
 }
+/* ── Avatar blur fallback (when no thumbnail available) ─────────── */
+.thumb-fallback {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    overflow: hidden; cursor: pointer;
+}
+.thumb-fallback__bg {
+    position: absolute; inset: -20px;
+    width: calc(100% + 40px); height: calc(100% + 40px);
+    background-size: cover; background-position: center;
+    filter: blur(18px) brightness(0.45) saturate(1.3);
+    transform: scale(1.1);
+}
+.thumb-fallback__bg--gradient {
+    position: absolute; inset: 0;
+    background: linear-gradient(145deg, #0a0f1a 0%, #0d1a2a 40%, #0a1a14 100%);
+}
+.thumb-fallback__avatar {
+    position: relative; z-index: 1;
+    width: 56px; height: 56px; border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(0, 204, 255, 0.5);
+    box-shadow: 0 0 20px rgba(0, 204, 255, 0.2);
+}
+.thumb-fallback__play {
+    position: relative; z-index: 1;
+    font-family: 'Material Icons Round'; font-size: 3rem;
+    color: rgba(0, 204, 255, 0.7);
+    text-shadow: 0 0 24px rgba(0, 204, 255, 0.3);
+}
+.thumb-fallback__name {
+    position: relative; z-index: 1;
+    font-size: 0.65rem; opacity: 0.6; color: #fff;
+    text-transform: uppercase; letter-spacing: 0.8px; margin-top: 8px;
+    max-width: 80%; text-align: center;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Glow ring when avatar is present */
+.thumb-fallback__avatar + .thumb-fallback__play { margin-top: 6px; font-size: 2.2rem; }
 
 /* Specific fix for Instagram/Social auto-sizing */
 .social-embed {
@@ -2010,28 +2048,30 @@ body { overflow-x: hidden; }
 function buildThumb(array $media): string {
     $url   = trim((string)($media['media_content'] ?? ''));
     $thumb = $media['thumbnail_url'] ?? '';
-    
-    // Check if thumbnail is just a platform favicon
+
+    // Filter out platform favicons (not real thumbnails)
     if (!empty($thumb) && strpos($thumb, 'favicon') !== false && strpos($thumb, 'google.com/s2/favicons') !== false) {
         $thumb = '';
     }
 
+    // Local cached thumbnail (e.g. "uploads/thumbnails/thumb_42.jpg")
+    if (!empty($thumb) && strpos($thumb, 'uploads/thumbnails/') !== false) {
+        return base_url('/' . $thumb);
+    }
+
     if (!empty($thumb)) return $thumb;
 
+    // YouTube — direct URL (never expires)
     if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/|live\/)|youtu\.be\/)([^"&?\/\s]{11})/i', $url, $m)) {
         return 'https://img.youtube.com/vi/' . $m[1] . '/hqdefault.jpg';
     }
-    if (strpos($url, 'instagram.com') !== false) {
-        return base_url('/assets/images/video_placeholder.png');
-    }
-    if (strpos($url, 'tiktok.com') !== false) {
-        return base_url('/assets/images/video_placeholder.png');
-    }
+    // Direct image URL
     if (preg_match('/\.(jpg|jpeg|png|webp|gif|avif|svg)/i', $url)) {
         return strpos($url, 'storage/') === 0 ? base_url('/' . $url) : $url;
     }
-    if (strpos($url, 'storage/') === 0) return base_url('/' . $url);
-    return base_url('/assets/images/video_placeholder.png');
+
+    // No thumbnail available — return empty (avatar blur fallback handled in HTML)
+    return '';
 }
 
 function isVideoUrl(string $url): bool {
@@ -2504,10 +2544,22 @@ $showHero = !empty($heroHeadline);
 
                 <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
                     <?php if ($thumb): ?>
-                    <img class="media-card__thumb" src="<?= htmlspecialchars($thumb) ?>" alt="<?= $title ?>" loading="lazy">
-                    <?php else: ?>
-                    <div class="media-card__thumb-placeholder"></div>
-                    <?php endif; ?>
+                    <img class="media-card__thumb" src="<?= htmlspecialchars($thumb) ?>" alt="<?= $title ?>" loading="lazy" onerror="thumbFallback(this)">
+                    <?php endif;
+                    $avatarFb = htmlspecialchars($media['avatar_url'] ?? '');
+                    $nameFb   = htmlspecialchars($media['user_name'] ?? 'Membro');
+                    ?>
+                    <div class="thumb-fallback" style="<?= ($thumb ? 'display:none;' : 'display:flex;') ?> align-items: center; justify-content: center; flex-direction: column;">
+                        <?php if ($avatarFb): ?>
+                        <div class="thumb-fallback__bg" style="background-image:url('<?= $avatarFb ?>')"></div>
+                        <img class="thumb-fallback__avatar" src="<?= $avatarFb ?>" alt="<?= $nameFb ?>" onerror="this.style.display='none'">
+                        <?php else: ?>
+                        <div class="thumb-fallback__bg thumb-fallback__bg--gradient"></div>
+                        <?php endif; ?>
+                        <div class="thumb-fallback__play">play_circle</div>
+                        <div class="thumb-fallback__name"><?= $nameFb ?></div>
+                    </div>
+                    
                     <div class="media-card__gradient"></div>
                     <div class="media-card__top">
                         <div class="media-type-badge">
@@ -2750,6 +2802,15 @@ const MEDIA_URL    = '<?= $mediaApiUrl ?>';
 const COMMENT_BASE = '<?= $commentBase ?>';
 const CLUB_SLUG    = '<?= htmlspecialchars($clubSlug, ENT_QUOTES) ?>';
 
+// ── Thumbnail fallback handler ───────────────────────────────────────────────
+function thumbFallback(img) {
+    img.style.display = 'none';
+    const fb = img.nextElementSibling;
+    if (fb && fb.classList.contains('thumb-fallback')) {
+        fb.style.display = 'flex';
+    }
+}
+
 // ── Infinite scroll state ────────────────────────────────────────────────────
 let currentPage = 1;
 let isLoading   = false;
@@ -2931,7 +2992,8 @@ function openViewer(card, forceComments = false) {
         // Count posts by this author visible in the grid
         const authorPostCount = document.querySelectorAll(`#mediaGrid .media-card[data-author="${CSS.escape(author)}"]`).length;
         const avatarHtml = avatar
-            ? `<img src="${escapeHtml(avatar)}" alt="${escapeHtml(author)}">`
+            ? `<img src="${escapeHtml(avatar)}" alt="${escapeHtml(author)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+               <div class="viewer-author-strip-initials" style="display:none;">${escapeHtml(author.charAt(0).toUpperCase())}</div>`
             : `<div class="viewer-author-strip-initials">${escapeHtml(author.charAt(0).toUpperCase())}</div>`;
         authorStrip.innerHTML = `
             ${avatarHtml}
@@ -3213,7 +3275,7 @@ function buildCardElement(item) {
     const likes     = parseInt(item.like_count) || 0;
     const comCount  = parseInt(item.comment_count) || 0;
     const views     = parseInt(item.view_count) || 0;
-    const thumb     = item.thumbnail_url || buildThumbJs(item);
+    const thumb     = buildThumbJs(item);
     const title     = escapeHtml(item.title || '');
     const author    = escapeHtml(item.user_name || '');
     const avatar    = item.avatar_url || '';
@@ -3225,7 +3287,7 @@ function buildCardElement(item) {
         if (/tiktok\.com/i.test(u)) return 'tiktok';
         if (/instagram\.com/i.test(u)) return 'reels';
         if (/\.(mp4|webm|mov)/i.test(u)) return 'video';
-        if (/\.(jpg|jpeg|png|webp|gif)/i.test(u)) return 'photo';
+        if (/\.(jpg|jpeg|png|webp|gif|avif|svg)/i.test(u)) return 'photo';
         return 'other';
     }
     const mediaType = _getTypeKey(url);
@@ -3250,9 +3312,20 @@ function buildCardElement(item) {
     div.setAttribute('onclick', 'openViewer(this)');
     div.setAttribute('ondblclick', 'doubleTapLike(event, this)');
 
+    const nameParts = (author || 'Membro').trim().split(' ');
+    const lastName = nameParts[nameParts.length - 1];
+    
     div.innerHTML = `
-        <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))">
-            ${thumb ? `<img class="media-card__thumb" src="${escapeHtml(thumb)}" alt="${title}" loading="lazy">` : '<div class="media-card__thumb-placeholder"></div>'}
+        <div class="media-card__image-container" onclick="openViewer(this.closest('.media-card'))" ondblclick="doubleTapLike(event, this.closest('.media-card'))">
+            ${thumb ? `<img class="media-card__thumb" src="${escapeHtml(thumb)}" alt="${title}" loading="lazy" onerror="thumbFallback(this)">` : ''}
+
+            <div class="thumb-fallback" style="${thumb ? 'display:none;' : 'display:flex;'} align-items: center; justify-content: center; flex-direction: column;">
+                ${avatar ? `<div class="thumb-fallback__bg" style="background-image:url('${escapeHtml(avatar)}')"></div>
+                <img class="thumb-fallback__avatar" src="${escapeHtml(avatar)}" alt="${escapeHtml(author)}" onerror="this.style.display='none'">` : `<div class="thumb-fallback__bg thumb-fallback__bg--gradient"></div>`}
+                <div class="thumb-fallback__play">play_circle</div>
+                <div class="thumb-fallback__name">${escapeHtml(author)}</div>
+            </div>
+
             <div class="media-card__gradient"></div>
             <div class="media-card__top">
                 <div class="media-type-badge">
@@ -3289,10 +3362,15 @@ function buildCardElement(item) {
 
 function buildThumbJs(item) {
     const url = item.media_content || '';
-    if (item.thumbnail_url) return item.thumbnail_url;
+    if (item.thumbnail_url) {
+        if (item.thumbnail_url.indexOf('uploads/thumbnails/') !== -1 && item.thumbnail_url.indexOf('http') !== 0) {
+            return '<?= base_url("/") ?>' + item.thumbnail_url;
+        }
+        return item.thumbnail_url;
+    }
     const yt = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/i);
     if (yt) return `https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg`;
-    return '<?= base_url("assets/images/video_placeholder.png") ?>';
+    return ''; // Empty triggers avatar blur fallback
 }
 
 // ── Double-tap like ───────────────────────────────────────────────────────────

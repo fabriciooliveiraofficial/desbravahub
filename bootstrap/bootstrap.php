@@ -41,7 +41,7 @@ date_default_timezone_set(config('app.timezone', 'America/Sao_Paulo'));
 
 // Configure error reporting based on environment
 if (is_debug()) {
-    error_reporting(E_ALL);
+    error_reporting(E_ALL & ~E_NOTICE);
     ini_set('display_errors', '1');
     ini_set('display_startup_errors', '1');
 } else {

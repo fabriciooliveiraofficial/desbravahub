@@ -356,6 +356,9 @@
 
 <div class="hud-wrapper-v3">
 
+    <!-- HUD Celebration Interceptor -->
+    <?php require BASE_PATH . '/views/dashboard/partials/hero_modal.php'; ?>
+
     <!-- Top Row: Hero & Radar -->
     <div class="top-grid">
 
