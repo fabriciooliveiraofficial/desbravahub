@@ -319,7 +319,7 @@ $pageIcon = 'school';
                 <?php
                 $specJson = htmlspecialchars(json_encode($spec, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
                 ?>
-                <div class="class-card" data-name="<?= strtolower($spec['name']) ?>" data-specialty="<?= $specJson ?>" onclick="openClassDetailsModal(this)">
+                <div class="class-card" data-name="<?= strtolower($spec['name']) ?>" data-specialty="<?= $specJson ?>" data-class="<?= $specJson ?>" onclick="openClassDetailsModal(this)">
                     <div class="class-header-row">
                         <div class="class-badge">
                             <?php if (str_starts_with($spec['badge_icon'] ?? '', 'fa-')): ?>
@@ -357,6 +357,10 @@ $pageIcon = 'school';
                             <?= $spec['xp_reward'] ?? 100 ?>
                         </span>
                         <div class="card-actions">
+                            <button type="button" class="btn-icon-action" title="Editar Detalhes"
+                                onclick="event.stopPropagation(); openEditClassModal(this.closest('.class-card').getAttribute('data-class'));">
+                                <span class="material-icons-round" style="font-size:18px">settings</span>
+                            </button>
                             <a href="<?= base_url($tenant['slug'] . '/admin/especialidades/prog_' . $spec['id'] . '/atribuir') ?>"
                                 class="btn-icon-action" title="Atribuir" onclick="event.stopPropagation();">
                                 <span class="material-icons-round" style="font-size:18px">rocket_launch</span>
@@ -484,6 +488,135 @@ $pageIcon = 'school';
     </div>
 </div>
 
+<!-- Edit Class Details Modal -->
+<div id="editClassDetailsModal" class="modal-overlay" onclick="if(event.target === this) closeEditClassModal();">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round" style="color: var(--primary);">settings</span>
+                Editar Detalhes da Classe
+            </h3>
+            <button onclick="closeEditClassModal()"
+                style="background: none; border: none; cursor: pointer; color: var(--text-secondary);">
+                <span class="material-icons-round">close</span>
+            </button>
+        </div>
+
+        <form id="editClassDetailsForm" onsubmit="submitEditClassDetails(event)">
+            <input type="hidden" name="program_id" id="editClassId">
+
+            <!-- Row 1: Nome + Categoria -->
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div class="form-group" style="position: relative;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Nome *</label>
+                    <input type="text" name="name" class="form-control" required placeholder="Ex: Classe de Amigo"
+                        id="editClassName" autocomplete="off" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:var(--text-main);">
+                </div>
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Categoria *</label>
+                    <select name="category_id" id="editClassCategory" class="form-control" required style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:var(--text-main);">
+                        <option value="" disabled selected>Selecione uma categoria...</option>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?= $cat['id'] ?>">
+                                <?php if (str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
+                                    (📂)
+                                <?php elseif (str_contains($cat['icon'] ?? '', ':')): ?>
+                                    (📂)
+                                <?php else: ?>
+                                    <?= $cat['icon'] ?>
+                                <?php endif; ?>
+                                <?= htmlspecialchars($cat['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 2: Ícone (full width) -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Ícone da Classe</label>
+                <input type="hidden" id="editClassIcon" name="icon" value="noto:blue-book">
+                <div class="icon-picker-trigger"
+                     onclick="IconPicker.open(document.getElementById('editClassIcon').value, (sel) => {
+                         document.getElementById('editClassIcon').value = sel;
+                         document.getElementById('editClassIconPreview').innerHTML = `<iconify-icon icon='${sel}' style='font-size: 1.5rem;'></iconify-icon>`;
+                         document.getElementById('editClassIconText').textContent = sel;
+                     })"
+                     style="display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer; height: 42px;">
+                    <div id="editClassIconPreview">
+                        <iconify-icon icon="noto:blue-book" style="font-size: 1.5rem;"></iconify-icon>
+                    </div>
+                    <div class="icon-info" style="flex: 1;">
+                        <span id="editClassIconText" style="font-size: 0.85rem; color: var(--text-primary);">noto:blue-book</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 3: Descrição (full width) -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Descrição</label>
+                <textarea name="description" id="editClassDescription" class="form-control" rows="3"
+                    placeholder="Descrição da classe..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:var(--text-main);"></textarea>
+            </div>
+
+            <!-- Row 4: Dificuldade / XP (readonly) / Duração (readonly) — Fair Play Engine -->
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Dificuldade (1-5)</label>
+                    <select name="difficulty" id="editClassDifficulty" class="form-control"
+                            onchange="applyEditFairPlayClass()" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:var(--text-main);">
+                        <option value="1">⭐ Muito Fácil</option>
+                        <option value="2" selected>⭐⭐ Fácil</option>
+                        <option value="3">⭐⭐⭐ Médio</option>
+                        <option value="4">⭐⭐⭐⭐ Difícil</option>
+                        <option value="5">⭐⭐⭐⭐⭐ Muito Difícil</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-weight:600;">
+                        Recompensa XP
+                        <span title="Preenchido automaticamente pelo Fair Play Engine"
+                              style="cursor:help;font-size:0.85rem;color:var(--text-secondary);">⚖️</span>
+                    </label>
+                    <input type="number" name="xp_reward" id="editClassXp" class="form-control"
+                           value="280" min="0" step="10"
+                           readonly style="cursor:not-allowed;border-style:dashed;width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:var(--text-main);">
+                </div>
+
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-weight:600;">
+                        Duração (horas)
+                        <span title="Preenchido automaticamente pelo Fair Play Engine"
+                              style="cursor:help;font-size:0.85rem;color:var(--text-secondary);">⚖️</span>
+                    </label>
+                    <input type="number" name="estimated_hours" id="editClassDuration" class="form-control"
+                           value="8" min="1" max="200"
+                           readonly style="cursor:not-allowed;border-style:dashed;width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:var(--text-main);">
+                </div>
+            </div>
+
+            <!-- Row 5: Outdoor -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-check" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" name="is_outdoor" id="editClassOutdoor" value="1" style="width: 20px; height: 20px;">
+                    <span>🏕️ Classe Outdoor (prática, sem perguntas interativas)</span>
+                </label>
+                <small style="margin-left: 30px; display: block; color: var(--text-secondary);">Classes outdoor exigem envio de provas para aprovação manual.</small>
+            </div>
+
+            <div class="form-footer"
+                style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border-light); padding-top: 24px; margin-top: 24px;">
+                <button type="button" class="btn-cancel" onclick="closeEditClassModal()"
+                    style="padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-light); background: transparent; color: var(--text-primary); cursor: pointer;">Cancelar</button>
+                <button type="submit" class="btn-submit"
+                    style="padding: 10px 20px; border-radius: 8px; border: none; background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: white; cursor: pointer; font-weight: 600;">💾
+                    Salvar Alterações</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 
 
 <script>
@@ -505,7 +638,17 @@ $pageIcon = 'school';
 
     function openClassDetailsModal(cardElement) {
         const data = JSON.parse(cardElement.dataset.specialty);
-        document.getElementById('modalBadge').textContent = data.badge_icon || '📘';
+        const modalBadge = document.getElementById('modalBadge');
+        const icon = data.badge_icon || '📘';
+        
+        if (icon.startsWith('fa-')) {
+            modalBadge.innerHTML = `<i class="${icon}"></i>`;
+        } else if (icon.includes(':')) {
+            modalBadge.innerHTML = `<iconify-icon icon="${icon.split(' ')[0]}"></iconify-icon>`;
+        } else {
+            modalBadge.textContent = icon;
+        }
+        
         document.getElementById('modalTitle').textContent = data.name;
         document.getElementById('modalDescription').textContent = data.description || 'Sem descrição.';
         document.getElementById('modalAssignBtn').href = `/${tenantSlug}/admin/especialidades/prog_${data.id}/atribuir`;
@@ -530,6 +673,109 @@ $pageIcon = 'school';
         if (typeof data === 'string') data = JSON.parse(data);
         const id = String(data.program_id || data.id).replace('prog_', '');
         window.location.href = `/${tenantSlug}/admin/programas/${id}/editar`;
+    }
+
+    // Fair Play Engine — mirrors create_modal.php
+    var EDIT_FAIR_PLAY_CLASS = {
+        1: { xp: 100,  hours: 4  },
+        2: { xp: 180,  hours: 8  },
+        3: { xp: 280,  hours: 16 },
+        4: { xp: 400,  hours: 32 },
+        5: { xp: 500,  hours: 60 },
+    };
+
+    function applyEditFairPlayClass() {
+        const diff = parseInt(document.getElementById('editClassDifficulty').value, 10);
+        const rule = EDIT_FAIR_PLAY_CLASS[diff];
+        if (!rule) return;
+        document.getElementById('editClassXp').value       = rule.xp;
+        document.getElementById('editClassDuration').value = rule.hours;
+    }
+
+    window.openEditClassModal = function(classJson) {
+        let classData;
+        try {
+            classData = typeof classJson === 'string' ? JSON.parse(classJson) : classJson;
+        } catch(e) {
+            console.error('Failed to parse class data', e, classJson);
+            return;
+        }
+
+        const modal = document.getElementById('editClassDetailsModal');
+        if (!modal) { console.error('Modal #editClassDetailsModal not found!'); return; }
+        modal.classList.add('active');
+
+        // Populate base fields
+        document.getElementById('editClassId').value          = classData.id;
+        document.getElementById('editClassName').value        = classData.name;
+        document.getElementById('editClassCategory').value    = classData.category_id || '';
+        document.getElementById('editClassDescription').value = classData.description || '';
+        document.getElementById('editClassOutdoor').checked   = classData.type === 'outdoor';
+
+        // Set difficulty then sync XP + Duration via Fair Play Engine
+        document.getElementById('editClassDifficulty').value = classData.difficulty || 2;
+        applyEditFairPlayClass();
+
+        // Set Icon
+        const iconValue = classData.badge_icon || 'noto:blue-book';
+        document.getElementById('editClassIcon').value        = iconValue;
+        document.getElementById('editClassIconText').textContent = iconValue;
+        const preview = document.getElementById('editClassIconPreview');
+        if (iconValue.startsWith('fa-')) {
+            preview.innerHTML = `<i class="${iconValue}" style="font-size:1.5rem;color:var(--primary);"></i>`;
+        } else if (iconValue.includes(':')) {
+            const cleanIcon = iconValue.split(' ')[0];
+            preview.innerHTML = `<iconify-icon icon="${cleanIcon}" style="font-size:1.5rem;"></iconify-icon>`;
+        } else {
+            preview.innerHTML = `<span style="font-size:1.5rem;">${iconValue}</span>`;
+        }
+    }
+
+    window.closeEditClassModal = function() {
+        document.getElementById('editClassDetailsModal').classList.remove('active');
+        document.getElementById('editClassDetailsForm').reset();
+    }
+
+    // Close on click outside
+    document.getElementById('editClassDetailsModal').addEventListener('click', function(e) {
+        if (e.target === this) closeEditClassModal();
+    });
+
+    async function submitEditClassDetails(e) {
+        e.preventDefault();
+
+        const form      = document.getElementById('editClassDetailsForm');
+        const formData  = new FormData(form);
+        const classId = document.getElementById('editClassId').value;
+        const btn       = form.querySelector('button[type="submit"]');
+        const original  = btn.innerHTML;
+
+        btn.disabled = true;
+        btn.innerHTML = 'Salvando...';
+
+        try {
+            const response = await fetch(`/${tenantSlug}/admin/api/classes/${classId}/update`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(data.message || 'Classe atualizada com sucesso!');
+                closeEditClassModal();
+                setTimeout(() => location.reload(), 800);
+            } else {
+                alert(data.error || 'Erro ao atualizar classe');
+                btn.disabled = false;
+                btn.innerHTML = original;
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro de conexão ao atualizar classe');
+            btn.disabled = false;
+            btn.innerHTML = original;
+        }
     }
 
     async function submitNewClass(e) {

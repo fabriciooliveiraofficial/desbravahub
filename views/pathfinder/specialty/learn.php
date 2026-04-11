@@ -310,7 +310,25 @@ $pageTitle = htmlspecialchars($assignment['specialty']['name'] ?? 'Especialidade
                 
                 <div class="training-header">
                     <span class="hud-badge" style="margin-bottom: 16px;">NODE DE CONHECIMENTO <?= $currentIndex + 1 ?></span>
-                    <h2 class="training-title"><?= htmlspecialchars($currentRequirement['title']) ?></h2>
+                    <h2 class="training-title">
+                        <?php 
+                        $title = $currentRequirement['title'] ?? 'Node de Conhecimento';
+                        if (str_contains($title, ':')): 
+                            $iconPart = explode(' ', $title)[0];
+                            $textPart = trim(str_replace($iconPart, '', $title));
+                        ?>
+                            <iconify-icon icon="<?= htmlspecialchars($iconPart) ?>" style="vertical-align: middle; margin-right: 8px; font-size: 1.2em;"></iconify-icon>
+                            <?= htmlspecialchars($textPart ?: $title) ?>
+                        <?php elseif (str_starts_with($title, 'fa-')):
+                            $iconPart = explode(' ', $title)[0];
+                            $textPart = trim(str_replace($iconPart, '', $title));
+                        ?>
+                            <i class="<?= htmlspecialchars($iconPart) ?>" style="margin-right: 8px; font-size: 1.1em;"></i>
+                            <?= htmlspecialchars($textPart ?: $title) ?>
+                        <?php else: ?>
+                            <?= htmlspecialchars($title) ?>
+                        <?php endif; ?>
+                    </h2>
                     <?php if (!empty($currentRequirement['description'])): ?>
                         <p style="color: var(--hud-text-dim); line-height: 1.6; max-width: 600px; margin: 0 auto;"><?= nl2br(htmlspecialchars($currentRequirement['description'])) ?></p>
                     <?php endif; ?>

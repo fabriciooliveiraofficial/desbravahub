@@ -82,7 +82,14 @@
                             if (data.results && data.results.length > 0) {
                                 dropdown.innerHTML = data.results.map(s => `
                                     <div class="autocomplete-item" style="padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(0,0,0,0.05);">
-                                        <span style="font-size: 1.2rem;">${s.badge_icon || '📘'}</span>
+                                        <span style="font-size: 1.2rem;">
+                                            ${(function(icon) {
+                                                if (!icon) return '📘';
+                                                if (icon.startsWith('fa-')) return `<i class="${icon}"></i>`;
+                                                if (icon.includes(':')) return `<iconify-icon icon="${icon.split(' ')[0]}"></iconify-icon>`;
+                                                return icon;
+                                            })(s.badge_icon)}
+                                        </span>
                                         <span>${s.name}</span>
                                     </div>
                                 `).join('');

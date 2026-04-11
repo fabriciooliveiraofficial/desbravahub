@@ -48,6 +48,15 @@ class EmailService
         $tenantId = App::tenantId();
         $userId = null;
 
+        // Reset to initial ENV defaults for each call (Prevents singleton leakage)
+        $this->smtpHost = env('SMTP_HOST', 'smtp.gmail.com');
+        $this->smtpPort = (int) env('SMTP_PORT', 587);
+        $this->smtpUser = env('SMTP_USER', '');
+        $this->smtpPass = env('SMTP_PASS', '');
+        $this->fromEmail = env('MAIL_FROM', 'noreply@desbravahub.com');
+        $this->fromName = env('MAIL_FROM_NAME', 'DesbravaHub');
+        $this->smtpEnabled = !empty($this->smtpUser) && !empty($this->smtpPass);
+
         // Load Tenant SMTP Settings
         try {
             $settings = db_fetch_one("SELECT * FROM tenant_smtp_settings WHERE tenant_id = ?", [$tenantId]);
@@ -61,8 +70,8 @@ class EmailService
                     $this->smtpPass = \App\Controllers\EmailController::decryptPassword($settings['smtp_pass_encrypted']);
                 }
                 
-                $this->fromEmail = $settings['smtp_user']; // Use SMTP user as from email usually
-                //$this->fromName = ... ? Keep default or add to DB.
+                $this->fromEmail = $settings['from_email'] ?? $settings['smtp_user'];
+                $this->fromName = $settings['from_name'] ?? env('MAIL_FROM_NAME', 'DesbravaHub');
                 
                 $this->smtpEnabled = !empty($this->smtpHost) && !empty($this->smtpUser) && !empty($this->smtpPass);
             }

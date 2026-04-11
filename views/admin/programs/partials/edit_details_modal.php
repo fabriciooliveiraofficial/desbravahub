@@ -181,7 +181,8 @@
         if (iconValue.startsWith('fa-')) {
             preview.innerHTML = `<i class="${iconValue}" style="font-size:1.5rem;color:var(--primary);"></i>`;
         } else if (iconValue.includes(':')) {
-            preview.innerHTML = `<iconify-icon icon="${iconValue}" style="font-size:1.5rem;"></iconify-icon>`;
+            const cleanIcon = iconValue.split(' ')[0];
+            preview.innerHTML = `<iconify-icon icon="${cleanIcon}" style="font-size:1.5rem;"></iconify-icon>`;
         } else {
             preview.innerHTML = `<span style="font-size:1.5rem;">${iconValue}</span>`;
         }

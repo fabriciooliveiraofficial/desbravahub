@@ -145,8 +145,21 @@ $canForceDelete = (new \App\Services\PermissionService())->can('specialties.dele
                                                     <iconify-icon icon="lucide:graduation-cap"></iconify-icon>
                                                 </div>
                                             <?php else: ?>
-                                                <img src="<?= base_url('assets/img/specialties/' . ($a['specialty']['badge_icon'] ?? 'default.png')) ?>" 
+                                            <?php 
+                                            $badgeIcon = $a['specialty']['badge_icon'] ?? 'default.png';
+                                            if (str_starts_with($badgeIcon, 'fa-')): ?>
+                                                <i class="<?= htmlspecialchars($badgeIcon) ?> specialty-visual-badge" style="font-size: 32px; color: var(--accent);"></i>
+                                            <?php elseif (str_contains($badgeIcon, ':')): ?>
+                                                <?php $iconName = explode(' ', $badgeIcon)[0]; ?>
+                                                <iconify-icon icon="<?= htmlspecialchars($iconName) ?>" class="specialty-visual-badge" style="font-size: 32px; color: var(--accent);"></iconify-icon>
+                                            <?php elseif (str_contains($badgeIcon, '.') || str_starts_with($badgeIcon, 'http')): ?>
+                                                <img src="<?= (str_starts_with($badgeIcon, 'http')) ? $badgeIcon : base_url('assets/img/specialties/' . $badgeIcon) ?>" 
                                                      class="specialty-visual-badge" alt="Badge">
+                                            <?php else: ?>
+                                                <div class="specialty-visual-badge" style="font-size: 24px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.1); border-radius: 8px;">
+                                                    <?= htmlspecialchars($badgeIcon) ?>
+                                                </div>
+                                            <?php endif; ?>
                                             <?php endif; ?>
                                         </div>
                                         <div>

@@ -135,12 +135,19 @@ class CertificateService
                 JOIN specialties s ON sa.specialty_id = s.id
                 WHERE sa.id = ?
             ", [$cert['assignment_id']]);
-        } else {
+        } elseif ($cert['assignment_type'] === 'program') {
             $row = db_fetch_one("
                 SELECT lp.name, lp.icon, upp.completed_at, lp.xp_reward AS xp_earned
                 FROM user_program_progress upp
                 JOIN learning_programs lp ON upp.program_id = lp.id
                 WHERE upp.id = ?
+            ", [$cert['assignment_id']]);
+        } else {
+            $row = db_fetch_one("
+                SELECT e.title as name, 'noto:event-admission' as icon, ee.attended_at as completed_at, e.xp_reward as xp_earned
+                FROM event_enrollments ee
+                JOIN events e ON ee.event_id = e.id
+                WHERE ee.id = ?
             ", [$cert['assignment_id']]);
         }
 
@@ -172,12 +179,19 @@ class CertificateService
                     JOIN specialties s ON sa.specialty_id = s.id
                     WHERE sa.id = ?
                 ", [$cert['assignment_id']]);
-            } else {
+            } elseif ($cert['assignment_type'] === 'program') {
                 $row = db_fetch_one("
                     SELECT lp.name, lp.icon, upp.completed_at, lp.xp_reward AS xp_earned
                     FROM user_program_progress upp
                     JOIN learning_programs lp ON upp.program_id = lp.id
                     WHERE upp.id = ?
+                ", [$cert['assignment_id']]);
+            } else {
+                $row = db_fetch_one("
+                    SELECT e.title as name, 'noto:event-admission' as icon, ee.attended_at as completed_at, e.xp_reward as xp_earned
+                    FROM event_enrollments ee
+                    JOIN events e ON ee.event_id = e.id
+                    WHERE ee.id = ?
                 ", [$cert['assignment_id']]);
             }
             $cert['achievement_name'] = $row['name']         ?? 'Conquista';
@@ -187,6 +201,48 @@ class CertificateService
         }
 
         return $certs;
+    }
+
+    /**
+     * Issue (or retrieve cached) certificate for an event.
+     *
+     * @param  int $enrollmentId  event_enrollments.id
+     * @param  int $tenantId
+     * @return int|null  issued_certificates.id, null on failure
+     */
+    public static function generateForEvent(int $enrollmentId, int $tenantId): ?int
+    {
+        $existing = db_fetch_one(
+            "SELECT id FROM issued_certificates
+             WHERE tenant_id = ? AND assignment_type = 'event' AND assignment_id = ?",
+            [$tenantId, $enrollmentId]
+        );
+        if ($existing) return (int) $existing['id'];
+
+        $row = db_fetch_one("
+            SELECT ee.id, ee.user_id, ee.event_id, ee.attended_at,
+                   e.title AS event_name, e.xp_reward,
+                   u.name  AS user_name, u.avatar_url,
+                   t.name  AS tenant_name, t.slug AS tenant_slug
+            FROM event_enrollments ee
+            JOIN events            e  ON ee.event_id = e.id
+            JOIN users             u  ON ee.user_id  = u.id
+            JOIN tenants           t  ON ee.tenant_id = t.id
+            WHERE ee.id = ? AND ee.tenant_id = ? AND ee.status = 'attended'
+        ", [$enrollmentId, $tenantId]);
+
+        if (!$row) return null;
+
+        return self::issue('event', $enrollmentId, (int) $row['user_id'], $tenantId, [
+            'member_name'    => $row['user_name'],
+            'achievement'    => $row['event_name'],
+            'type_label'     => 'o Evento Especial',
+            'xp'             => (int) ($row['xp_reward'] ?? 0),
+            'icon'           => 'noto:event-admission',
+            'completed_date' => $row['attended_at'] ? date('d \d\e F \d\e Y', strtotime($row['attended_at'])) : date('d \d\e F \d\e Y'),
+            'club_name'      => $row['tenant_name'],
+            'tenant_slug'    => $row['tenant_slug'],
+        ]);
     }
 
     /**

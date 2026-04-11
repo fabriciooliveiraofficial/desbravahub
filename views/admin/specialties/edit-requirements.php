@@ -497,7 +497,16 @@ $pageTitle = 'Editar Requisitos - ' . htmlspecialchars($specialty['name']);
         <div style="display: flex; align-items: center; gap: 16px;">
             <div
                 style="font-size: 2.2rem; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2); border-radius: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
-                <?= $specialty['badge_icon'] ?? '📘' ?>
+                <?php 
+                $icon = $specialty['badge_icon'] ?? '📘';
+                if (str_starts_with($icon, 'fa-')): ?>
+                    <i class="<?= htmlspecialchars($icon) ?>"></i>
+                <?php elseif (str_contains($icon, ':')): ?>
+                    <?php $iconName = explode(' ', $icon)[0]; ?>
+                    <iconify-icon icon="<?= htmlspecialchars($iconName) ?>"></iconify-icon>
+                <?php else: ?>
+                    <?= $icon ?>
+                <?php endif; ?>
             </div>
             <div>
                 <h3

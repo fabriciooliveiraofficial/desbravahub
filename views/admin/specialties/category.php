@@ -601,6 +601,10 @@ $pageTitle = $category['name'] . ' - Especialidades';
                     <div class="specialty-footer">
                         <span class="xp-reward">🌟 <?= $spec['xp_reward'] ?? 100 ?> XP</span>
                         <div class="card-actions">
+                            <button type="button" class="btn-card" title="Editar Detalhes"
+                                onclick="event.stopPropagation(); openEditSpecialtyModal(this.closest('.specialty-card').getAttribute('data-spec'));">
+                                <span class="material-icons-round" style="font-size:18px">settings</span>
+                            </button>
                             <a href="<?= base_url($tenant['slug'] . '/admin/especialidades/' . $spec['id'] . '/requisitos') ?>"
                                 class="btn-card" title="Editar Requisitos" onclick="event.stopPropagation();">
                                 <iconify-icon icon="lucide:edit-3" style="font-size: 18px;"></iconify-icon>
@@ -654,6 +658,139 @@ $pageTitle = $category['name'] . ' - Especialidades';
                 <button class="btn-close-modal" onclick="closeSpecialtyModal()">Fechar</button>
                 <a href="#" id="modalAssignBtn" class="btn-edit-specialty">👥 Atribuir Especialidade</a>
             </div>
+        </div>
+    </div>
+
+    <!-- Edit Specialty Details Modal -->
+    <div id="editSpecialtyDetailsModal" class="modal-overlay"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="modal-content"
+            style="background: var(--bg-card); padding: 24px; border-radius: 12px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <span class="material-icons-round" style="color: var(--primary);">settings</span>
+                    Editar Detalhes da Especialidade
+                </h3>
+                <button onclick="closeEditSpecialtyModal()"
+                    style="background: none; border: none; cursor: pointer; color: var(--text-secondary);">
+                    <span class="material-icons-round">close</span>
+                </button>
+            </div>
+
+            <form id="editSpecialtyDetailsForm" onsubmit="submitEditSpecialtyDetails(event)">
+                <input type="hidden" name="specialty_id" id="editSpecId">
+
+                <!-- Row 1: Nome + Categoria -->
+                <div class="form-row">
+                    <div class="form-group" style="position: relative;">
+                        <label>Nome *</label>
+                        <input type="text" name="name" class="form-control" required placeholder="Ex: Primeiros Socorros"
+                            id="editSpecName" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria *</label>
+                        <select name="category_id" id="editSpecCategory" class="form-control" required>
+                            <option value="" disabled selected>Selecione uma categoria...</option>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?= $cat['id'] ?>">
+                                    <?php if (str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
+                                        (📂)
+                                    <?php elseif (str_contains($cat['icon'] ?? '', ':')): ?>
+                                        (📂)
+                                    <?php else: ?>
+                                        <?= $cat['icon'] ?>
+                                    <?php endif; ?>
+                                    <?= htmlspecialchars($cat['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Row 2: Ícone (full width) -->
+                <div class="form-group">
+                    <label>Ícone da Especialidade</label>
+                    <input type="hidden" id="editSpecIcon" name="badge_icon" value="noto:blue-book">
+                    <div class="icon-picker-trigger"
+                         onclick="IconPicker.open(document.getElementById('editSpecIcon').value, (sel) => {
+                             document.getElementById('editSpecIcon').value = sel;
+                             document.getElementById('editSpecIconPreview').innerHTML = `<iconify-icon icon='${sel}' style='font-size: 1.5rem;'></iconify-icon>`;
+                             document.getElementById('editSpecIconText').textContent = sel;
+                         })"
+                         style="display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer; height: 42px;">
+                        <div id="editSpecIconPreview">
+                            <iconify-icon icon="noto:blue-book" style="font-size: 1.5rem;"></iconify-icon>
+                        </div>
+                        <div class="icon-info" style="flex: 1;">
+                            <span id="editSpecIconText" style="font-size: 0.85rem; color: var(--text-primary);">noto:blue-book</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3: Descrição (full width) -->
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea name="description" id="editSpecDescription" class="form-control" rows="3"
+                        placeholder="Descrição da especialidade..."></textarea>
+                </div>
+
+                <!-- Row 4: Dificuldade / XP (readonly) / Duração (readonly) — Fair Play Engine -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Dificuldade (1-5)</label>
+                        <select name="difficulty" id="editSpecDifficulty" class="form-control"
+                                onchange="applyEditFairPlaySpec()">
+                            <option value="1">⭐ Iniciante</option>
+                            <option value="2">⭐⭐ Básico</option>
+                            <option value="3" selected>⭐⭐⭐ Intermediário</option>
+                            <option value="4">⭐⭐⭐⭐ Avançado</option>
+                            <option value="5">⭐⭐⭐⭐⭐ Expert</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            Recompensa XP
+                            <span title="Preenchido automaticamente pelo Fair Play Engine"
+                                  style="cursor:help;font-size:0.85rem;color:var(--text-secondary);">⚖️</span>
+                        </label>
+                        <input type="number" name="xp_reward" id="editSpecXp" class="form-control"
+                               value="280" min="0" step="10"
+                               readonly style="cursor:not-allowed;border-style:dashed;">
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:6px;">
+                            Duração (horas)
+                            <span title="Preenchido automaticamente pelo Fair Play Engine"
+                                  style="cursor:help;font-size:0.85rem;color:var(--text-secondary);">⚖️</span>
+                        </label>
+                        <input type="number" name="duration_hours" id="editSpecDuration" class="form-control"
+                               value="16" min="1" max="200"
+                               readonly style="cursor:not-allowed;border-style:dashed;">
+                    </div>
+                </div>
+
+                <!-- Row 5: Tipo (Indoor/Outdoor) -->
+                <div class="form-group">
+                    <label class="form-check" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" name="is_outdoor" id="editSpecOutdoor" value="1" style="width: 20px; height: 20px;">
+                        <span>🏕️ Especialidade Outdoor (prática, sem perguntas interativas)</span>
+                    </label>
+                    <small style="margin-left: 30px; display: block; color: var(--text-secondary);">Especialidades outdoor
+                        exigem envio de provas para aprovação manual.</small>
+                </div>
+
+                <div class="form-footer"
+                    style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border-light); padding-top: 24px; margin-top: 24px;">
+                    <button type="button" class="btn-cancel" onclick="closeEditSpecialtyModal()"
+                        style="padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-light); background: transparent; color: var(--text-primary); cursor: pointer;">Cancelar</button>
+                    <button type="submit" class="btn-submit"
+                        style="padding: 10px 20px; border-radius: 8px; border: none; background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: white; cursor: pointer; font-weight: 600;">💾
+                        Salvar Alterações</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -871,6 +1008,117 @@ $pageTitle = $category['name'] . ' - Especialidades';
             if (window.confirmCallback) {
                 window.confirmCallback(result);
                 window.confirmCallback = null;
+            }
+        }
+
+        // ═════════════════════════════════════════════════════════════════
+        // EDIT SPECIALTY DETAILS MODAL
+        // ═════════════════════════════════════════════════════════════════
+
+        // Fair Play Engine — mirrors programs
+        var EDIT_FAIR_PLAY_SPEC = {
+            1: { xp: 100,  hours: 4  },
+            2: { xp: 180,  hours: 8  },
+            3: { xp: 280,  hours: 16 },
+            4: { xp: 400,  hours: 32 },
+            5: { xp: 500,  hours: 60 },
+        };
+
+        function applyEditFairPlaySpec() {
+            const diff = parseInt(document.getElementById('editSpecDifficulty').value, 10);
+            const rule = EDIT_FAIR_PLAY_SPEC[diff];
+            if (!rule) return;
+            document.getElementById('editSpecXp').value       = rule.xp;
+            document.getElementById('editSpecDuration').value = rule.hours;
+        }
+
+        window.openEditSpecialtyModal = function(specJson) {
+            let specialty;
+            try {
+                specialty = typeof specJson === 'string' ? JSON.parse(specJson) : specJson;
+            } catch(e) {
+                console.error('Failed to parse specialty data', e, specJson);
+                return;
+            }
+
+            const modal = document.getElementById('editSpecialtyDetailsModal');
+            if (!modal) { console.error('Modal #editSpecialtyDetailsModal not found!'); return; }
+            modal.classList.add('active');
+            modal.style.display = 'flex';
+
+            // Populate base fields
+            document.getElementById('editSpecId').value          = specialty.id;
+            document.getElementById('editSpecName').value        = specialty.name;
+            document.getElementById('editSpecCategory').value    = specialty.category_id || '';
+            document.getElementById('editSpecDescription').value = specialty.description || '';
+            document.getElementById('editSpecOutdoor').checked   = parseInt(specialty.is_outdoor || specialty.type === 'outdoor' ? 1 : 0) === 1;
+
+            // Set difficulty then sync XP + Duration via Fair Play Engine
+            document.getElementById('editSpecDifficulty').value = specialty.difficulty || 3;
+            applyEditFairPlaySpec();
+
+            // Set Icon
+            const iconValue = specialty.badge_icon || specialty.icon || 'noto:blue-book';
+            document.getElementById('editSpecIcon').value        = iconValue;
+            document.getElementById('editSpecIconText').textContent = iconValue;
+            const preview = document.getElementById('editSpecIconPreview');
+            if (iconValue.startsWith('fa-')) {
+                preview.innerHTML = `<i class="${iconValue}" style="font-size:1.5rem;color:var(--primary);"></i>`;
+            } else if (iconValue.includes(':')) {
+                const cleanIcon = iconValue.split(' ')[0];
+                preview.innerHTML = `<iconify-icon icon="${cleanIcon}" style="font-size:1.5rem;"></iconify-icon>`;
+            } else {
+                preview.innerHTML = `<span style="font-size:1.5rem;">${iconValue}</span>`;
+            }
+        }
+
+        window.closeEditSpecialtyModal = function() {
+            const modal = document.getElementById('editSpecialtyDetailsModal');
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+            document.getElementById('editSpecialtyDetailsForm').reset();
+        }
+
+        // Close on click outside
+        document.getElementById('editSpecialtyDetailsModal')?.addEventListener('click', function(e) {
+            if (e.target === this) closeEditSpecialtyModal();
+        });
+
+        async function submitEditSpecialtyDetails(e) {
+            e.preventDefault();
+
+            const form      = document.getElementById('editSpecialtyDetailsForm');
+            const formData  = new FormData(form);
+            const specId    = document.getElementById('editSpecId').value;
+            const btn       = form.querySelector('button[type="submit"]');
+            const original  = btn.innerHTML;
+
+            btn.disabled = true;
+            btn.innerHTML = 'Salvando...';
+
+            try {
+                const tSlug = window.tenantSlug || '<?= $tenant['slug'] ?? '' ?>';
+                const response = await fetch(`/${tSlug}/admin/api/specialties/${specId}/update`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(data.message || 'Especialidade atualizada com sucesso!');
+                    closeEditSpecialtyModal();
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    showToast(data.error || 'Erro ao atualizar especialidade', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = original;
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('Erro de conexão ao atualizar especialidade', 'error');
+                btn.disabled = false;
+                btn.innerHTML = original;
             }
         }
     </script>

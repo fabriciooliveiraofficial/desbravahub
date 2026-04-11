@@ -48,12 +48,17 @@
                 <!-- Category Header -->
                 <div class="lp-cat-header" style="--cat-color: <?= htmlspecialchars($category['color']) ?>">
                     <div class="lp-cat-icon">
-                        <?php if (str_contains($category['icon'], ':')): ?>
-                            <iconify-icon icon="<?= htmlspecialchars($category['icon']) ?>"></iconify-icon>
-                        <?php elseif (strlen($category['icon']) > 4): ?>
-                            <span class="material-icons-round"><?= htmlspecialchars($category['icon']) ?></span>
+                        <?php 
+                        $catIcon = $category['icon'] ?? '📁';
+                        if (str_starts_with($catIcon, 'fa-')): ?>
+                            <i class="<?= htmlspecialchars($catIcon) ?>"></i>
+                        <?php elseif (str_contains($catIcon, ':')): ?>
+                            <?php $iconName = explode(' ', $catIcon)[0]; ?>
+                            <iconify-icon icon="<?= htmlspecialchars($iconName) ?>"></iconify-icon>
+                        <?php elseif (strlen($catIcon) > 4 && !str_contains($catIcon, ' ')): ?>
+                            <span class="material-icons-round"><?= htmlspecialchars($catIcon) ?></span>
                         <?php else: ?>
-                            <?= $category['icon'] ?>
+                            <?= $catIcon ?>
                         <?php endif; ?>
                     </div>
                     <div class="lp-cat-info">
@@ -107,12 +112,17 @@
                                 <?php endif; ?>
                                 
                                 <div class="lp-node-icon">
-                                    <?php if (str_contains($node['icon'], ':')): ?>
-                                        <iconify-icon icon="<?= htmlspecialchars($node['icon']) ?>"></iconify-icon>
-                                    <?php elseif (strlen($node['icon']) > 4): ?>
-                                        <span class="material-icons-round"><?= htmlspecialchars($node['icon']) ?></span>
+                                    <?php 
+                                    $nIcon = $node['icon'] ?? '🛡️';
+                                    if (str_starts_with($nIcon, 'fa-')): ?>
+                                        <i class="<?= htmlspecialchars($nIcon) ?>"></i>
+                                    <?php elseif (str_contains($nIcon, ':')): ?>
+                                        <?php $iconName = explode(' ', $nIcon)[0]; ?>
+                                        <iconify-icon icon="<?= htmlspecialchars($iconName) ?>"></iconify-icon>
+                                    <?php elseif (strlen($nIcon) > 4 && !str_contains($nIcon, ' ')): ?>
+                                        <span class="material-icons-round"><?= htmlspecialchars($nIcon) ?></span>
                                     <?php else: ?>
-                                        <?= $node['icon'] ?>
+                                        <?= $nIcon ?>
                                     <?php endif; ?>
                                 </div>
                                 <div class="lp-node-content">

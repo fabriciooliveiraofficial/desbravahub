@@ -24,11 +24,13 @@ class EventController
         $events = db_fetch_all(
             "SELECT e.*, 
                 (SELECT COUNT(*) FROM event_enrollments WHERE event_id = e.id) as enrolled_count,
-                (SELECT id FROM event_enrollments WHERE event_id = e.id AND user_id = ?) as my_enrollment_id
+                (SELECT id FROM event_enrollments WHERE event_id = e.id AND user_id = ?) as my_enrollment_id,
+                (SELECT status FROM event_enrollments WHERE event_id = e.id AND user_id = ?) as my_status,
+                (SELECT checkin_token FROM event_enrollments WHERE event_id = e.id AND user_id = ?) as checkin_token
              FROM events e 
              WHERE e.tenant_id = ? AND e.status IN ('upcoming', 'ongoing')
              ORDER BY e.start_datetime ASC",
-            [$user['id'], $tenant['id']]
+            [$user['id'], $user['id'], $user['id'], $tenant['id']]
         );
 
         // Get past events
@@ -41,6 +43,14 @@ class EventController
              LIMIT 10",
             [$user['id'], $tenant['id']]
         );
+
+        // Fetch gallery for each event
+        foreach ($events as &$event) {
+            $event['gallery'] = db_fetch_all("SELECT * FROM event_gallery WHERE event_id = ? ORDER BY created_at DESC", [$event['id']]);
+        }
+        foreach ($pastEvents as &$event) {
+            $event['gallery'] = db_fetch_all("SELECT * FROM event_gallery WHERE event_id = ? ORDER BY created_at DESC", [$event['id']]);
+        }
 
         View::render('dashboard/events', [
             'tenant' => $tenant,
@@ -93,13 +103,52 @@ class EventController
             }
         }
 
+        $token = bin2hex(random_bytes(16));
+
         // Enroll
         db_insert('event_enrollments', [
             'event_id' => $eventId,
             'user_id' => $user['id'],
             'tenant_id' => $tenant['id'],
             'status' => 'enrolled',
+            'checkin_token' => $token
         ]);
+
+        // Notifications
+        $notificationService = new \App\Services\NotificationService();
+        
+        // 1. Send confirmation to Member
+        $notificationService->send(
+            $user['id'],
+            'event_enrollment',
+            "✅ Inscrição Confirmada!",
+            "Sua vaga no evento \"{$event['title']}\" está garantida.",
+            [
+                'channels' => ['toast', 'email', 'push'],
+                'data' => [
+                    'event_id' => $eventId,
+                    'link' => base_url($tenant['slug'] . '/eventos')
+                ]
+            ]
+        );
+
+        // 2. Alert Admins
+        $admins = db_fetch_all("SELECT id FROM users WHERE tenant_id = ? AND role_id IN (SELECT id FROM roles WHERE slug = 'admin')", [$tenant['id']]);
+        foreach ($admins as $admin) {
+            $notificationService->send(
+                (int) $admin['id'],
+                'admin_alert',
+                "👤 Nova Inscrição no Evento",
+                "{$user['name']} acabou de se inscrever em \"{$event['title']}\".",
+                [
+                    'channels' => ['toast', 'push'],
+                    'priority' => 'high',
+                    'data' => [
+                        'link' => base_url($tenant['slug'] . '/admin/eventos/' . $eventId . '/inscritos')
+                    ]
+                ]
+            );
+        }
 
         $this->json(['success' => true, 'message' => 'Inscrição confirmada!']);
     }

@@ -528,11 +528,29 @@ public function toggleUserStatus(array $params): void
     {
         $this->requirePermission('notifications.broadcast');
 
-        $tenant = App::tenant();
+        $tenantId = App::tenantId();
+        
+        // Task 3.1: Check if SMTP is configured
+        $smtpConfigured = (bool) db_fetch_column(
+            "SELECT COUNT(*) FROM tenant_smtp_settings WHERE tenant_id = ? AND smtp_user != ''",
+            [$tenantId]
+        );
+
+        // Task 3.2: Count users with push active
+        $pushStats = db_fetch_one("
+            SELECT 
+                COUNT(DISTINCT u.id) as total,
+                COUNT(DISTINCT ps.user_id) as with_push
+            FROM users u
+            LEFT JOIN push_subscriptions ps ON ps.user_id = u.id AND ps.tenant_id = u.tenant_id
+            WHERE u.tenant_id = ? AND u.status = 'active' AND u.deleted_at IS NULL
+        ", [$tenantId]);
 
         View::render('admin/notifications', [
-            'tenant' => $tenant,
+            'tenant' => App::tenant(),
             'user' => App::user(),
+            'smtpConfigured' => $smtpConfigured,
+            'pushStats' => $pushStats,
             'pageTitle' => 'Notificações',
             'pageIcon' => 'campaign',
             'pageColor' => '#f97316'
@@ -555,11 +573,44 @@ public function toggleUserStatus(array $params): void
             return;
         }
 
-        $ids = $this->notificationService->broadcast('broadcast', $title, $message, [
+        $result = $this->notificationService->broadcast('broadcast', $title, $message, [
             'channels' => $channels,
         ]);
 
-        $this->json(['success' => true, 'sent_count' => count($ids)]);
+        $this->json([
+            'success' => true, 
+            'sent_count' => count($result['notification_ids']),
+            'stats' => $result['stats']
+        ]);
+    }
+
+    /**
+     * Get notification logs
+     */
+    public function notificationLogs(): void
+    {
+        $this->requirePermission('notifications.broadcast');
+
+        $tenant = App::tenant();
+        $user = App::user();
+
+        $logs = db_fetch_all(
+            "SELECT el.*, u.name as user_name 
+             FROM email_logs el 
+             LEFT JOIN users u ON el.user_id = u.id 
+             WHERE el.tenant_id = ? 
+             ORDER BY el.created_at DESC 
+             LIMIT 500",
+            [$tenant['id']]
+        );
+
+        \App\Core\View::render('admin/notifications/logs', [
+            'tenant' => $tenant,
+            'user' => $user,
+            'logs' => $logs,
+            'pageTitle' => 'Logs de Notificação',
+            'pageIcon' => 'history'
+        ]);
     }
 
     /**
@@ -903,6 +954,101 @@ public function toggleUserStatus(array $params): void
             'pageIcon' => 'school',
             'pageColor' => '#eab308'
         ]);
+    }
+
+    /**
+     * Update class details (name, icon, description, difficulty, XP, duration, outdoor)
+     */
+    public function updateClassDetails(array $params): void
+    {
+        $this->requireLeadership();
+        $id = (int)$params['id'];
+        $tenant = App::tenant();
+
+        try {
+            $name = trim($_POST['name'] ?? '');
+            $description = trim($_POST['description'] ?? '');
+            $icon = trim($_POST['icon'] ?? '');
+            $difficulty = (int)($_POST['difficulty'] ?? 2);
+            $xp_reward = (int)($_POST['xp_reward'] ?? 180);
+            $estimated_hours = (int)($_POST['estimated_hours'] ?? 8);
+            $is_outdoor = isset($_POST['is_outdoor']) && $_POST['is_outdoor'] ? 1 : 0;
+            $category_id = (int)($_POST['category_id'] ?? 0);
+
+            // Validation
+            if (empty($name)) {
+                $this->json(['success' => false, 'error' => 'Nome é obrigatório'], 400);
+                return;
+            }
+
+            if ($difficulty < 1 || $difficulty > 5) {
+                $difficulty = 2;
+            }
+
+            if ($category_id <= 0) {
+                $this->json(['success' => false, 'error' => 'Categoria é obrigatória'], 400);
+                return;
+            }
+
+            // Update class
+            $updated = db_update(
+                'learning_programs',
+                [
+                    'name' => $name,
+                    'description' => $description,
+                    'icon' => $icon,
+                    'difficulty' => $difficulty,
+                    'xp_reward' => $xp_reward,
+                    'estimated_hours' => $estimated_hours,
+                    'is_outdoor' => $is_outdoor,
+                    'category_id' => $category_id,
+                ],
+                'id = ? AND tenant_id = ?',
+                [$id, $tenant['id']]
+            );
+
+            if ($updated > 0) {
+                $this->json(['success' => true, 'message' => 'Classe atualizada com sucesso!']);
+            } else {
+                $this->json(['success' => false, 'error' => 'Classe não encontrada'], 404);
+            }
+        } catch (\Exception $e) {
+            error_log("Error updating class: " . $e->getMessage());
+            $this->json(['success' => false, 'error' => 'Erro ao atualizar classe: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Require leadership role
+     */
+    private function requireLeadership(): void
+    {
+        $user = App::user();
+        $role = strtolower($user['role_name'] ?? '');
+
+        // Expanded roles to include leader and chaplain
+        if (!in_array($role, ['admin', 'director', 'associate_director', 'instructor', 'counselor', 'leader', 'chaplain'])) {
+            error_log("AdminController::requireLeadership - Access Denied: User " . ($user['id'] ?? 'unknown') . " with role $role tried to access leadership features.");
+
+            $isHtmx = !empty($_SERVER['HTTP_HX_REQUEST']);
+            $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+                   || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
+            if ($isHtmx) {
+                $tenant = App::tenant();
+                $redirect = base_url(($tenant['slug'] ?? '') . '/login');
+                http_response_code(403);
+                header('HX-Redirect: ' . $redirect);
+            } elseif ($isAjax) {
+                http_response_code(403);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Acesso negado: Requer privilégios de liderança.']);
+            } else {
+                $tenant = App::tenant();
+                header('Location: ' . base_url(($tenant['slug'] ?? '') . '/login'));
+            }
+            exit;
+        }
     }
 
     /**

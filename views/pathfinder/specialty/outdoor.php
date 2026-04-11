@@ -263,7 +263,16 @@ foreach ($requirements as $req) {
     <div class="hero-banner stagger-1">
         <div class="specialty-header" style="display: flex; align-items: center; gap: 24px;">
             <div class="specialty-badge-lg">
-                <?= $specialty['badge_icon'] ?? '🎯' ?>
+                <?php 
+                $icon = $specialty['badge_icon'] ?? '🎯';
+                if (str_starts_with($icon, 'fa-')): ?>
+                    <i class="<?= htmlspecialchars($icon) ?>"></i>
+                <?php elseif (str_contains($icon, ':')): ?>
+                    <?php $iconName = explode(' ', $icon)[0]; ?>
+                    <iconify-icon icon="<?= htmlspecialchars($iconName) ?>"></iconify-icon>
+                <?php else: ?>
+                    <?= $icon ?>
+                <?php endif; ?>
             </div>
             <div style="flex: 1;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">

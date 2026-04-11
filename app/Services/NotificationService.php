@@ -28,13 +28,13 @@ class NotificationService
      * @param string $message Notification message
      * @param array $options Additional options (channels, priority, data)
      */
-    public function send(
+     public function send(
         ?int $userId,
         string $type,
         string $title,
         string $message,
         array $options = []
-    ): int {
+    ): array {
         $tenantId = App::tenantId();
 
         // Default channels based on user preferences
@@ -55,10 +55,13 @@ class NotificationService
             'created_at' => date('Y-m-d H:i:s'),
         ]);
 
-        // Dispatch to channels
-        $this->dispatchToChannels($notificationId, $userId, $channels, $title, $message, $data, $priority);
+        // Dispatch to channels and track success
+        $results = $this->dispatchToChannels($notificationId, $userId, $channels, $title, $message, $data, $priority);
 
-        return $notificationId;
+        return [
+            'id' => $notificationId,
+            'results' => $results
+        ];
     }
 
     /**
@@ -71,6 +74,12 @@ class NotificationService
     {
         $tenantId = App::tenantId();
         $ids = [];
+        $stats = [
+            'total_users' => 0,
+            'email' => ['sent' => 0, 'failed' => 0],
+            'push' => ['sent' => 0, 'failed' => 0],
+            'toast' => ['sent' => 0]
+        ];
 
         // Get all active users
         $users = db_fetch_all(
@@ -78,22 +87,40 @@ class NotificationService
             [$tenantId]
         );
 
+        $stats['total_users'] = count($users);
+
         // Enable deferred push mode so flush() happens once at the end
         $webPush = WebPushService::getInstance();
         $webPush->setDeferred(true);
 
         try {
             foreach ($users as $user) {
-                $ids[] = $this->send($user['id'], $type, $title, $message, $options);
+                $result = $this->send($user['id'], $type, $title, $message, $options);
+                $ids[] = $result['id'];
+                
+                // Aggregate stats
+                foreach ($result['results'] as $channel => $success) {
+                    if ($success) {
+                        $stats[$channel]['sent']++;
+                    } else {
+                        $stats[$channel]['failed']++;
+                    }
+                }
             }
 
             // Flush all queued push notifications in one batch
-            $webPush->flushAll();
+            $pushStats = $webPush->flushAll();
+            $stats['push']['sent']    = $pushStats['success'];
+            $stats['push']['failed']  = $pushStats['failed'];
+            $stats['push']['expired'] = $pushStats['expired'] ?? 0;
         } finally {
             $webPush->setDeferred(false);
         }
 
-        return $ids;
+        return [
+            'notification_ids' => $ids,
+            'stats' => $stats
+        ];
     }
 
     /**
@@ -324,36 +351,42 @@ class NotificationService
         string $message,
         ?array $data,
         string $priority
-    ): void {
-        // Mark as sent
+    ): array {
+        $results = [];
+
+        // Mark as sent in DB
         db_update('notifications', ['sent_at' => date('Y-m-d H:i:s')], 'id = ?', [$notificationId]);
 
         // Email channel
         if (in_array('email', $channels) && $userId) {
-            $this->sendEmail($userId, $title, $message, $data);
+            $results['email'] = $this->sendEmail($userId, $title, $message, $data);
         }
 
         // Push channel
         if (in_array('push', $channels) && $userId) {
-            // Include notification_id so client can mark as read on receipt,
-            // preventing duplicate toasts from the DB polling channel.
+            // Include notification_id so client can mark as read on receipt
             $pushData = array_merge($data ?? [], ['notification_id' => $notificationId, 'priority' => $priority]);
-            $this->queuePush($userId, $title, $message, $pushData);
+            $results['push'] = $this->queuePush($userId, $title, $message, $pushData);
         }
 
-        // Toast is handled client-side via polling or websocket
+        // Toast: always considered "sent" to DB for retrieval
+        if (in_array('toast', $channels)) {
+            $results['toast'] = true;
+        }
+
+        return $results;
     }
 
     /**
-     * Send email notification
+     * Send email notification return status
      */
-    private function sendEmail(int $userId, string $title, string $message, ?array $data): void
+    private function sendEmail(int $userId, string $title, string $message, ?array $data): bool
     {
         $user = db_fetch_one("SELECT email, name FROM users WHERE id = ?", [$userId]);
         if (!$user)
-            return;
+            return false;
 
-        $this->emailService->send(
+        return $this->emailService->send(
             $user['email'],
             $title,
             $this->buildEmailContent($user['name'], $title, $message, $data)
@@ -405,13 +438,14 @@ HTML;
     /**
      * Queue push notification
      */
-    private function queuePush(int $userId, string $title, string $message, ?array $data): void
+    private function queuePush(int $userId, string $title, string $message, ?array $data): bool
     {
         try {
             $webPush = WebPushService::getInstance();
-            $webPush->sendToUser($userId, $title, $message, $data);
+            return $webPush->sendToUser($userId, $title, $message, $data);
         } catch (\Exception $e) {
             error_log("Push queue error: " . $e->getMessage());
+            return false;
         }
     }
 

@@ -264,7 +264,18 @@ $progressPercent = $totalReqs > 0 ? round(($completedReqs / $totalReqs) * 100) :
     </a>
 
     <div class="summary-card" style="border-left: 6px solid <?= $specialty['category']['color'] ?? 'var(--primary)' ?>;">
-        <div class="spec-badge-large"><?= $specialty['badge_icon'] ?? '🎖️' ?></div>
+        <div class="spec-badge-large">
+            <?php 
+            $icon = $specialty['badge_icon'] ?? '🎖️';
+            if (str_starts_with($icon, 'fa-')): ?>
+                <i class="<?= htmlspecialchars($icon) ?>"></i>
+            <?php elseif (str_contains($icon, ':')): ?>
+                <?php $iconName = explode(' ', $icon)[0]; ?>
+                <iconify-icon icon="<?= htmlspecialchars($iconName) ?>"></iconify-icon>
+            <?php else: ?>
+                <?= $icon ?>
+            <?php endif; ?>
+        </div>
         <div class="summary-info">
             <h1><?= htmlspecialchars($specialty['name']) ?></h1>
             <div class="user-pill">

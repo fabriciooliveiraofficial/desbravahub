@@ -122,7 +122,48 @@ window.NotificationCenter = class {
 
         this._updateBadge(this._initialCount);
         this._startPolling();
+        this._setupServiceWorkerLink();
         this._injectStyles();
+    }
+
+    _setupServiceWorkerLink() {
+        if (!('serviceWorker' in navigator)) return;
+
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            const type = event.data?.type;
+            if (type === 'PUSH_NOTIFICATION' || type === 'push-notification-received') {
+                console.log('[NC] Real-time push received via SW');
+                
+                // If the event contains specific data, handle it (toasts/dopamine)
+                if (event.data.data) {
+                    this._handlePushMessage(event.data.data);
+                }
+                
+                // Always sync ground-truth badge count from server immediately
+                this._silentPoll();
+            }
+        });
+    }
+
+    _handlePushMessage(payload) {
+        // Trigger toast immediately
+        if (window.toast) {
+            window.toast.info(payload.title || 'Aviso', payload.body || payload.message || '');
+        }
+
+        // Drop dopamine if it's a hero notification
+        if (payload.type === 'achievement' || payload.type === 'level_up') {
+            this._checkForHeroNotifications();
+        }
+
+        // Increment badge count optimistically
+        const cur = this._badgeCount();
+        this._updateBadge(cur + 1);
+
+        // If popover is open, refresh it
+        if (this._popover?.classList.contains('active')) {
+            this.fetchNotifications();
+        }
     }
 
     _ensurePopover() {
@@ -329,26 +370,37 @@ window.NotificationCenter = class {
     _startPolling() {
         if (this._pollTimer) clearInterval(this._pollTimer);
 
-        // INITIAL CHECK: Trigger Dopamine Drop for any existing hero notifications
-        this._checkForHeroNotifications();
-
-        this._pollTimer = setInterval(async () => {
+        const pollLogic = async () => {
             try {
-                const res = await fetch(this._unreadUrl);
-                const data = await res.json();
-                const newCount = data.count;
-                const oldCount = this._badgeCount();
-
-                if (newCount !== oldCount && !this._popover.classList.contains('active')) {
-                    this._updateBadge(newCount);
-                }
-
-                // If count increased, check for hero-worthy notifications
-                if (newCount > oldCount) {
-                    this._checkForHeroNotifications();
-                }
+                // If popover is open, we don't need to silent poll (fetchNotifications does it)
+                if (this._popover?.classList.contains('active')) return;
+                
+                await this._silentPoll();
+                await this._checkForHeroNotifications();
             } catch (e) {}
-        }, 30000);
+        };
+
+        const handleVisibility = () => {
+            clearInterval(this._pollTimer);
+            if (!document.hidden) {
+                console.log('[NC] Tab active — Polling resumed (10s)');
+                pollLogic();
+                this._pollTimer = setInterval(pollLogic, 10000);
+            } else {
+                console.log('[NC] Tab hidden — Polling paused');
+            }
+        };
+
+        if (!this._visibilityBound) {
+            document.addEventListener('visibilitychange', handleVisibility);
+            this._visibilityBound = true;
+        }
+
+        // Initial check and start if visible
+        if (!document.hidden) {
+            pollLogic();
+            this._pollTimer = setInterval(pollLogic, 10000);
+        }
     }
 
     async _checkForHeroNotifications() {

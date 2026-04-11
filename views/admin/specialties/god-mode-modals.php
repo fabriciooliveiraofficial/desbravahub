@@ -1004,7 +1004,14 @@ function initMissionControlAutocomplete() {
                             const safeSpec = JSON.stringify(spec).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
                             html += `
                                 <div class="autocomplete-item" style="padding: 12px; cursor: pointer; border-bottom: 1px solid var(--border-color, #e5e7eb); display: flex; align-items: center; gap: 10px;" onclick="window.selectMasterSpecialty('${safeSpec}')" onmouseover="this.style.background='var(--bg-hover, #f3f4f6)'" onmouseout="this.style.background='transparent'">
-                                    <div style="font-size: 1.5rem;">${spec.badge_icon || '📁'}</div>
+                                    <div style="font-size: 1.5rem;">
+                                        ${(function(icon) {
+                                            if (!icon) return '📁';
+                                            if (icon.startsWith('fa-')) return `<i class="${icon}" style="color:var(--primary);"></i>`;
+                                            if (icon.includes(':')) return `<iconify-icon icon="${icon.split(' ')[0]}"></iconify-icon>`;
+                                            return icon;
+                                        })(spec.badge_icon)}
+                                    </div>
                                     <div>
                                         <div style="font-weight: 600; color: var(--text-main);">${spec.name}</div>
                                         <div style="font-size: 0.8rem; color: var(--text-muted);">${spec.duration_hours} horas • Nível ${spec.difficulty}</div>

@@ -134,10 +134,50 @@
                 </div>
             </div>
 
+            <!-- SMTP Stats & Banner -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                <div style="background: var(--bg-hover); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="material-icons-round" style="color: var(--primary);">people</span>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Membros Ativos</div>
+                        <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-dark);"><?= $pushStats['total'] ?? 0 ?></div>
+                    </div>
+                </div>
+                <div style="background: var(--bg-hover); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="material-icons-round" style="color: #10b981;">phonelink_ring</span>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Web Push Ativo</div>
+                        <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-dark);"><?= $pushStats['with_push'] ?? 0 ?></div>
+                    </div>
+                </div>
+                <div style="background: var(--bg-hover); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="material-icons-round" style="color: <?= $smtpConfigured ? '#10b981' : '#f59e0b' ?>;"><?= $smtpConfigured ? 'verified' : 'error_outline' ?></span>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Servidor SMTP</div>
+                        <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-dark);"><?= $smtpConfigured ? 'Configurado' : 'Pendente' ?></div>
+                    </div>
+                </div>
+            </div>
+
+            <?php if (!$smtpConfigured): ?>
+            <div style="background: #fff4f4; border: 1px solid #fee2e2; padding: 1rem; margin-bottom: 2rem; border-radius: var(--radius-md); display: flex; gap: 1rem; align-items: center;">
+                 <span class="material-icons-round" style="color: #ef4444;">alternate_email</span>
+                 <div style="flex: 1;">
+                     <div style="color: #991b1b; font-weight: 700; margin-bottom: 0.25rem;">E-mail não configurado!</div>
+                     <div style="color: #b91c1c; font-size: 0.85rem;">
+                         O SMTP do clube não foi configurado. Os e-mails falharão silenciosamente.
+                     </div>
+                 </div>
+                 <a href="<?= base_url($tenant['slug'] . '/admin/email/settings') ?>" class="btn btn-sm" style="background: #fff; border: 1px solid #ef4444; color: #ef4444; font-weight: 700;">
+                     Configurar Agora
+                 </a>
+            </div>
+            <?php endif; ?>
+
             <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 1rem; margin-bottom: 2rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; display: flex; gap: 1rem; align-items: center;">
                  <span class="material-icons-round" style="color: #d97706;">warning_amber</span>
                  <div style="color: #92400e; font-size: 0.9rem;">
-                     Esta mensagem será enviada para <strong>todos</strong> os membros ativos. Use com responsabilidade.
+                     Esta transmissão será disparada para todos os <strong><?= $pushStats['total'] ?? 0 ?></strong> membros ativos.
                  </div>
             </div>
 
@@ -179,9 +219,30 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    toast.success('Sucesso', 'Notificação enviada com sucesso para o clube!');
+                    const stats = data.stats || {};
+                    let summaryHtml = `
+                        <div style="text-align: left; margin-top: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                <span>🔔 App (Toast):</span>
+                                <span style="font-weight: 800; color: #10b981;">${stats.toast?.sent || 0} OK</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                <span>📱 Push (PWA):</span>
+                                <span style="font-weight: 800; color: ${stats.push?.failed > 0 ? '#ef4444' : '#10b981'};">
+                                    ${stats.push?.sent || 0} OK, ${stats.push?.failed || 0} Fail
+                                </span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>📧 E-mail:</span>
+                                <span style="font-weight: 800; color: ${stats.email?.failed > 0 ? '#ef4444' : '#10b981'};">
+                                    ${stats.email?.sent || 0} OK, ${stats.email?.failed || 0} Fail
+                                </span>
+                            </div>
+                        </div>
+                    `;
+
+                    toast.success(`Enviado para ${data.sent_count} usuários`, summaryHtml);
                     e.target.reset();
-                    // Reset visual state of checkboxes if needed, though they default mostly to unchecked or checked based on HTML
                 } else {
                     toast.error('Erro ao Enviar', data.error || 'Não foi possível completar o envio.');
                 }

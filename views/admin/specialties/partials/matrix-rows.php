@@ -25,12 +25,13 @@
                     <div class="mission-icon">
                         <?php 
                         $icon = $specialty['badge_icon'] ?? '🛡️';
-                        if (str_contains($icon, 'fa-')): ?>
+                        if (str_starts_with($icon, 'fa-')): ?>
                             <i class="<?= htmlspecialchars($icon) ?>" style="color: var(--god-blue)"></i>
                         <?php elseif (str_contains($icon, ':')): ?>
-                            <iconify-icon icon="<?= htmlspecialchars($icon) ?>"></iconify-icon>
+                            <?php $iconName = explode(' ', $icon)[0]; ?>
+                            <iconify-icon icon="<?= htmlspecialchars($iconName) ?>"></iconify-icon>
                         <?php else: ?>
-                            <?= $icon ?>
+                            <span style="font-size: 1.2rem;"><?= $icon ?></span>
                         <?php endif; ?>
                     </div>
                     <div class="mission-name"><?= htmlspecialchars($specialty['name'] ?? 'Missão não identificada') ?></div>

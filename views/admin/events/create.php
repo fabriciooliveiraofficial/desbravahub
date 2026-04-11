@@ -65,6 +65,39 @@
 
             <div style="border-top: 1px solid var(--border-light); margin: 24px 0; padding-top: 24px;">
                 <h4 style="margin-top: 0; color: var(--text-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <span class="material-icons-round" style="color: #6366f1; font-size: 20px;">military_tech</span>
+                    Gamificação & Estética
+                </h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label>Tipo de Evento</label>
+                        <select name="type" class="form-control">
+                            <option value="regular">Regular / Geral</option>
+                            <option value="mission">Missão Operacional</option>
+                            <option value="camp">Acampamento / Bivaque</option>
+                            <option value="training">Treinamento / Classe</option>
+                            <option value="social">Social / Recreativo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Medalha de Honra (Badge)</label>
+                        <select name="achievement_id" class="form-control">
+                            <option value="">Nenhuma (Apenas XP)</option>
+                            <?php foreach ($achievements as $achievement): ?>
+                                <option value="<?= $achievement['id'] ?>"><?= htmlspecialchars($achievement['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>URL Imagem de Capa</label>
+                        <input type="url" name="cover_image_url" class="form-control" placeholder="https://exemplo.com/banner.jpg">
+                    </div>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-light); margin: 24px 0; padding-top: 24px;">
+                <h4 style="margin-top: 0; color: var(--text-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
                     <span class="material-icons-round" style="color: #10b981; font-size: 20px;">payments</span>
                     Financeiro do Evento
                 </h4>

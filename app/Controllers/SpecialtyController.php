@@ -1543,6 +1543,68 @@ class SpecialtyController
     }
 
     /**
+     * Update specialty details (name, icon, description, difficulty, XP, duration, outdoor)
+     */
+    public function updateDetails(array $params): void
+    {
+        $this->requireLeadership();
+        $id = (int)$params['id'];
+        $tenant = App::tenant();
+
+        try {
+            $name = trim($_POST['name'] ?? '');
+            $description = trim($_POST['description'] ?? '');
+            $icon = trim($_POST['badge_icon'] ?? '');
+            $difficulty = (int)($_POST['difficulty'] ?? 3);
+            $xp_reward = (int)($_POST['xp_reward'] ?? 280);
+            $duration_hours = (int)($_POST['duration_hours'] ?? 16);
+            $is_outdoor = isset($_POST['is_outdoor']) && $_POST['is_outdoor'] ? 1 : 0;
+            $category_id = (int)($_POST['category_id'] ?? 0);
+
+            // Validation
+            if (empty($name)) {
+                $this->json(['success' => false, 'error' => 'Nome é obrigatório'], 400);
+                return;
+            }
+
+            if ($difficulty < 1 || $difficulty > 5) {
+                $difficulty = 3;
+            }
+
+            if ($category_id <= 0) {
+                $this->json(['success' => false, 'error' => 'Categoria é obrigatória'], 400);
+                return;
+            }
+
+            // Update specialty
+            $updated = db_update(
+                'specialties',
+                [
+                    'name' => $name,
+                    'description' => $description,
+                    'badge_icon' => $icon,
+                    'difficulty' => $difficulty,
+                    'xp_reward' => $xp_reward,
+                    'duration_hours' => $duration_hours,
+                    'is_outdoor' => $is_outdoor,
+                    'category_id' => $category_id,
+                ],
+                'id = ? AND tenant_id = ?',
+                [$id, $tenant['id']]
+            );
+
+            if ($updated > 0) {
+                $this->json(['success' => true, 'message' => 'Especialidade atualizada com sucesso!']);
+            } else {
+                $this->json(['success' => false, 'error' => 'Especialidade não encontrada'], 404);
+            }
+        } catch (\Exception $e) {
+            error_log("Error updating specialty: " . $e->getMessage());
+            $this->json(['success' => false, 'error' => 'Erro ao atualizar especialidade: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Require leadership role
      */
     private function requireLeadership(): void

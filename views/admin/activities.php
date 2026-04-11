@@ -26,7 +26,8 @@
                                 <?php if (str_starts_with($activity['badge_icon'] ?? '', 'fa-')): ?>
                                     <i class="<?= htmlspecialchars($activity['badge_icon']) ?>"></i>
                                 <?php elseif (str_contains($activity['badge_icon'] ?? '', ':')): ?>
-                                    <iconify-icon icon="<?= htmlspecialchars($activity['badge_icon']) ?>"></iconify-icon>
+                                    <?php $iconName = explode(' ', $activity['badge_icon'])[0]; ?>
+                                    <iconify-icon icon="<?= htmlspecialchars($iconName) ?>"></iconify-icon>
                                 <?php else: ?>
                                     <?= $activity['badge_icon'] ?? '📘' ?>
                                 <?php endif; ?>

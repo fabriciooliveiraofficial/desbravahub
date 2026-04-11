@@ -48,6 +48,51 @@ class CertificateController
         CertificateService::streamPdf($cert, $certData);
     }
 
+    /**
+     * GET /{tenant}/certificados/evento/{id}
+     */
+    public function downloadEventCertificate(array $params): void
+    {
+        $tenant = App::tenant();
+        $user   = App::user();
+        $eventId = (int) $params['id'];
+
+        // Get enrollment
+        $enrollment = db_fetch_one(
+            "SELECT id FROM event_enrollments WHERE event_id = ? AND user_id = ? AND tenant_id = ? AND status = 'attended'",
+            [$eventId, $user['id'], $tenant['id']]
+        );
+
+        if (!$enrollment) {
+            http_response_code(404);
+            echo 'Inscrição ou presença não confirmada para este evento.';
+            return;
+        }
+
+        // Get certificate record
+        $cert = db_fetch_one(
+            "SELECT * FROM issued_certificates WHERE assignment_type = 'event' AND assignment_id = ? AND user_id = ? AND tenant_id = ?",
+            [$enrollment['id'], $user['id'], $tenant['id']]
+        );
+
+        if (!$cert) {
+            // Try to generate on the fly if user is attended but cert record is missing
+            $certId = CertificateService::generateForEvent((int) $enrollment['id'], (int) $tenant['id']);
+            if ($certId) {
+                $cert = db_fetch_one("SELECT * FROM issued_certificates WHERE id = ?", [$certId]);
+            }
+        }
+
+        if (!$cert) {
+            http_response_code(404);
+            echo 'Certificado ainda não disponível.';
+            return;
+        }
+
+        $certData = $this->buildCertData($cert);
+        CertificateService::streamPdf($cert, $certData);
+    }
+
     // ----------------------------------------------------------------
     // Public: verify by hash
     // ----------------------------------------------------------------
@@ -102,9 +147,12 @@ class CertificateController
 
         if (!$full) return [];
 
-        $typeLabel = $cert['assignment_type'] === 'specialty'
-            ? 'a Especialidade'
-            : 'o Programa de Aprendizagem';
+        $typeLabel = match($cert['assignment_type']) {
+            'specialty' => 'a Especialidade',
+            'program'   => 'o Programa de Aprendizagem',
+            'event'     => 'o Evento Especial',
+            default     => 'a Conquista'
+        };
 
         $completedDate = $full['completed_at']
             ? date('d \d\e F \d\e Y', strtotime($full['completed_at']))

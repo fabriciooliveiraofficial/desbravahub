@@ -30,14 +30,28 @@ function renderIcon(string $icon, string $color = '#fff', int $sizePx = 48): str
     $icon = trim($icon);
     if ($icon === '') return '<span style="font-size:' . $sizePx . 'px">🏆</span>';
 
+    // FontAwesome
+    if (str_starts_with($icon, 'fa-')) {
+        return '<i class="' . htmlspecialchars($icon) . '" style="font-size:' . $sizePx . 'px;color:' . $color . '"></i>';
+    }
+
     // Iconify string: "collection:icon-name"
-    if (preg_match('/^[\w-]+:[\w-]+$/', $icon)) {
-        return '<iconify-icon icon="' . htmlspecialchars($icon) . '" style="font-size:' . $sizePx . 'px;color:' . $color . '"></iconify-icon>';
+    if (str_contains($icon, ':')) {
+        // Iconify doesn't like spaces in the icon name. If there's a space, 
+        // we assume the first part is the icon and the rest is supplementary.
+        $iconParts = explode(' ', $icon);
+        $iconName = $iconParts[0];
+        return '<iconify-icon icon="' . htmlspecialchars($iconName) . '" style="font-size:' . $sizePx . 'px;color:' . $color . ';vertical-align:middle;"></iconify-icon>';
     }
 
     // URL (badge image)
     if (str_starts_with($icon, 'http') || str_starts_with($icon, '/')) {
         return '<img src="' . htmlspecialchars($icon) . '" alt="" style="width:' . $sizePx . 'px;height:' . $sizePx . 'px;object-fit:contain;border-radius:8px;">';
+    }
+
+    // Material Icons (fallback for text-based icons like 'military_tech')
+    if (strlen($icon) > 4 && !str_contains($icon, ' ')) {
+         return '<span class="material-icons-round" style="font-size:' . $sizePx . 'px;color:' . $color . ';line-height:1;">' . htmlspecialchars($icon) . '</span>';
     }
 
     // Emoji or text

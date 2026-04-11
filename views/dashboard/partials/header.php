@@ -36,7 +36,10 @@
             <!-- Profile Picture -->
             <a href="<?= base_url($tenant['slug'] . '/perfil') ?>" class="header-avatar-link">
                 <?php if (!empty($user['avatar_url'])): ?>
-                    <img src="<?= $user['avatar_url'] ?>" alt="<?= htmlspecialchars($user['name']) ?>" class="header-avatar-img">
+                    <img src="<?= $user['avatar_url'] ?>" alt="<?= htmlspecialchars($user['name']) ?>" class="header-avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="header-avatar-fallback" style="display:none;">
+                        <?= strtoupper(substr($user['name'], 0, 1)) ?>
+                    </div>
                 <?php else: ?>
                     <div class="header-avatar-fallback">
                         <?= strtoupper(substr($user['name'], 0, 1)) ?>

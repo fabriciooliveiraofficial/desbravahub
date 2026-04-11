@@ -158,7 +158,10 @@ $theme = 'dark'; // Force dark mode for Super Admin
                     <span class="sa-user-badge">Super Admin</span>
                 </div>
                 <?php if (!empty($user['avatar_url'])): ?>
-                    <img src="<?= htmlspecialchars($user['avatar_url']) ?>" alt="Avatar" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid var(--sa-primary);">
+                    <img src="<?= htmlspecialchars($user['avatar_url']) ?>" alt="Avatar" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid var(--sa-primary);" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
+                    <div style="display:none; width:36px; height:36px; border-radius:50%; background:var(--sa-primary); place-items:center; color:white; font-weight:bold;">
+                        <?= substr($user['name'] ?? 'A', 0, 1) ?>
+                    </div>
                 <?php else: ?>
                     <div style="width:36px; height:36px; border-radius:50%; background:var(--sa-primary); display:grid; place-items:center; color:white; font-weight:bold;">
                         <?= substr($user['name'] ?? 'A', 0, 1) ?>

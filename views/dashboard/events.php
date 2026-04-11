@@ -92,10 +92,32 @@
                                 <?php endif; ?>
                                 <div class="data-point" style="align-items: flex-end;">
                                     <?php if ($event['my_enrollment_id']): ?>
-                                        <button class="hud-badge" onclick="cancelEnrollment(<?= $event['id'] ?>)" 
-                                                style="color: var(--accent-green); background: rgba(0,255,136,0.1); cursor: pointer; padding: 6px 12px;">
-                                            CONFIRMADO
-                                        </button>
+                                        <div style="display: flex; gap: 8px; align-items: center;">
+                                            <?php
+                                            $gTitle = urlencode($event['title']);
+                                            $gStart = $date->format('Ymd\THis');
+                                            $gEnd   = $date->modify('+2 hours')->format('Ymd\THis'); // Default 2h duration
+                                            $date->modify('-2 hours'); // Reset for view
+                                            $gLoc   = urlencode($event['location'] ?: '');
+                                            $gUrl   = "https://www.google.com/calendar/render?action=TEMPLATE&text={$gTitle}&dates={$gStart}/{$gEnd}&location={$gLoc}";
+                                            ?>
+                                            <a href="<?= $gUrl ?>" target="_blank" class="hud-badge" title="Adicionar ao Google Calendar"
+                                               style="color: var(--accent-cyan); border-color: var(--accent-cyan); cursor: pointer; padding: 6px; display: flex; align-items: center; justify-content: center;">
+                                                <span class="material-icons-round" style="font-size: 16px;">calendar_add_on</span>
+                                            </a>
+                                            
+                                            <?php if ($event['my_status'] === 'attended'): ?>
+                                                <button class="hud-badge" onclick="viewCertificate(<?= $event['id'] ?>)" 
+                                                        style="color: #fbbf24; background: rgba(251,191,36,0.1); border-color: #fbbf24; cursor: pointer; padding: 6px 12px; font-weight: bold;">
+                                                    <span class="material-icons-round" style="font-size: 14px; vertical-align: middle;">military_tech</span> CERTIFICADO
+                                                </button>
+                                            <?php else: ?>
+                                                <button class="hud-badge" onclick="showTicket('<?= $event['checkin_token'] ?>', '<?= htmlspecialchars($event['title']) ?>')" 
+                                                        style="color: var(--accent-green); background: rgba(0,255,136,0.1); cursor: pointer; padding: 6px 12px;">
+                                                    MEU INGRESSO
+                                                </button>
+                                            <?php endif; ?>
+                                        </div>
                                     <?php else: ?>
                                         <button class="hud-badge" onclick="enroll(<?= $event['id'] ?>)" 
                                                 style="color: var(--accent-cyan); cursor: pointer; padding: 6px 12px; transition: all 0.2s">
@@ -103,6 +125,19 @@
                                         </button>
                                     <?php endif; ?>
                                 </div>
+                                
+                                <?php if (!empty($event['gallery'])): ?>
+                                    <div class="event-gallery-preview" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05);">
+                                        <div style="font-size: 0.65rem; color: var(--hud-text-dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Galeria de Atividades</div>
+                                        <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none;">
+                                            <?php foreach ($event['gallery'] as $img): ?>
+                                                <img src="<?= htmlspecialchars($img['image_url']) ?>" 
+                                                     onclick="openLightbox('<?= htmlspecialchars($img['image_url']) ?>', '<?= htmlspecialchars($img['caption'] ?: '') ?>')"
+                                                     style="height: 60px; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: transform 0.2s;">
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -139,46 +174,118 @@
 </div>
 
 <script>
-    async function enroll(eventId) {
+    async function enroll(id) {
+        if (!confirm('Deseja se inscrever neste evento?')) return;
+        
         try {
-            const btn = event.target;
-            const originalText = btn.innerText;
-            btn.innerText = 'PROCESSANDO...';
-            btn.disabled = true;
-
-            const response = await fetch(`/${<?= json_encode($tenant['slug']) ?>}/eventos/${eventId}/inscrever`, {
+            const response = await fetch('<?= base_url($tenant['slug'] . '/eventos/') ?>' + id + '/inscricao', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 'Accept': 'application/json' }
             });
             const data = await response.json();
             if (data.success) {
-                location.reload();
+                window.location.reload();
             } else {
-                swal(data.error || 'Erro ao inscrever', 'Ops!');
-                btn.innerText = originalText;
-                btn.disabled = false;
+                alert(data.error || 'Erro ao se inscrever.');
             }
-        } catch (e) {
-            swal('Falha na comunicação', 'Erro');
+        } catch (err) {
+            console.error(err);
+            alert('Erro de conexão.');
         }
     }
 
-    async function cancelEnrollment(eventId) {
-        const confirmed = await sconfirm('Abortar participação nesta missão?', 'Cancelar Inscrição');
-        if (!confirmed) return;
-        try {
-            const response = await fetch(`/${<?= json_encode($tenant['slug']) ?>}/eventos/${eventId}/cancelar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const data = await response.json();
-            if (data.success) {
-                location.reload();
-            } else {
-                swal(data.error || 'Erro ao cancelar', 'Erro');
-            }
-        } catch (e) {
-            swal('Falha na comunicação', 'Erro');
+    async function cancelEnrollment(id) {
+        if (!confirm('Deseja cancelar sua inscrição?')) return;
+        alert('Para cancelar, entre em contato com a diretoria do clube.');
+    }
+
+    function showTicket(token, title) {
+        if (!token) {
+            alert('Erro: Token de check-in não disponível. Tente recarregar a página.');
+            return;
         }
+        
+        const tenantSlug = '<?= $tenant['slug'] ?>';
+        const checkinUrl = window.location.origin + '/' + tenantSlug + '/admin/eventos/checkin/' + token;
+        const qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(checkinUrl)}`;
+        
+        document.getElementById('ticket-event-title').innerText = title;
+        document.getElementById('ticket-qr').src = qrUrl;
+        document.getElementById('ticket-modal').style.display = 'flex';
+        setTimeout(() => document.getElementById('ticket-modal').classList.add('visible'), 10);
+    }
+
+    function closeTicket() {
+        document.getElementById('ticket-modal').classList.remove('visible');
+        setTimeout(() => document.getElementById('ticket-modal').style.display = 'none', 300);
+    }
+
+    function viewCertificate(eventId) {
+        const tenantSlug = '<?= $tenant['slug'] ?>';
+        window.open('/' + tenantSlug + '/certificados/evento/' + eventId, '_blank');
+    }
+
+    function openLightbox(url, caption) {
+        document.getElementById('lightbox-img').src = url;
+        document.getElementById('lightbox-caption').innerText = caption;
+        document.getElementById('lightbox-modal').style.display = 'flex';
+        setTimeout(() => document.getElementById('lightbox-modal').classList.add('visible'), 10);
+    }
+
+    function closeLightbox() {
+        document.getElementById('lightbox-modal').classList.remove('visible');
+        setTimeout(() => document.getElementById('lightbox-modal').style.display = 'none', 300);
     }
 </script>
+
+<!-- Lightbox Modal -->
+<div id="lightbox-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10001; align-items: center; justify-content: center; backdrop-filter: blur(15px); transition: all 0.3s ease; opacity: 0;">
+    <button onclick="closeLightbox()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: white; cursor: pointer; z-index: 10002;">
+        <span class="material-icons-round" style="font-size: 32px;">close</span>
+    </button>
+    
+    <div style="max-width: 90vw; max-height: 80vh; position: relative; text-align: center;">
+        <img id="lightbox-img" src="" style="max-width: 100%; max-height: 80vh; border-radius: 12px; box-shadow: 0 0 40px rgba(0,0,0,0.5);">
+        <p id="lightbox-caption" style="color: white; margin-top: 20px; font-size: 1.1rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5);"></p>
+    </div>
+</div>
+
+<!-- Ticket Modal Overlay -->
+<div id="ticket-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(10px); transition: all 0.3s ease; opacity: 0;">
+    <div class="tech-plate" style="width: 90%; max-width: 360px; padding: 30px; border: 1px solid rgba(0,255,255,0.3); text-align: center; background: rgba(13,27,62,0.95); position: relative; box-shadow: 0 0 50px rgba(0,255,255,0.15);">
+        <button onclick="closeTicket()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--hud-text-dim); cursor: pointer;">
+            <span class="material-icons-round">close</span>
+        </button>
+
+        <div style="font-family: monospace; font-size: 0.7rem; color: var(--accent-cyan); letter-spacing: 2px; margin-bottom: 15px; text-transform: uppercase;">Acesso Autorizado</div>
+        <h3 id="ticket-event-title" style="margin: 0 0 25px; color: white; font-size: 1.2rem;">Nome do Evento</h3>
+        
+        <div style="background: white; padding: 15px; border-radius: 12px; display: inline-block; margin-bottom: 25px; box-shadow: 0 0 20px rgba(255,255,255,0.1);">
+            <img id="ticket-qr" src="" style="display: block; width: 200px; height: 200px;">
+        </div>
+
+        <p style="font-size: 0.8rem; color: var(--hud-text-dim); line-height: 1.5; margin-bottom: 0;">Apresente este QR Code no local do evento para validar sua presença e receber suas recompensas.</p>
+    </div>
+</div>
+
+<style>
+#ticket-modal.visible { opacity: 1; }
+#ticket-modal.visible .tech-plate { transform: scale(1); }
+.tech-plate { transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+.hud-badge {
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    background: rgba(255,255,255,0.05);
+}
+.hud-badge:hover {
+    background: rgba(255,255,255,0.15);
+    transform: translateY(-1px);
+}
+</style>

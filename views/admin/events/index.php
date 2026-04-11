@@ -59,6 +59,12 @@
                         </td>
                         <td data-label="Ações">
                             <div style="display: flex; gap: 8px;">
+                                <a href="<?= base_url($tenant['slug'] . '/admin/eventos/' . $event['id'] . '/galeria') ?>" class="btn btn-sm btn-secondary" title="Galeria de Fotos" style="background: rgba(236, 72, 153, 0.1); color: #ec4899; border-color: rgba(236, 72, 153, 0.2);">
+                                    <span class="material-icons-round" style="font-size: 18px;">photo_library</span>
+                                </a>
+                                <a href="<?= base_url($tenant['slug'] . '/admin/eventos/' . $event['id'] . '/inscritos') ?>" class="btn btn-sm btn-info" title="Ver Inscritos">
+                                    <span class="material-icons-round" style="font-size: 18px;">group</span>
+                                </a>
                                 <a href="<?= base_url($tenant['slug'] . '/admin/eventos/' . $event['id'] . '/editar') ?>" class="btn btn-sm btn-secondary" title="Editar">
                                     <span class="material-icons-round" style="font-size: 18px;">edit</span>
                                 </a>

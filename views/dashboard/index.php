@@ -375,7 +375,10 @@
                 <div class="ring-inner"></div>
                 <div class="avatar-image-wrapper">
                     <?php if (!empty($user['avatar_url'])): ?>
-                        <img src="<?= $user['avatar_url'] ?>" alt="<?= htmlspecialchars($user['name']) ?>">
+                        <img src="<?= $user['avatar_url'] ?>" alt="<?= htmlspecialchars($user['name']) ?>" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div style="display:none; width: 100%; height: 100%; background: #1e293b; align-items: center; justify-content: center; font-size: 3rem; color: #cbd5e1; font-weight: 800;">
+                            <?= strtoupper(substr($user['name'], 0, 1)) ?>
+                        </div>
                     <?php else: ?>
                         <!-- Fallback style if no avatar -->
                         <div style="width: 100%; height: 100%; background: #1e293b; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #cbd5e1; font-weight: 800;">
@@ -435,7 +438,18 @@
                     <?php foreach ($recentAchievements as $ach): ?>
                         <div class="ach-card <?= htmlspecialchars($ach['style']) ?>">
                             <div class="ach-icon-glow">
-                                <span class="material-icons-round"><?= htmlspecialchars($ach['icon']) ?></span>
+                                <?php 
+                                $icon = $ach['icon'];
+                                if (str_starts_with($icon, 'fa-')): ?>
+                                    <i class="<?= htmlspecialchars($icon) ?>"></i>
+                                <?php elseif (str_contains($icon, ':')): ?>
+                                    <?php $iconName = explode(' ', $icon)[0]; ?>
+                                    <iconify-icon icon="<?= htmlspecialchars($iconName) ?>"></iconify-icon>
+                                <?php elseif (strlen($icon) > 4 && !str_contains($icon, ' ')): ?>
+                                    <span class="material-icons-round"><?= htmlspecialchars($icon) ?></span>
+                                <?php else: ?>
+                                    <?= $icon ?>
+                                <?php endif; ?>
                             </div>
                             <span class="ach-name"><?= htmlspecialchars(mb_strtoupper(mb_strimwidth($ach['name'], 0, 22, '…', 'UTF-8'), 'UTF-8')) ?></span>
                         </div>

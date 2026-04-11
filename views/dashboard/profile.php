@@ -421,7 +421,8 @@ $activeTab = $_GET['tab'] ?? (isset($_GET['incomplete']) ? 'registry' : 'overvie
             <div class="profile-avatar-hud">
                 <div class="avatar-img-hud" id="avatarPreviewContainer" style="overflow: hidden;">
                     <?php if (!empty($user['avatar_url'])): ?>
-                        <img src="<?= htmlspecialchars($user['avatar_url']) ?>" alt="Avatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
+                        <img src="<?= htmlspecialchars($user['avatar_url']) ?>" alt="Avatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div style="display:none; width:100%; height:100%; align-items:center; justify-content:center;"><?= strtoupper(substr($user['name'], 0, 1)) ?></div>
                     <?php else: ?>
                         <?= strtoupper(substr($user['name'], 0, 1)) ?>
                     <?php endif; ?>
@@ -854,7 +855,11 @@ async function handleAvatarUpload(event) {
         if (json.success) {
             // Update UI preview
             const container = document.getElementById('avatarPreviewContainer');
-            container.innerHTML = `<img src="${json.avatar_url}" alt="Avatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+            const initials = '<?= strtoupper(substr($user['name'], 0, 1)) ?>';
+            container.innerHTML = `
+                <img src="${json.avatar_url}" alt="Avatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div style="display:none; width:100%; height:100%; align-items:center; justify-content:center;">${initials}</div>
+            `;
             alert('Foto de perfil atualizada com sucesso!');
         } else {
             alert('Erro: ' + (json.message || 'Erro ao fazer upload da imagem.'));

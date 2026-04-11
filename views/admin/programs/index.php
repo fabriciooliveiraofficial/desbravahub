@@ -63,7 +63,8 @@ $typeLabel = ($type ?? '') === 'class' ? 'Classes' : 'Especialidades';
                                 <?php if (str_starts_with($program['icon'] ?? '', 'fa-')): ?>
                                     <i class="<?= htmlspecialchars($program['icon']) ?>"></i>
                                 <?php elseif (str_contains($program['icon'] ?? '', ':')): ?>
-                                    <iconify-icon icon="<?= htmlspecialchars($program['icon']) ?>"></iconify-icon>
+                                    <?php $iconName = explode(' ', $program['icon'])[0]; ?>
+                                    <iconify-icon icon="<?= htmlspecialchars($iconName) ?>"></iconify-icon>
                                 <?php else: ?>
                                     <?= $program['icon'] ?>
                                 <?php endif; ?>

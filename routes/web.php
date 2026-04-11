@@ -183,6 +183,7 @@ $router->get('/{tenant}/admin/versoes', [AdminController::class, 'versions'], [T
 $router->get('/{tenant}/admin/features', [AdminController::class, 'features'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/notificacoes', [AdminController::class, 'notifications'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/notifications/broadcast', [AdminController::class, 'sendBroadcast'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/admin/notifications/logs', [AdminController::class, 'notificationLogs'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/quizzes', [AdminController::class, 'quizzes'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/quizzes', [AdminController::class, 'createQuiz'], [TenantMiddleware::class, AuthMiddleware::class]);
 
@@ -204,6 +205,14 @@ $router->get('/{tenant}/admin/eventos/novo', [AdminEventController::class, 'crea
 $router->post('/{tenant}/admin/eventos/novo', [AdminEventController::class, 'store'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/admin/eventos/{id}/editar', [AdminEventController::class, 'edit'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/eventos/{id}/editar', [AdminEventController::class, 'update'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/admin/eventos/{id}/inscritos', [AdminEventController::class, 'enrollees'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/admin/eventos/{id}/galeria', [AdminEventController::class, 'gallery'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/eventos/{id}/galeria', [AdminEventController::class, 'addGalleryImage'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/eventos/galeria/{id}/excluir', [AdminEventController::class, 'removeGalleryImage'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/admin/eventos/checkin/{token}', [AdminEventController::class, 'checkinStatus'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/eventos/checkin/{token}', [AdminEventController::class, 'checkinByToken'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/eventos/{id}/inscritos/presenca-massa', [AdminEventController::class, 'markAllAttendance'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/eventos/inscritos/presenca', [AdminEventController::class, 'markAttendance'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/admin/eventos/{id}/excluir', [AdminEventController::class, 'delete'], [TenantMiddleware::class, AuthMiddleware::class]);
 
 $router->get('/{tenant}/admin/mission-control/search-master', [SpecialtyController::class, 'searchMaster'], [TenantMiddleware::class, AuthMiddleware::class]);
@@ -292,7 +301,11 @@ $router->get('/{tenant}/notificacoes', [DashboardController::class, 'notificatio
 $router->post('/{tenant}/notificacoes/limpar', [DashboardController::class, 'clearNotifications'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/classes', [DashboardController::class, 'classes'], [TenantMiddleware::class, AuthMiddleware::class]);
 
-// Learning Engine routes (Pathfinder)
+// Learning Engine routes
+// Certificates
+$router->get('/{tenant}/certificados', [CertificateController::class, 'index'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/certificados/evento/{id}', [CertificateController::class, 'downloadEventCertificate'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->get('/{tenant}/certificados/{id}', [CertificateController::class, 'download'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/aprendizado', [LearningController::class, 'index'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/aprendizado/{id}', [LearningController::class, 'show'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/aprendizado/step/{step_id}/modal', [LearningController::class, 'stepModal'], [TenantMiddleware::class, AuthMiddleware::class]);
@@ -336,6 +349,8 @@ $router->get('/{tenant}/admin/especialidades/atribuicao/{id}/detalhes', [Special
 $router->post('/{tenant}/admin/especialidades/atribuicao/{id}/concluir', [SpecialtyController::class, 'adminCompleteAssignment'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->get('/{tenant}/api/specialties/search', [SpecialtyController::class, 'search'], [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/{tenant}/api/specialties/{id}/delete', [SpecialtyController::class, 'delete'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/api/specialties/{id}/update', [SpecialtyController::class, 'updateDetails'], [TenantMiddleware::class, AuthMiddleware::class]);
+$router->post('/{tenant}/admin/api/classes/{id}/update', [AdminController::class, 'updateClassDetails'], [TenantMiddleware::class, AuthMiddleware::class]);
 
 // Pathfinder Specialty routes
 $router->get('/{tenant}/especialidades', [SpecialtyController::class, 'mySpecialties'], [TenantMiddleware::class, AuthMiddleware::class]);
