@@ -68,7 +68,7 @@ class HomeController
         }
 
         if (!empty($errors)) {
-            $this->json(['success' => false, 'errors' => $errors], 400);
+            App::jsonResponse(['success' => false, 'errors' => $errors], 400);
             return;
         }
 
@@ -95,21 +95,14 @@ class HomeController
                 'xp_points' => 0,
             ]);
 
-            $this->json([
+            App::jsonResponse([
                 'success' => true,
                 'message' => 'Clube cadastrado com sucesso!',
                 'redirect' => base_url($slug . '/login'),
             ]);
 
         } catch (\Exception $e) {
-            $this->json(['success' => false, 'error' => 'Erro ao cadastrar: ' . $e->getMessage()], 500);
+            App::jsonResponse(['success' => false, 'error' => 'Erro ao cadastrar: ' . $e->getMessage()], 500);
         }
-    }
-
-    private function json(array $data, int $code = 200): void
-    {
-        http_response_code($code);
-        header('Content-Type: application/json');
-        echo json_encode($data);
     }
 }

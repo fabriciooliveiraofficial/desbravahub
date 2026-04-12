@@ -1,299 +1,455 @@
 <?php
 /**
  * Club Profile & Growth Settings View
+ * Tactical Pathfinder Redesign - Unified Operational Hub
  */
 ?>
-<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-    <div>
-        <h2 style="margin: 0; color: var(--text-primary); font-size: 1.5rem; display: flex; align-items: center; gap: 8px;">
-            <span class="material-icons-round" style="color: #ec4899;">storefront</span>
-            Perfil do Clube & Crescimento
-        </h2>
-        <p style="margin: 4px 0 0 0; color: var(--text-secondary); font-size: 0.95rem;">
-            Gerencie a página pública do seu clube e ferramentas de atração.
-        </p>
-    </div>
-    <div style="display: flex; gap: 12px;">
-        <a href="<?= base_url('c/' . ($profile['slug'] ?? '')) ?>" target="_blank" class="btn btn-secondary" <?= empty($profile['slug']) ? 'style="display:none;"' : '' ?>>
-            <span class="material-icons-round">open_in_new</span> Ver Página Pública
-        </a>
-    </div>
-</div>
+<style>
+    :root {
+        --tactical-primary: var(--primary, #06b6d4);
+        --tactical-primary-rgb: var(--primary-rgb, 6, 182, 212);
+        --tactical-bg: var(--bg-main, #0f172a);
+        --tactical-card: var(--bg-card, #1e293b);
+        --tactical-border: var(--border-color, #334155);
+        --tactical-text: var(--text-main, #f8fafc);
+        --tactical-muted: var(--text-muted, #94a3b8);
+        --tactical-dark: var(--bg-dark, #020617);
+    }
 
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
-    <!-- Profile Form -->
-    <div class="dashboard-card">
-        <header class="dashboard-card-header">
-            <span class="material-icons-round" style="color: #3b82f6;">edit_document</span>
-            <h3>Dados Públicos</h3>
-        </header>
-        <div class="dashboard-card-body">
+    .tactical-hub-container {
+        font-family: 'Inter', system-ui, sans-serif;
+        color: var(--tactical-text);
+        width: 100%;
+        padding: 16px;
+        box-sizing: border-box;
+    }
+
+    /* Spacing for sync button */
+    .form-footer {
+        margin-top: 32px;
+    }
+
+    /* Operation Modules */
+    .operation-module {
+        background: var(--tactical-card);
+        border: 1px solid var(--tactical-border);
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 24px;
+        transition: transform 0.2s ease;
+    }
+
+    .module-header {
+        padding: 24px 32px;
+        border-bottom: 1px solid var(--tactical-border);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(var(--tactical-primary-rgb), 0.03);
+    }
+
+    .module-header h3 {
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: var(--tactical-muted);
+        margin: 0;
+    }
+
+    .module-header .material-icons-round {
+        font-size: 20px;
+        color: var(--tactical-primary);
+    }
+
+    .module-body {
+        padding: 32px;
+    }
+
+    /* Form Controls */
+    .tactical-label {
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--tactical-muted);
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    .form-control-tactical {
+        width: 100%;
+        background: var(--tactical-dark);
+        border: 1.5px solid var(--tactical-border);
+        border-radius: 12px;
+        padding: 12px 16px;
+        color: var(--tactical-text);
+        font-weight: 500;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .form-control-tactical:focus {
+        border-color: var(--tactical-primary);
+        box-shadow: 0 0 0 4px rgba(var(--tactical-primary-rgb), 0.1);
+        outline: none;
+        background: var(--tactical-card);
+    }
+
+    .slug-preview {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: var(--tactical-muted);
+        margin-top: 8px;
+        display: block;
+        padding-left: 14px;
+        border-left: 2px solid var(--tactical-border);
+    }
+
+    .slug-preview strong {
+        color: var(--tactical-primary);
+    }
+
+    /* Equipment Selector (Hero Type) */
+    .equipment-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 12px;
+    }
+
+    .equipment-card {
+        padding: 16px 20px;
+        border-radius: 14px;
+        border: 1.5px solid var(--tactical-border);
+        background: var(--tactical-dark);
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .equipment-radio:checked + .equipment-card {
+        border-color: var(--tactical-primary);
+        background: rgba(var(--tactical-primary-rgb), 0.08);
+        box-shadow: 0 8px 24px -12px rgba(var(--tactical-primary-rgb), 0.3);
+    }
+
+    .equipment-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: var(--tactical-card);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: var(--tactical-muted);
+        transition: all 0.3s;
+    }
+
+    .equipment-radio:checked + .equipment-card .equipment-icon {
+        background: var(--tactical-primary);
+        color: white;
+    }
+
+    .equipment-text {
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--tactical-muted);
+    }
+
+    .equipment-radio:checked + .equipment-card .equipment-text {
+        color: var(--tactical-text);
+    }
+
+    /* Growth Module (Sidebar) */
+    .growth-diagnostic {
+        background: var(--tactical-card);
+        border: 1px solid var(--tactical-border);
+        border-radius: 24px;
+    }
+
+    .qr-technical-frame {
+        background: white;
+        padding: 24px;
+        border-radius: 16px;
+        display: inline-block;
+        border: 2px solid var(--tactical-border);
+        box-shadow: 0 20px 40px -20px rgba(0,0,0,0.1);
+        margin-bottom: 24px;
+        position: relative;
+    }
+
+    .qr-technical-frame::after {
+        content: 'SCAN_READY';
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--tactical-primary);
+        color: white;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 8px;
+        font-weight: 900;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    .metric-readout {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        background: var(--tactical-dark);
+        border-radius: 12px;
+        margin-bottom: 12px;
+        border: 1px solid var(--tactical-border);
+    }
+
+    .metric-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--tactical-primary);
+    }
+
+    /* Animations & Utility */
+    .rotate { animation: spin 1s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    @media (max-width: 1024px) {
+        .tactical-grid { grid-template-columns: 1fr !important; }
+    }
+</style>
+
+<div class="tactical-hub-container">
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 24px;">
+        <?php if (!empty($profile['slug'])): ?>
+            <a href="<?= base_url('c/' . $profile['slug']) ?>" target="_blank" 
+               class="btn-tactical-view"
+               style="background: var(--tactical-card); border: 1.5px solid var(--tactical-border); padding: 12px 24px; border-radius: 12px; color: var(--tactical-text); font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; text-decoration: none; display: flex; align-items: center; gap: 8px; transition: all 0.3s; width: fit-content;">
+                <span class="material-icons-round" style="font-size: 18px;">visibility</span>
+                Ver Página Pública
+            </a>
+        <?php endif; ?>
+    </div>
+
+    <div class="tactical-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 32px;">
+        <!-- Left Column: Operations -->
+        <div class="operation-flow">
             <form id="profile-form">
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div class="form-group">
-                        <label>Nome de Exibição *</label>
-                        <input type="text" name="display_name" class="form-control" required value="<?= htmlspecialchars($profile['display_name'] ?? '') ?>" placeholder="Ex: Clube Leão do Norte">
-                    </div>
-                    <div class="form-group">
-                        <label>Slug da URL *</label>
-                        <input type="text" name="slug" class="form-control" required value="<?= htmlspecialchars($profile['slug'] ?? '') ?>" placeholder="Ex: leao-do-norte">
-                        <small style="color: var(--text-secondary); font-size: 0.8rem;">https://desbravahub.app/c/<strong>slug</strong></small>
-                    </div>
-                </div>
+                <!-- MODULE: BIO -->
+                <div class="operation-module">
+                    <header class="module-header">
+                        <span class="material-icons-round">badge</span>
+                        <h3>Modulo Operacional: Bio & Identidade</h3>
+                    </header>
+                    <div class="module-body">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                            <div class="form-group">
+                                <label class="tactical-label">Nome de Exibição</label>
+                                <input type="text" name="display_name" class="form-control-tactical" required value="<?= htmlspecialchars($profile['display_name'] ?? '') ?>" placeholder="Ex: Clube Leão do Norte">
+                            </div>
+                            <div class="form-group">
+                                <label class="tactical-label">Slug da URL (Identificador)</label>
+                                <input type="text" name="slug" class="form-control-tactical" required value="<?= htmlspecialchars($profile['slug'] ?? '') ?>" placeholder="Ex: leao-do-norte">
+                                <span class="slug-preview">desbravahub.app/c/<strong><?= htmlspecialchars($profile['slug'] ?? 'slug') ?></strong></span>
+                            </div>
+                        </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div class="form-group">
-                        <label>URL do Logo</label>
-                        <input type="url" name="logo_url" class="form-control" value="<?= htmlspecialchars($profile['logo_url'] ?? '') ?>" placeholder="https://exemplo.com/logo.png">
-                    </div>
-                    <div class="form-group">
-                        <label>URL da Capa (Banner)</label>
-                        <input type="url" name="cover_image_url" class="form-control" value="<?= htmlspecialchars($profile['cover_image_url'] ?? '') ?>" placeholder="https://exemplo.com/capa.jpg">
-                    </div>
-                </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                            <div class="form-group">
+                                <label class="tactical-label">URL do Logo (SVG/PNG)</label>
+                                <input type="url" name="logo_url" class="form-control-tactical" value="<?= htmlspecialchars($profile['logo_url'] ?? '') ?>" placeholder="https://exemplo.com/logo.png">
+                            </div>
+                            <div class="form-group">
+                                <label class="tactical-label">URL da Capa (Banner)</label>
+                                <input type="url" name="cover_image_url" class="form-control-tactical" value="<?= htmlspecialchars($profile['cover_image_url'] ?? '') ?>" placeholder="https://exemplo.com/capa.jpg">
+                            </div>
+                        </div>
 
-                <div class="form-group">
-                    <label>Endereço das Reuniões</label>
-                    <input type="text" name="meeting_address" class="form-control" value="<?= htmlspecialchars($profile['meeting_address'] ?? '') ?>" placeholder="Rua 1, Bairro Centro - Igreja Central">
-                </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                            <div class="form-group">
+                                <label class="tactical-label">Local de Reunião</label>
+                                <input type="text" name="meeting_address" class="form-control-tactical" value="<?= htmlspecialchars($profile['meeting_address'] ?? '') ?>" placeholder="Rua 1, Bairro Centro - Igreja Central">
+                            </div>
+                            <div class="form-group">
+                                <label class="tactical-label">Cronograma Semanal</label>
+                                <input type="text" name="meeting_time" class="form-control-tactical" value="<?= htmlspecialchars($profile['meeting_time'] ?? '') ?>" placeholder="Domingos às 09:00">
+                            </div>
+                        </div>
 
-                <div class="form-group">
-                    <label>Horário das Reuniões</label>
-                    <input type="text" name="meeting_time" class="form-control" value="<?= htmlspecialchars($profile['meeting_time'] ?? '') ?>" placeholder="Domingos às 09:00">
-                </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                            <div class="form-group">
+                                <label class="tactical-label">Instagram (@)</label>
+                                <input type="text" name="social_instagram" class="form-control-tactical" value="<?= htmlspecialchars($profile['social_instagram'] ?? '') ?>" placeholder="@seuclube">
+                            </div>
+                            <div class="form-group">
+                                <label class="tactical-label">Link WhatsApp (Grupo)</label>
+                                <input type="url" name="social_whatsapp_group" class="form-control-tactical" value="<?= htmlspecialchars($profile['social_whatsapp_group'] ?? '') ?>" placeholder="https://chat.whatsapp.com/...">
+                            </div>
+                        </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div class="form-group">
-                        <label>Instagram do Clube (Ex: @clube)</label>
-                        <input type="text" name="social_instagram" class="form-control" value="<?= htmlspecialchars($profile['social_instagram'] ?? '') ?>" placeholder="@seuclube">
-                    </div>
-                    <div class="form-group">
-                        <label>Link Grupo WhatsApp (Dúvidas/Membros)</label>
-                        <input type="url" name="social_whatsapp_group" class="form-control" value="<?= htmlspecialchars($profile['social_whatsapp_group'] ?? '') ?>" placeholder="https://chat.whatsapp.com/...">
-                    </div>
-                </div>
+                        <div class="form-group" style="margin-bottom: 24px;">
+                            <label class="tactical-label">Mensagem de Boas-Vindas</label>
+                            <textarea name="welcome_message" class="form-control-tactical" rows="4" style="resize:none;"><?= htmlspecialchars($profile['welcome_message'] ?? '') ?></textarea>
+                        </div>
 
-                <div class="form-group">
-                    <label>Mensagem de Boas-Vindas (Sobre Nós)</label>
-                    <textarea name="welcome_message" class="form-control" rows="4"><?= htmlspecialchars($profile['welcome_message'] ?? '') ?></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Meta Description (SEO)</label>
-                    <input type="text" name="seo_meta_description" class="form-control" value="<?= htmlspecialchars($profile['seo_meta_description'] ?? '') ?>" maxlength="160" placeholder="Descrição curta para o Google (máx 160 char)">
-                </div>
-
-                <div class="dashboard-card-header" style="margin-top: 32px; padding-left: 0; padding-right: 0;">
-                    <span class="material-icons-round" style="color: #f59e0b;">local_fire_department</span>
-                    <h3 style="margin:0;">Identidade e Event Hub</h3>
-                </div>
-
-                <div class="form-group" style="margin-top: 16px;">
-                    <label>Lema do Clube</label>
-                    <input type="text" name="club_motto" class="form-control" value="<?= htmlspecialchars($profile['club_motto'] ?? '') ?>" placeholder="Ex: O amor de Cristo nos motiva...">
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div class="form-group">
-                        <label>Voto do Desbravador</label>
-                        <textarea name="club_vow" class="form-control" rows="4"><?= htmlspecialchars($profile['club_vow'] ?? '') ?></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Lei do Desbravador</label>
-                        <textarea name="club_law" class="form-control" rows="4"><?= htmlspecialchars($profile['club_law'] ?? '') ?></textarea>
+                        <div class="form-group">
+                            <label class="tactical-label">Meta Description (SEO)</label>
+                            <input type="text" name="seo_meta_description" class="form-control-tactical" value="<?= htmlspecialchars($profile['seo_meta_description'] ?? '') ?>" maxlength="160" placeholder="Descrição para motores de busca...">
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Estilo Visual da Página Pública (Hub)</label>
-                    <select name="layout_vibe" class="form-control" style="background: var(--bg-dashboard); border: 1px solid var(--border-light); color: var(--text-primary); padding: 12px; border-radius: 8px; width: 100%;">
-                        <option value="hybrid" <?= ($profile['layout_vibe'] ?? 'hybrid') === 'hybrid' ? 'selected' : '' ?>>Híbrido Premium (Feed Social + Galeria Instagram) - Recomendado</option>
-                        <option value="feed" <?= ($profile['layout_vibe'] ?? '') === 'feed' ? 'selected' : '' ?>>Apenas Feed Linear (Estilo X/Twitter)</option>
-                        <option value="grid" <?= ($profile['layout_vibe'] ?? '') === 'grid' ? 'selected' : '' ?>>Apenas Galeria Visual (Estilo Instagram)</option>
-                    </select>
-                    <small style="color: var(--text-secondary); font-size: 0.8rem; display: block; margin-top: 4px;">Escolha o Layout do Hub. Os temas Claro (Bússola) e Escuro (Fogueira) estarão sempre disponíveis ao visitante público.</small>
-                </div>
+                <!-- MODULE: CULTURE -->
+                <div class="operation-module">
+                    <header class="module-header">
+                        <span class="material-icons-round">auto_fix_high</span>
+                        <h3>Modulo Operacional: Cultura & Estilo</h3>
+                    </header>
+                    <div class="module-body">
+                        <div class="form-group" style="margin-bottom: 24px;">
+                            <label class="tactical-label">Lema da Unidade/Clube</label>
+                            <input type="text" name="club_motto" class="form-control-tactical" value="<?= htmlspecialchars($profile['club_motto'] ?? '') ?>" placeholder="Ex: O amor de Cristo nos motiva...">
+                        </div>
 
-                <!-- ── Landing Page Hero ──────────────────────────────── -->
-                <div class="dashboard-card-header" style="margin-top: 32px; padding-left: 0; padding-right: 0;">
-                    <span class="material-icons-round" style="color: #00ccff;">auto_awesome</span>
-                    <h3 style="margin:0;">Hero de Conversão (Topo da Página Pública)</h3>
-                </div>
-                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 8px 0 16px;">
-                    Seção imersiva no topo do Hub Público para atrair pais e jovens que não conhecem os Desbravadores.
-                    Use um vídeo do YouTube ou uma imagem de fundo.
-                </p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                            <div class="form-group">
+                                <label class="tactical-label">Voto</label>
+                                <textarea name="club_vow" class="form-control-tactical" rows="3" style="resize:none;"><?= htmlspecialchars($profile['club_vow'] ?? '') ?></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="tactical-label">Lei</label>
+                                <textarea name="club_law" class="form-control-tactical" rows="3" style="resize:none;"><?= htmlspecialchars($profile['club_law'] ?? '') ?></textarea>
+                            </div>
+                        </div>
 
-                <div class="form-group">
-                    <label>Título Principal (Headline)</label>
-                    <input type="text" name="hero_headline" class="form-control" maxlength="255"
-                           value="<?= htmlspecialchars($profile['hero_headline'] ?? '') ?>"
-                           placeholder="Ex: Aventura com Propósito">
-                    <small style="color: var(--text-secondary); font-size: 0.8rem;">Deixe em branco para ocultar a seção hero.</small>
-                </div>
-
-                <div class="form-group">
-                    <label>Subtítulo (Breve explicação para quem não conhece os Desbravadores)</label>
-                    <textarea name="hero_subheadline" class="form-control" rows="2" maxlength="500"
-                              placeholder="Ex: Mais de 1 milhão de jovens pelo mundo descobrem amizade, fé e habilidades para a vida."><?= htmlspecialchars($profile['hero_subheadline'] ?? '') ?></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Tipo de Fundo do Hero</label>
-                    <div style="display: flex; gap: 12px; margin-top: 8px;" id="heroBannerTypePicker">
-                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:10px 16px; border-radius:10px; border:1px solid var(--border-light); flex:1; transition:all .2s;"
-                               id="typeImageLabel">
-                            <input type="radio" name="hero_banner_type" value="image"
-                                   <?= ($profile['hero_banner_type'] ?? 'image') === 'image' ? 'checked' : '' ?>
-                                   onchange="switchHeroBannerType('image')" style="accent-color:#00ccff;">
-                            <span class="material-icons-round" style="font-size:20px; color:#00ccff;">image</span>
-                            Imagem
-                        </label>
-                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:10px 16px; border-radius:10px; border:1px solid var(--border-light); flex:1; transition:all .2s;"
-                               id="typeYoutubeLabel">
-                            <input type="radio" name="hero_banner_type" value="youtube"
-                                   <?= ($profile['hero_banner_type'] ?? '') === 'youtube' ? 'checked' : '' ?>
-                                   onchange="switchHeroBannerType('youtube')" style="accent-color:#00ccff;">
-                            <span class="material-icons-round" style="font-size:20px; color:#ef4444;">smart_display</span>
-                            Vídeo YouTube
-                        </label>
+                        <div class="form-group">
+                            <label class="tactical-label">Arquitetura de Layout (Hub Público)</label>
+                            <select name="layout_vibe" class="form-control-tactical">
+                                <option value="hybrid" <?= ($profile['layout_vibe'] ?? 'hybrid') === 'hybrid' ? 'selected' : '' ?>>Híbrido Premium (Social + Galeria)</option>
+                                <option value="feed" <?= ($profile['layout_vibe'] ?? '') === 'feed' ? 'selected' : '' ?>>Feed Linear (Estilo X)</option>
+                                <option value="grid" <?= ($profile['layout_vibe'] ?? '') === 'grid' ? 'selected' : '' ?>>Galeria Visual (Estilo Instagram)</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-group" id="heroBannerUrlGroup">
-                    <label id="heroBannerUrlLabel">URL da Imagem de Fundo</label>
-                    <input type="url" name="hero_banner_url" id="heroBannerUrlInput" class="form-control"
-                           value="<?= htmlspecialchars($profile['hero_banner_url'] ?? '') ?>"
-                           placeholder="https://exemplo.com/foto.jpg">
-                    <small id="heroBannerUrlHint" style="color: var(--text-secondary); font-size: 0.8rem;">
-                        Use uma imagem de alta qualidade (mín. 1920×1080).
-                    </small>
-                </div>
+                <!-- MODULE: HERO ENGINE -->
+                <div class="operation-module">
+                    <header class="module-header">
+                        <span class="material-icons-round">bolt</span>
+                        <h3>Modulo Operacional: Hero Conversion Engine</h3>
+                    </header>
+                    <div class="module-body">
+                        <div class="form-group" style="margin-bottom: 24px;">
+                            <label class="tactical-label">Headline (Título de Impacto)</label>
+                            <input type="text" name="hero_headline" class="form-control-tactical" maxlength="255" value="<?= htmlspecialchars($profile['hero_headline'] ?? '') ?>" placeholder="Ex: Aventura com Propósito">
+                        </div>
 
-                <!-- Live Preview strip -->
-                <div id="heroBannerPreview" style="display:none; border-radius:12px; overflow:hidden; height:160px; position:relative; margin-bottom:16px; background:var(--bg-elevated); border:1px solid var(--border-light);">
-                    <div id="heroBannerPreviewBg" style="position:absolute;inset:0;background-size:cover;background-position:center;"></div>
-                    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;">
-                        <span id="heroBannerPreviewLabel" style="color:white;font-size:0.8rem;opacity:0.7;">Pré-visualização</span>
+                        <div class="form-group" style="margin-bottom: 24px;">
+                            <label class="tactical-label">Subheadline (Contextualização)</label>
+                            <textarea name="hero_subheadline" class="form-control-tactical" rows="2" maxlength="500" placeholder="Ex: Descubra amizade, fé e novas habilidades."><?= htmlspecialchars($profile['hero_subheadline'] ?? '') ?></textarea>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 24px;">
+                            <label class="tactical-label">Seletor de Equipamento (Fundo do Hero)</label>
+                            <div class="equipment-grid">
+                                <label style="display:block; cursor:pointer;">
+                                    <input type="radio" name="hero_banner_type" value="image" class="equipment-radio" style="display:none;" <?= ($profile['hero_banner_type'] ?? 'image') === 'image' ? 'checked' : '' ?> onchange="switchHeroBannerType('image')">
+                                    <div class="equipment-card">
+                                        <div class="equipment-icon">
+                                            <span class="material-icons-round">image</span>
+                                        </div>
+                                        <span class="equipment-text">Static Image</span>
+                                    </div>
+                                </label>
+
+                                <label style="display:block; cursor:pointer;">
+                                    <input type="radio" name="hero_banner_type" value="youtube" class="equipment-radio" style="display:none;" <?= ($profile['hero_banner_type'] ?? '') === 'youtube' ? 'checked' : '' ?> onchange="switchHeroBannerType('youtube')">
+                                    <div class="equipment-card">
+                                        <div class="equipment-icon">
+                                            <span class="material-icons-round" style="color: #ef4444;">smart_display</span>
+                                        </div>
+                                        <span class="equipment-text">Cinematic Video</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="heroBannerUrlGroup" style="margin-bottom: 24px;">
+                            <label class="tactical-label" id="heroBannerUrlLabel">Source URL (Asset)</label>
+                            <input type="url" name="hero_banner_url" id="heroBannerUrlInput" class="form-control-tactical" value="<?= htmlspecialchars($profile['hero_banner_url'] ?? '') ?>" placeholder="https://...">
+                            <small id="heroBannerUrlHint" style="display:block; margin-top:8px; font-size:11px; color:var(--tactical-muted); font-style:italic; opacity:0.8;"></small>
+                        </div>
+
+                        <div id="heroBannerPreview" style="display:none; border-radius:20px; overflow:hidden; height:200px; position:relative; margin-bottom:24px; border:2px dashed var(--tactical-border); background:var(--tactical-dark);">
+                            <div id="heroBannerPreviewBg" style="position:absolute; inset:0; background-size:cover; background-position:center; opacity:0.5;"></div>
+                            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; background: radial-gradient(circle at center, rgba(0,0,0,0.5), transparent);">
+                                <span class="material-icons-round" style="color:var(--tactical-primary); font-size:40px;">biotech</span>
+                                <span id="heroBannerPreviewLabel" style="color:white; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:0.15em; background:var(--tactical-card); border:1px solid var(--tactical-border); padding:6px 16px; border-radius:6px;">PRÉ-VISUALIZAÇÃO ANALÍTICA</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
-                    <span class="material-icons-round">save</span> Salvar Perfil
-                </button>
+                <div class="form-footer">
+                    <button type="submit" class="btn-tactical-submit" style="width: 100%; padding: 20px; background: var(--tactical-primary); border: none; color: white; font-weight: 900; font-size: 13px; text-transform: uppercase; letter-spacing: 0.15em; border-radius: 16px; cursor: pointer; box-shadow: 0 10px 25px -5px rgba(var(--tactical-primary-rgb), 0.4); transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 12px;">
+                        <span class="material-icons-round">save</span>
+                        Sincronizar Operações do Clube
+                    </button>
+                </div>
             </form>
-
-<script>
-(function() {
-    const currentType = '<?= htmlspecialchars($profile['hero_banner_type'] ?? 'image') ?>';
-    switchHeroBannerType(currentType);
-    // trigger preview on load if URL exists
-    const urlInput = document.getElementById('heroBannerUrlInput');
-    if (urlInput && urlInput.value) updateHeroPreview(urlInput.value, currentType);
-    urlInput && urlInput.addEventListener('input', () => {
-        const t = document.querySelector('input[name="hero_banner_type"]:checked')?.value || 'image';
-        updateHeroPreview(urlInput.value, t);
-    });
-})();
-
-function switchHeroBannerType(type) {
-    const urlLabel   = document.getElementById('heroBannerUrlLabel');
-    const urlHint    = document.getElementById('heroBannerUrlHint');
-    const urlInput   = document.getElementById('heroBannerUrlInput');
-    const imgLabel   = document.getElementById('typeImageLabel');
-    const ytLabel    = document.getElementById('typeYoutubeLabel');
-    const accentBorder = '1px solid rgba(0,204,255,0.5)';
-    const defaultBorder = '1px solid var(--border-light)';
-
-    if (type === 'youtube') {
-        urlLabel.textContent = 'URL do Vídeo YouTube';
-        urlInput.placeholder = 'https://www.youtube.com/watch?v=...';
-        urlHint.textContent  = 'O vídeo tocará mudo, em loop, como fundo imersivo.';
-        urlInput.type        = 'url';
-        imgLabel.style.border   = defaultBorder;
-        ytLabel.style.border    = accentBorder;
-    } else {
-        urlLabel.textContent = 'URL da Imagem de Fundo';
-        urlInput.placeholder = 'https://exemplo.com/foto.jpg';
-        urlHint.textContent  = 'Use uma imagem de alta qualidade (mín. 1920×1080).';
-        urlInput.type        = 'url';
-        imgLabel.style.border   = accentBorder;
-        ytLabel.style.border    = defaultBorder;
-    }
-    updateHeroPreview(urlInput.value, type);
-}
-
-function updateHeroPreview(url, type) {
-    const preview     = document.getElementById('heroBannerPreview');
-    const previewBg   = document.getElementById('heroBannerPreviewBg');
-    const previewLabel= document.getElementById('heroBannerPreviewLabel');
-    if (!url) { preview.style.display = 'none'; return; }
-
-    preview.style.display = 'block';
-    if (type === 'youtube') {
-        const vid = extractYtId(url);
-        if (vid) {
-            previewBg.style.backgroundImage = `url(https://img.youtube.com/vi/${vid}/hqdefault.jpg)`;
-            previewLabel.textContent = '▶ Thumb do YouTube (o vídeo tocará em loop na página pública)';
-        } else {
-            previewBg.style.backgroundImage = '';
-            previewLabel.textContent = 'URL de YouTube inválida';
-        }
-    } else {
-        previewBg.style.backgroundImage = `url(${url})`;
-        previewLabel.textContent = 'Pré-visualização da imagem';
-    }
-}
-
-function extractYtId(url) {
-    const m = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
-    return m ? m[1] : null;
-}
-</script>
         </div>
-    </div>
 
-    <!-- Growth & QR Code Area -->
-    <div style="display: flex; flex-direction: column; gap: 24px;">
-        <div class="dashboard-card">
-            <header class="dashboard-card-header">
-                <span class="material-icons-round" style="color: #10b981;">qr_code_2</span>
-                <h3>QR Code (Offline Growth)</h3>
-            </header>
-            <div class="dashboard-card-body" style="text-align: center;">
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px;">
-                    Use este QR Code em panfletos, cartazes e eventos da igreja para captação de membros.
-                </p>
-                
-                <div id="qr-code-container" style="background: white; padding: 16px; border-radius: 8px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 16px; min-width: 200px; min-height: 200px; display: flex; align-items: center; justify-content: center;">
-                    <?php if (!empty($growth['qr_code_path'])): ?>
-                        <img src="<?= base_url($growth['qr_code_path']) ?>" alt="QR Code do Clube" style="max-width: 100%; height: auto; border-radius: 4px;">
-                    <?php else: ?>
-                        <span style="color: #888; font-size: 0.9rem;">QR Code não gerado</span>
-                    <?php endif; ?>
+        <!-- Right Column: Growth & Telemetry -->
+        <div class="diagnostic-flow">
+            <div class="operation-module growth-diagnostic">
+                <header class="module-header" style="background: rgba(16, 185, 129, 0.05);">
+                    <span class="material-icons-round" style="color:#10b981;">qr_code_2</span>
+                    <h3>Growth Engine: Offline Discovery</h3>
+                </header>
+                <div class="module-body" style="text-align: center;">
+                    <p style="color: var(--tactical-muted); font-size: 0.85rem; margin-bottom: 24px; line-height: 1.5;">
+                        Identificador único para materiais impressos e eventos. Rastreie a conversão física em digital.
+                    </p>
+                    
+                    <div class="qr-technical-frame" id="qr-technical-frame">
+                        <div id="qr-code-container" style="min-width: 180px; min-height: 180px; display: flex; align-items: center; justify-content: center;">
+                            <?php if (!empty($growth['qr_code_path'])): ?>
+                                <img src="<?= base_url($growth['qr_code_path']) ?>" alt="QR Code" style="max-width: 100%; height: auto; border-radius: 4px;">
+                            <?php else: ?>
+                                <div style="color: var(--tactical-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; opacity: 0.5;">Frequência não gerada</div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn-tactical-qr" onclick="generateQr()" style="width: 100%; padding: 14px; background: var(--tactical-dark); border: 1.5px solid var(--tactical-border); color: var(--tactical-text); font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <span class="material-icons-round">autorenew</span> 
+                        <?= empty($growth['qr_code_path']) ? 'Gerar Acesso QR' : 'Sincronizar QR' ?>
+                    </button>
                 </div>
-
-                <button type="button" class="btn btn-secondary" onclick="generateQr()" style="width: 100%;">
-                    <span class="material-icons-round">autorenew</span> 
-                    <?= empty($growth['qr_code_path']) ? 'Gerar QR Code' : 'Regerar QR Code' ?>
-                </button>
             </div>
-        </div>
 
-        <div class="dashboard-card">
-            <header class="dashboard-card-header">
-                <span class="material-icons-round" style="color: #8b5cf6;">insights</span>
-                <h3>Métricas de Crescimento</h3>
-            </header>
-            <div class="dashboard-card-body">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-light);">
-                    <span>Acessos via QR Code:</span>
-                    <strong style="color: #10b981; font-size: 1.2rem;"><?= number_format($growth['visits_count'] ?? 0) ?></strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0;">
-                    <span>Origem da Campanha:</span>
-                    <strong style="color: var(--text-primary);"><?= htmlspecialchars($growth['campaign_source'] ?? 'N/A') ?></strong>
+            <div class="operation-module" style="margin-top: 24px;">
+                <header class="module-header" style="background: rgba(139, 92, 246, 0.05);">
+                    <span class="material-icons-round" style="color:#8b5cf6;">insights</span>
+                    <h3>Telemetria de Engajamento</h3>
+                </header>
+                <div class="module-body" style="padding: 24px;">
+                    <div class="metric-readout">
+                        <span class="tactical-label" style="margin:0;">Vistas via QR</span>
+                        <span class="metric-value"><?= number_format($growth['visits_count'] ?? 0) ?></span>
+                    </div>
+                    <div class="metric-readout" style="margin-bottom:0;">
+                        <span class="tactical-label" style="margin:0;">Vetor de Campanha</span>
+                        <span style="font-family:'JetBrains Mono'; font-weight:700; font-size:11px; color:var(--tactical-text); letter-spacing:0.05em;"><?= htmlspecialchars($growth['campaign_source'] ?? 'ACTIVE_HUB') ?></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -301,17 +457,28 @@ function extractYtId(url) {
 </div>
 
 <script>
-    var toast;
-    
     document.addEventListener('DOMContentLoaded', () => {
-        toast = window.toast = window.toast || new (window.ToastNotification || ToastNotification)();
+        const toast = window.toast = window.toast || new (window.ToastNotification || ToastNotification)();
+        const urlInput = document.getElementById('heroBannerUrlInput');
+        const initialType = document.querySelector('input[name="hero_banner_type"]:checked')?.value || 'image';
 
+        // Initialize Hero Engine
+        switchHeroBannerType(initialType, false);
+        if (urlInput.value) updateHeroPreview(urlInput.value, initialType);
+
+        // Live URL updates
+        urlInput.addEventListener('input', () => {
+            const type = document.querySelector('input[name="hero_banner_type"]:checked')?.value || 'image';
+            updateHeroPreview(urlInput.value, type);
+        });
+
+        // Form Submission
         document.getElementById('profile-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const btn = e.target.querySelector('button[type="submit"]');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<span class="material-icons-round rotate">sync</span> Salvando...';
+            const originalHTML = btn.innerHTML;
+            
+            btn.innerHTML = '<span class="material-icons-round rotate">sync</span> Sincronizando...';
             btn.disabled = true;
 
             const formData = new FormData(e.target);
@@ -326,32 +493,78 @@ function extractYtId(url) {
                 const data = await response.json();
 
                 if (data.success) {
-                    toast.success('Sucesso', data.message);
+                    toast.success('Operação Completa', data.message);
                     setTimeout(() => location.reload(), 1000);
                 } else {
-                    toast.error('Erro', data.error || 'Erro ao salvar perfil');
+                    toast.error('Falha na Operação', data.error || 'Erro inesperado no servidor');
                 }
             } catch (err) {
                 console.error(err);
-                if (toast) toast.error('Erro', 'Erro de conexão com o servidor');
-                else alert('Erro de conexão com o servidor');
+                toast.error('Erro de Rede', 'Não foi possível conectar ao Hub Central.');
             } finally {
-                btn.innerHTML = originalText;
+                btn.innerHTML = originalHTML;
                 btn.disabled = false;
             }
         });
     });
 
+    function switchHeroBannerType(type, triggerPreview = true) {
+        const urlLabel = document.getElementById('heroBannerUrlLabel');
+        const urlHint  = document.getElementById('heroBannerUrlHint');
+        const urlInput = document.getElementById('heroBannerUrlInput');
+
+        if (type === 'youtube') {
+            urlLabel.textContent = 'Identificador Cinematico (YouTube URL)';
+            urlInput.placeholder = 'https://www.youtube.com/watch?v=...';
+            urlHint.textContent  = 'O algorítmo extrairá o ID automaticamente para renderização em loop.';
+        } else {
+            urlLabel.textContent = 'Matriz de Imagem (Background URL)';
+            urlInput.placeholder = 'https://exemplo.com/foto.jpg';
+            urlHint.textContent  = 'Recomendado: 1920x1080px para máxima fidelidade visual.';
+        }
+
+        if (triggerPreview) updateHeroPreview(urlInput.value, type);
+    }
+
+    function updateHeroPreview(url, type) {
+        const preview      = document.getElementById('heroBannerPreview');
+        const previewBg    = document.getElementById('heroBannerPreviewBg');
+        const previewLabel = document.getElementById('heroBannerPreviewLabel');
+
+        if (!url) {
+            preview.style.display = 'none';
+            return;
+        }
+
+        preview.style.display = 'block';
+        if (type === 'youtube') {
+            const vid = extractYtId(url);
+            if (vid) {
+                previewBg.style.backgroundImage = `url(https://img.youtube.com/vi/${vid}/hqdefault.jpg)`;
+                previewLabel.textContent = 'PRÉ-VISUALIZAÇÃO: CINEMATIC ENGINE READY';
+            } else {
+                previewBg.style.backgroundImage = '';
+                previewLabel.textContent = 'ERRO: URL YOUTUBE INVÁLIDA';
+            }
+        } else {
+            previewBg.style.backgroundImage = `url(${url})`;
+            previewLabel.textContent = 'PRÉ-VISUALIZAÇÃO: STATIC BUFFER READY';
+        }
+    }
+
+    function extractYtId(url) {
+        const m = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+        return m ? m[1] : null;
+    }
+
     async function generateQr() {
-        if (!toast) toast = window.toast || new (window.ToastNotification || ToastNotification)();
-        
+        const toast = window.toast || new (window.ToastNotification || ToastNotification)();
         const btn = document.querySelector('button[onclick="generateQr()"]');
-        const originalText = btn.innerHTML;
+        const originalHTML = btn.innerHTML;
         
         try {
-            btn.innerHTML = '<span class="material-icons-round rotate">sync</span> Gerando...';
+            btn.innerHTML = '<span class="material-icons-round rotate">sync</span> Sincronizando...';
             btn.disabled = true;
-            toast.info('Aguarde', 'Gerando QR Code...');
             
             const response = await fetch('<?= base_url($tenant['slug'] . '/admin/perfil-clube/qrcode') ?>', {
                 method: 'POST',
@@ -364,37 +577,20 @@ function extractYtId(url) {
             const data = await response.json();
 
             if (data.success) {
-                toast.success('Sucesso', data.message);
+                toast.success('Criptografia Concluída', 'Novo QR Code gerado com sucesso.');
                 const container = document.getElementById('qr-code-container');
-                // Use the returned path directly (it's now a full URL from backend)
-                container.innerHTML = `<img src="${data.path}" alt="QR Code do Clube" style="max-width: 100%; height: auto; border-radius: 4px;">`;
-                
-                // Update button text after first generation
-                if (originalText.includes('Gerar')) {
-                    btn.innerHTML = '<span class="material-icons-round">autorenew</span> Regerar QR Code';
-                }
+                container.innerHTML = `<img src="${data.path}" alt="QR Code" style="max-width: 100%; height: auto; border-radius: 4px; animation: fadeIn 0.5s ease;">`;
+                btn.innerHTML = '<span class="material-icons-round">autorenew</span> Sincronizar QR';
             } else {
-                toast.error('Erro', data.error || 'Erro ao gerar QR Code');
+                toast.error('Erro de Protocolo', data.error || 'Falha ao processar QR Code');
+                btn.innerHTML = originalHTML;
             }
         } catch (err) {
             console.error(err);
-            if (toast) toast.error('Erro', 'Erro de conexão ou resposta inválida do servidor.');
+            toast.error('Erro Crítico', 'Falha na comunicação com o Growth Engine.');
+            btn.innerHTML = originalHTML;
         } finally {
-            if (!document.getElementById('qr-code-container').querySelector('img')) {
-                btn.innerHTML = originalText;
-            } else {
-                btn.innerHTML = '<span class="material-icons-round">autorenew</span> Regerar QR Code';
-            }
             btn.disabled = false;
         }
     }
 </script>
-
-<style>
-.rotate {
-    animation: spin 1s linear infinite;
-}
-@keyframes spin {
-    100% { transform: rotate(360deg); }
-}
-</style>

@@ -488,129 +488,358 @@ $pageIcon = 'school';
     </div>
 </div>
 
-<!-- Edit Class Details Modal -->
+<!-- Edit Class Details Modal [Tactical Pathfinder Redesign] -->
+<style>
+    #editClassDetailsModal .modal-content {
+        max-width: 650px;
+        max-height: 94vh;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        box-shadow: var(--shadow-2xl), 0 0 40px rgba(6, 182, 212, 0.05);
+        overflow: hidden;
+    }
+
+    #editClassDetailsModal .modal-header {
+        flex-shrink: 0;
+        background: linear-gradient(to bottom, rgba(6, 182, 212, 0.05), transparent);
+        border-bottom: 1px solid var(--border-color);
+        padding: 24px 32px;
+    }
+
+    #editClassDetailsModal form {
+        overflow-y: auto;
+        flex: 1;
+        padding: 32px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary) transparent;
+    }
+
+    #editClassDetailsModal form::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #editClassDetailsModal form::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    #editClassDetailsModal form::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 10px;
+    }
+
+    #editClassDetailsModal form::-webkit-scrollbar-thumb:hover {
+        background: var(--primary);
+    }
+
+    #editClassDetailsModal .modal-header h3 {
+        font-size: 1.25rem;
+        letter-spacing: -0.02em;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: var(--text-dark);
+    }
+
+    #editClassDetailsModal .tactical-label {
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    #editClassDetailsModal .form-control-tactical {
+        width: 100%;
+        background: var(--bg-dark);
+        border: 1.5px solid var(--border-color);
+        border-radius: 12px;
+        padding: 12px 16px;
+        color: var(--text-main);
+        font-weight: 500;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #editClassDetailsModal .form-control-tactical:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.1);
+        outline: none;
+        background: var(--bg-card);
+    }
+
+    /* Fair Play HUD */
+    .fair-play-hud {
+        display: grid;
+        grid-template-columns: 2.2fr 0.8fr 1fr;
+        gap: 0;
+        padding: 24px 20px;
+        background: rgba(6, 182, 212, 0.03);
+        border-radius: 16px;
+        border: 1px dashed var(--border-color);
+        margin: 32px 0;
+        position: relative;
+    }
+
+    .fair-play-hud::before {
+        content: 'FAIR PLAY ENGINE / AUTO-CALC';
+        position: absolute;
+        top: 0;
+        left: 24px;
+        transform: translateY(-50%);
+        background: var(--bg-card);
+        padding: 0 12px;
+        font-size: 8px;
+        font-weight: 900;
+        color: var(--primary);
+        letter-spacing: 0.15em;
+        white-space: nowrap;
+        z-index: 1;
+    }
+
+    .hud-metric {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 0 20px;
+        position: relative;
+    }
+
+    .hud-metric:not(:first-child)::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 10%;
+        bottom: 10%;
+        width: 1px;
+        background: var(--border-color);
+        opacity: 0.8;
+    }
+
+    .hud-metric .tactical-label {
+        margin-bottom: 2px !important;
+        opacity: 0.7;
+    }
+
+    .hud-metric select.form-control-tactical {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+        height: auto !important;
+        cursor: pointer;
+        width: 100%;
+        color: var(--text-dark);
+        appearance: none;
+    }
+
+    .hud-metric .value-container {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 24px; /* Align with select height */
+    }
+
+    .hud-metric input[readonly] {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        width: 60px !important;
+        cursor: default !important;
+        color: var(--text-dark) !important;
+        font-family: inherit;
+        font-weight: inherit;
+        font-size: inherit;
+        outline: none;
+    }
+
+    /* Icon Picker Premium */
+    .icon-trigger-premium {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 14px 20px;
+        background: var(--bg-dark);
+        border: 1.5px solid var(--border-color);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .icon-trigger-premium:hover {
+        border-color: var(--primary);
+        background: rgba(6, 182, 212, 0.05);
+    }
+
+    .icon-preview-box {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-card);
+        border-radius: 10px;
+        box-shadow: var(--shadow-sm);
+        font-size: 1.5rem;
+        color: var(--primary);
+    }
+
+    /* Outdoor Toggle Premium */
+    .outdoor-feature-card {
+        padding: 20px;
+        border-radius: 16px;
+        border: 1.5px solid var(--border-color);
+        background: var(--bg-card);
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        gap: 16px;
+    }
+
+    #editClassOutdoor:checked + .outdoor-feature-card {
+        border-color: var(--accent-emerald);
+        background: var(--accent-emerald-bg);
+    }
+
+    .feature-icon-box {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: var(--bg-dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        transition: all 0.3s;
+    }
+
+    #editClassOutdoor:checked + .outdoor-feature-card .feature-icon-box {
+        background: var(--accent-emerald);
+        color: white;
+    }
+</style>
+
 <div id="editClassDetailsModal" class="modal-overlay" onclick="if(event.target === this) closeEditClassModal();">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
-                <span class="material-icons-round" style="color: var(--primary);">settings</span>
-                Editar Detalhes da Classe
-            </h3>
-            <button onclick="closeEditClassModal()"
-                style="background: none; border: none; cursor: pointer; color: var(--text-secondary);">
-                <span class="material-icons-round">close</span>
+            <h3>Redefinir Classe</h3>
+            <button onclick="closeEditClassModal()" style="background: var(--bg-dark); border: none; cursor: pointer; color: var(--text-muted); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                <span class="material-icons-round" style="font-size: 20px;">close</span>
             </button>
         </div>
 
         <form id="editClassDetailsForm" onsubmit="submitEditClassDetails(event)">
             <input type="hidden" name="program_id" id="editClassId">
 
-            <!-- Row 1: Nome + Categoria -->
-            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-                <div class="form-group" style="position: relative;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Nome *</label>
-                    <input type="text" name="name" class="form-control" required placeholder="Ex: Classe de Amigo"
-                        id="editClassName" autocomplete="off" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:var(--text-main);">
-                </div>
-                <div class="form-group">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Categoria *</label>
-                    <select name="category_id" id="editClassCategory" class="form-control" required style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:var(--text-main);">
-                        <option value="" disabled selected>Selecione uma categoria...</option>
-                        <?php foreach ($categories as $cat): ?>
-                            <option value="<?= $cat['id'] ?>">
-                                <?php if (str_starts_with($cat['icon'] ?? '', 'fa-')): ?>
-                                    (📂)
-                                <?php elseif (str_contains($cat['icon'] ?? '', ':')): ?>
-                                    (📂)
-                                <?php else: ?>
-                                    <?= $cat['icon'] ?>
-                                <?php endif; ?>
-                                <?= htmlspecialchars($cat['name']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Row 2: Ícone (full width) -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Ícone da Classe</label>
-                <input type="hidden" id="editClassIcon" name="icon" value="noto:blue-book">
-                <div class="icon-picker-trigger"
-                     onclick="IconPicker.open(document.getElementById('editClassIcon').value, (sel) => {
-                         document.getElementById('editClassIcon').value = sel;
-                         document.getElementById('editClassIconPreview').innerHTML = `<iconify-icon icon='${sel}' style='font-size: 1.5rem;'></iconify-icon>`;
-                         document.getElementById('editClassIconText').textContent = sel;
-                     })"
-                     style="display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer; height: 42px;">
-                    <div id="editClassIconPreview">
-                        <iconify-icon icon="noto:blue-book" style="font-size: 1.5rem;"></iconify-icon>
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px;">
+                <!-- Main Fields -->
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <div class="form-group">
+                        <label class="tactical-label">ID / Nome da Classe</label>
+                        <input type="text" name="name" id="editClassName" class="form-control-tactical" required placeholder="Ex: Pioneiro do Céu">
                     </div>
-                    <div class="icon-info" style="flex: 1;">
-                        <span id="editClassIconText" style="font-size: 0.85rem; color: var(--text-primary);">noto:blue-book</span>
+
+                    <div class="form-group">
+                        <label class="tactical-label">Objetivos e Missão</label>
+                        <textarea name="description" id="editClassDescription" class="form-control-tactical" rows="4" style="resize: none;" placeholder="Descreva os requisitos e o propósito desta classe..."></textarea>
                     </div>
                 </div>
+
+                <!-- Side Panel -->
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <div class="form-group">
+                        <label class="tactical-label">Nível Hierárquico</label>
+                        <select name="category_id" id="editClassCategory" class="form-control-tactical" required>
+                            <option value="" disabled selected>Selecionar...</option>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="tactical-label">Identidade Visual</label>
+                        <input type="hidden" id="editClassIcon" name="icon">
+                        <div class="icon-trigger-premium" onclick="IconPicker.open(document.getElementById('editClassIcon').value, (sel) => {
+                                document.getElementById('editClassIcon').value = sel;
+                                document.getElementById('editClassIconPreview').innerHTML = `<iconify-icon icon='${sel}'></iconify-icon>`;
+                                document.getElementById('editClassIconText').textContent = sel;
+                            })">
+                            <div class="icon-preview-box" id="editClassIconPreview">
+                                <iconify-icon icon="noto:blue-book"></iconify-icon>
+                            </div>
+                            <div style="flex: 1; overflow: hidden;">
+                                <span id="editClassIconText" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">noto:blue-book</span>
+                                <span style="font-size: 0.65rem; color: var(--primary); font-weight: 800; text-transform: uppercase;">Mudar Ícone</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Row 3: Descrição (full width) -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Descrição</label>
-                <textarea name="description" id="editClassDescription" class="form-control" rows="3"
-                    placeholder="Descrição da classe..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:var(--text-main);"></textarea>
-            </div>
-
-            <!-- Row 4: Dificuldade / XP (readonly) / Duração (readonly) — Fair Play Engine -->
-            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                <div class="form-group">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Dificuldade (1-5)</label>
-                    <select name="difficulty" id="editClassDifficulty" class="form-control"
-                            onchange="applyEditFairPlayClass()" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:var(--text-main);">
+            <!-- Fair Play HUD Section -->
+            <div class="fair-play-hud">
+                <div class="hud-metric">
+                    <label class="tactical-label">Dificuldade</label>
+                    <select name="difficulty" id="editClassDifficulty" class="form-control-tactical" onchange="applyEditFairPlayClass()">
                         <option value="1">⭐ Muito Fácil</option>
-                        <option value="2" selected>⭐⭐ Fácil</option>
+                        <option value="2">⭐⭐ Fácil</option>
                         <option value="3">⭐⭐⭐ Médio</option>
                         <option value="4">⭐⭐⭐⭐ Difícil</option>
-                        <option value="5">⭐⭐⭐⭐⭐ Muito Difícil</option>
+                        <option value="5">⭐⭐⭐⭐⭐ Expert</option>
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-weight:600;">
-                        Recompensa XP
-                        <span title="Preenchido automaticamente pelo Fair Play Engine"
-                              style="cursor:help;font-size:0.85rem;color:var(--text-secondary);">⚖️</span>
-                    </label>
-                    <input type="number" name="xp_reward" id="editClassXp" class="form-control"
-                           value="280" min="0" step="10"
-                           readonly style="cursor:not-allowed;border-style:dashed;width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:var(--text-main);">
+                <div class="hud-metric">
+                    <label class="tactical-label">XP Yield</label>
+                    <div class="value-container">
+                        <span class="material-icons-round" style="font-size: 18px; color: var(--accent-emerald);">bolt</span>
+                        <input type="number" name="xp_reward" id="editClassXp" readonly value="280">
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-weight:600;">
-                        Duração (horas)
-                        <span title="Preenchido automaticamente pelo Fair Play Engine"
-                              style="cursor:help;font-size:0.85rem;color:var(--text-secondary);">⚖️</span>
-                    </label>
-                    <input type="number" name="estimated_hours" id="editClassDuration" class="form-control"
-                           value="8" min="1" max="200"
-                           readonly style="cursor:not-allowed;border-style:dashed;width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:var(--text-main);">
+                <div class="hud-metric">
+                    <label class="tactical-label">Est. Time</label>
+                    <div class="value-container">
+                        <span class="material-icons-round" style="font-size: 18px; color: var(--accent-amber);">schedule</span>
+                        <input type="number" name="estimated_hours" id="editClassDuration" readonly value="8">
+                        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Hrs</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Row 5: Outdoor -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-check" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                    <input type="checkbox" name="is_outdoor" id="editClassOutdoor" value="1" style="width: 20px; height: 20px;">
-                    <span>🏕️ Classe Outdoor (prática, sem perguntas interativas)</span>
+            <!-- Outdoor Switch Section -->
+            <div style="margin-top: 32px;">
+                <input type="checkbox" name="is_outdoor" id="editClassOutdoor" value="1" style="display: none;">
+                <label for="editClassOutdoor" class="outdoor-feature-card">
+                    <div class="feature-icon-box">
+                        <span class="material-icons-round">forest</span>
+                    </div>
+                    <div>
+                        <span style="display: block; font-weight: 700; color: var(--text-dark); margin-bottom: 2px;">Experiência Outdoor</span>
+                        <span style="display: block; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">Atividades práticas em ambiente externo. Exige aprovação manual de evidências.</span>
+                    </div>
                 </label>
-                <small style="margin-left: 30px; display: block; color: var(--text-secondary);">Classes outdoor exigem envio de provas para aprovação manual.</small>
             </div>
 
-            <div class="form-footer"
-                style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border-light); padding-top: 24px; margin-top: 24px;">
-                <button type="button" class="btn-cancel" onclick="closeEditClassModal()"
-                    style="padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-light); background: transparent; color: var(--text-primary); cursor: pointer;">Cancelar</button>
-                <button type="submit" class="btn-submit"
-                    style="padding: 10px 20px; border-radius: 8px; border: none; background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: white; cursor: pointer; font-weight: 600;">💾
+            <!-- Footer Actions -->
+            <div style="display: flex; justify-content: flex-end; gap: 16px; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border-color);">
+                <button type="button" class="btn-toolbar" onclick="closeEditClassModal()" style="background: transparent; border: 1.5px solid var(--border-color); color: var(--text-muted);">Descartar</button>
+                <button type="submit" class="btn-toolbar primary" style="padding: 12px 32px; height: auto;">
+                    <span class="material-icons-round">save</span>
+                    Finalizar Alterações
+                </button>
+            </div>
+        </form>
+    </div>
+</div>ointer; font-weight: 600;">💾
                     Salvar Alterações</button>
             </div>
         </form>

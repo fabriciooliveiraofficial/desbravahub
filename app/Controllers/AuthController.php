@@ -37,7 +37,7 @@ class AuthController
         $tenant = App::tenant();
 
         if (!$tenant) {
-            $this->jsonError('Invalid tenant', 400);
+            App::jsonResponse(['success' => false, 'error' => 'Invalid tenant'], 400);
             return;
         }
 
@@ -47,7 +47,7 @@ class AuthController
 
         // Validate input
         if (empty($email) || empty($password)) {
-            $this->jsonError('Email and password are required', 400);
+            App::jsonResponse(['success' => false, 'error' => 'Email and password are required'], 400);
             return;
         }
 
@@ -55,7 +55,7 @@ class AuthController
         $user = $this->authService->attempt($email, $password, $tenant['id']);
 
         if (!$user) {
-            $this->jsonError('Invalid credentials', 401);
+            App::jsonResponse(['success' => false, 'error' => 'Invalid credentials'], 401);
             return;
         }
 
@@ -69,7 +69,8 @@ class AuthController
         $redirectPath = $isAdmin ? '/admin/dashboard' : '/dashboard';
 
         // Return success (include token for per-tab sessionStorage)
-        $this->jsonSuccess([
+        App::jsonResponse([
+            'success' => true,
             'message' => 'Login successful',
             'token' => $token,
             'user' => [
@@ -108,7 +109,7 @@ class AuthController
         // POST from JS fetch: return JSON redirect URL.
         // Do NOT send Clear-Site-Data here — the header aborts fetch() response processing in some browsers.
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $this->jsonSuccess(['redirect' => $redirectUrl]);
+            App::jsonResponse(['success' => true, 'redirect' => $redirectUrl]);
             return;
         }
 
@@ -145,7 +146,7 @@ class AuthController
         $tenant = App::tenant();
 
         if (!$tenant) {
-            $this->jsonError('Invalid tenant', 400);
+            App::jsonResponse(['success' => false, 'error' => 'Invalid tenant'], 400);
             return;
         }
 
@@ -159,7 +160,7 @@ class AuthController
         $errors = $this->validateRegistration($name, $email, $password, $passwordConfirm, $tenant['id']);
 
         if (!empty($errors)) {
-            $this->jsonError($errors[0], 400, ['errors' => $errors]);
+            App::jsonResponse(['success' => false, 'error' => $errors[0], 'errors' => $errors], 400);
             return;
         }
 
@@ -170,7 +171,7 @@ class AuthController
         );
 
         if (!$role) {
-            $this->jsonError('Registration not available', 500);
+            App::jsonResponse(['success' => false, 'error' => 'Registration not available'], 500);
             return;
         }
 
@@ -198,7 +199,8 @@ class AuthController
         $token = $this->authService->createSession($userId);
         $this->authService->setAuthCookie($token, $cookiePath, $tenant['slug']);
 
-        $this->jsonSuccess([
+        App::jsonResponse([
+            'success' => true,
             'message' => 'Registration successful',
             'token' => $token,
             'user' => ['id' => $userId],
@@ -252,22 +254,4 @@ class AuthController
         return str_contains($accept, 'application/json') || !empty($_SERVER['HTTP_X_REQUESTED_WITH']);
     }
 
-    /**
-     * Send JSON success response
-     */
-    private function jsonSuccess(array $data): void
-    {
-        header('Content-Type: application/json');
-        echo json_encode(array_merge(['success' => true], $data));
-    }
-
-    /**
-     * Send JSON error response
-     */
-    private function jsonError(string $message, int $code = 400, array $extra = []): void
-    {
-        http_response_code($code);
-        header('Content-Type: application/json');
-        echo json_encode(array_merge(['success' => false, 'error' => $message], $extra));
-    }
 }

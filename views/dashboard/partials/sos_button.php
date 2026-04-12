@@ -65,9 +65,11 @@
 /* ============ SOS BUTTON ============ */
 .sos-wrapper {
     position: fixed;
+    /* Default position if no saved coords */
     bottom: 100px;
     right: 16px;
     z-index: 999;
+    touch-action: none; /* Prevent scrolling while dragging on mobile */
 }
 
 @media (min-width: 1024px) {
@@ -84,13 +86,19 @@
     border: 2px solid rgba(239, 68, 68, 0.5);
     background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(185, 28, 28, 0.2));
     backdrop-filter: blur(12px);
-    cursor: pointer;
+    cursor: grab;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     animation: sosPulse 3s ease-in-out infinite;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.sos-btn:active {
+    cursor: grabbing;
 }
 
 .sos-btn:hover {
@@ -366,8 +374,141 @@ let sosGpsExtraResolve = null;   // resolve da promise de espera extra
 let sosGpsExtraTimer   = null;
 let sosCancelled       = false;
 
+// ============ DRAGGABLE LOGIC ============
+const SOSDraggable = {
+    wrapper: document.getElementById('sos-button-wrapper'),
+    btn: document.getElementById('sos-trigger'),
+    active: false,
+    currentX: 0,
+    currentY: 0,
+    initialX: 0,
+    initialY: 0,
+    xOffset: 0,
+    yOffset: 0,
+    isDragging: false,
+    dragThreshold: 5,
+    
+    init() {
+        if (!this.wrapper || !this.btn) return;
+
+        this.loadPosition();
+
+        // Mouse Events
+        this.wrapper.addEventListener('mousedown', (e) => this.dragStart(e), false);
+        window.addEventListener('mousemove', (e) => this.drag(e), false);
+        window.addEventListener('mouseup', (e) => this.dragEnd(e), false);
+
+        // Touch Events
+        this.wrapper.addEventListener('touchstart', (e) => this.dragStart(e), { passive: false });
+        window.addEventListener('touchmove', (e) => this.drag(e), { passive: false });
+        window.addEventListener('touchend', (e) => this.dragEnd(e), false);
+    },
+
+    dragStart(e) {
+        if (e.type === 'touchstart') {
+            this.initialX = e.touches[0].clientX - this.xOffset;
+            this.initialY = e.touches[0].clientY - this.yOffset;
+        } else {
+            this.initialX = e.clientX - this.xOffset;
+            this.initialY = e.clientY - this.yOffset;
+        }
+
+        if (e.target === this.btn || this.btn.contains(e.target)) {
+            this.active = true;
+            this.isDragging = false;
+        }
+    },
+
+    drag(e) {
+        if (this.active) {
+            if (e.type === 'touchmove') e.preventDefault();
+
+            let clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            let clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+
+            let moveX = clientX - this.initialX;
+            let moveY = clientY - this.initialY;
+
+            // Check threshold
+            if (!this.isDragging && (Math.abs(moveX - this.xOffset) > this.dragThreshold || Math.abs(moveY - this.yOffset) > this.dragThreshold)) {
+                this.isDragging = true;
+                this.btn.style.transition = 'none'; // Disable transition during drag
+            }
+
+            if (this.isDragging) {
+                // Apply boundaries
+                const rect = this.wrapper.getBoundingClientRect();
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+
+                // Restrict X
+                if (clientX >= 0 && clientX <= viewportWidth) {
+                    this.currentX = moveX;
+                }
+                
+                // Restrict Y
+                if (clientY >= 0 && clientY <= viewportHeight) {
+                    this.currentY = moveY;
+                }
+
+                this.setTranslate(this.currentX, this.currentY, this.wrapper);
+            }
+        }
+    },
+
+    dragEnd(e) {
+        if (!this.active) return;
+        
+        this.initialX = this.currentX;
+        this.initialY = this.currentY;
+        this.active = false;
+        
+        if (this.isDragging) {
+            this.btn.style.transition = 'transform 0.3s ease, box-shadow 0.3s ease';
+            this.savePosition();
+        }
+        
+        // Delay resetting isDragging to allow the click event to check it
+        setTimeout(() => {
+            this.isDragging = false;
+        }, 50);
+    },
+
+    setTranslate(xPos, yPos, el) {
+        this.xOffset = xPos;
+        this.yOffset = yPos;
+        el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+    },
+
+    savePosition() {
+        const pos = { x: this.xOffset, y: this.yOffset };
+        localStorage.setItem('sos_btn_position', JSON.stringify(pos));
+    },
+
+    loadPosition() {
+        const saved = localStorage.getItem('sos_btn_position');
+        if (saved) {
+            try {
+                const pos = JSON.parse(saved);
+                this.currentX = pos.x;
+                this.currentY = pos.y;
+                this.initialX = pos.x;
+                this.initialY = pos.y;
+                this.setTranslate(pos.x, pos.y, this.wrapper);
+            } catch (e) {
+                console.warn('[SOS] Error loading saved position');
+            }
+        }
+    }
+};
+
+// Initialize draggable
+SOSDraggable.init();
+
 // ---- Abrir modal: inicia warm-up de GPS imediatamente ----
 document.getElementById('sos-trigger')?.addEventListener('click', () => {
+    if (SOSDraggable.isDragging) return; // Prevent opening if we just finished dragging
+    
     sosCancelled = false;
     sosBestPosition = null;
 

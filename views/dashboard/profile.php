@@ -469,7 +469,7 @@ $activeTab = $_GET['tab'] ?? (isset($_GET['incomplete']) ? 'registry' : 'overvie
                         <span class="material-icons-round menu-icon">shield</span>
                         <span class="menu-text">UNIDADE</span>
                     </div>
-                    <span class="menu-right" style="color: #fff;"><?= htmlspecialchars($tenant['name']) ?></span>
+                    <span class="menu-right" style="color: #fff;"><?= htmlspecialchars($user['unit_name'] ?? 'Sem Unidade') ?></span>
                 </div>
 
                 <?php if (!empty($user['pathfinder_class'])): ?>

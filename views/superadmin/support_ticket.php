@@ -1,22 +1,21 @@
 <?php
 /**
- * Super Admin - Ticket Detail View
- * Shows a single ticket with messages and reply form
+ * Console de Análise de Incidente - HUD v4.0 Master Control
  */
 
 $statusLabels = [
-    'open' => ['label' => 'Aberto', 'class' => 'active'],
-    'in_progress' => ['label' => 'Em Andamento', 'class' => 'pending'],
-    'waiting' => ['label' => 'Aguardando', 'class' => 'pending'],
-    'resolved' => ['label' => 'Resolvido', 'class' => 'active'],
-    'closed' => ['label' => 'Fechado', 'class' => ''],
+    'open' => ['label' => 'Aberto', 'class' => 'sa-tag-error', 'icon' => 'radio_button_checked'],
+    'in_progress' => ['label' => 'Andamento', 'class' => 'sa-tag-warning', 'icon' => 'sync'],
+    'waiting' => ['label' => 'Aguardando', 'class' => 'sa-tag-warning opacity-70', 'icon' => 'hourglass_empty'],
+    'resolved' => ['label' => 'Resolvido', 'class' => 'sa-tag-success', 'icon' => 'verified'],
+    'closed' => ['label' => 'Fechado', 'class' => '', 'icon' => 'lock'],
 ];
 
 $categoryLabels = [
-    'bug' => ['label' => 'Bug', 'icon' => '🐛'],
-    'question' => ['label' => 'Dúvida', 'icon' => '❓'],
-    'suggestion' => ['label' => 'Sugestão', 'icon' => '💡'],
-    'improvement' => ['label' => 'Melhoria', 'icon' => '🚀'],
+    'bug' => ['label' => 'Anomalia', 'icon' => 'bug_report', 'class' => 'text-sa-error'],
+    'question' => ['label' => 'Consulta', 'icon' => 'help_center', 'class' => 'text-sa-primary'],
+    'suggestion' => ['label' => 'Sugestão', 'icon' => 'lightbulb', 'class' => 'text-sa-secondary'],
+    'improvement' => ['label' => 'Otimização', 'icon' => 'rocket_launch', 'class' => 'text-sa-success'],
 ];
 
 $ticketStatus = $statusLabels[$ticket['status']] ?? $statusLabels['open'];
@@ -24,26 +23,6 @@ $ticketCategory = $categoryLabels[$ticket['category']] ?? $categoryLabels['quest
 $createdAt = new DateTime($ticket['created_at']);
 ?>
 
-<style>
-    .ticket-back {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        color: #94a3b8;
-        text-decoration: none;
-        font-size: 0.9rem;
-        margin-bottom: 24px;
-        transition: color 0.2s;
-    }
-    .ticket-back:hover { color: var(--sa-neon); }
-
-    .ticket-header-card {
-        background: var(--sa-surface);
-        border: 1px solid rgba(255,255,255,0.05);
-        border-radius: 16px;
-        padding: 28px;
-        margin-bottom: 28px;
-    }
     .ticket-subject {
         font-family: 'Outfit', sans-serif;
         font-size: 1.4rem;

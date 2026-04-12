@@ -1,42 +1,8 @@
 <?php
 /**
- * Super Scraper UI View
+ * Super Scraper - HUD v4.0 Master Control
  */
 ?>
-
-<div class="sa-card" style="margin-bottom: 24px;">
-    <h3 style="color: white; font-family: 'Outfit'; margin-bottom: 16px; display:flex; align-items:center; gap:8px;">
-        <span class="material-symbols-rounded" style="color: var(--sa-neon)">smart_toy</span>
-        Configuração de Inteligência Artificial
-    </h3>
-    <p style="color: #94a3b8; margin-bottom: 24px;">Para o Scraper atingir 100% de precisão em qualquer estrutura de site ou PDF complexo, insira sua chave da OpenAI. Sem a chave, o sistema tentará usar expressões regulares (Regex) com resultados limitados.</p>
-    
-    <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-        <label style="display:block; color:white; font-size:0.875rem; margin-bottom:8px; font-weight:500;">Chave de API (OpenAI gpt-4o / gpt-4o-mini)</label>
-        <div style="display:flex; gap:12px;">
-            <input type="password" id="apiKey" value="<?= htmlspecialchars($_SESSION['super_scraper_key'] ?? '') ?>" placeholder="sk-proj-..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; padding:12px 16px; border-radius:8px; font-family:monospace; outline:none;">
-            <button onclick="saveApiKey()" style="background:var(--sa-primary); color:white; border:none; padding:0 24px; border-radius:8px; font-weight:600; cursor:pointer; transition:background 0.2s;">
-                Salvar Chave
-            </button>
-        </div>
-    </div>
-</div>
-
-<div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
-    
-    <!-- Input Column -->
-    <div class="sa-card" style="display:flex; flex-direction:column;">
-        <h3 style="color: white; font-family: 'Outfit'; margin-bottom: 16px;">Fonte de Dados</h3>
-        
-        <div style="display:flex; gap:8px; margin-bottom:24px;">
-            <button class="tab-btn active" onclick="switchTab('url')">URL / Link</button>
-            <button class="tab-btn" onclick="switchTab('text')">Texto Bruto / HTML</button>
-        </div>
-
-        <div id="tab-url" class="tab-content active" style="flex:1;">
-            <label style="display:block; color:#cbd5e1; font-size:0.875rem; margin-bottom:8px;">URL do Site ou PDF Público</label>
-            <input type="url" id="targetUrl" placeholder="https://..." style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; padding:12px 16px; border-radius:8px; outline:none; margin-bottom:24px;">
-        </div>
 
         <div id="tab-text" class="tab-content" style="flex:1; display:none;">
             <label style="display:block; color:#cbd5e1; font-size:0.875rem; margin-bottom:8px;">Cole o texto ou código HTML aqui</label>

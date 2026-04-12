@@ -2,62 +2,54 @@
 /**
  * @var array $user
  * @var string $pageTitle
+ * Sincronização de Dados Global - HUD v4.0 Master Control
  */
 ?>
-<div class="space-y-8 animate-fade-in">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-white mb-2">Migração de Banco de Dados</h1>
-            <p class="text-sa-text-muted">Gerencie a sincronização de dados entre ambientes de forma nativa e segura.</p>
-        </div>
+<div class="animate-in" style="animation-delay: 0.1s;">
+    <!-- Cabeçalho -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-white mb-1">Módulo de Migração Estrutural</h1>
+        <p class="text-sa-text-muted text-xs uppercase font-bold tracking-[0.2em]">Sincronização Binária de Ambientes Clusterizados</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Export Section -->
-        <div class="sa-card relative overflow-hidden group">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-sa-primary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-sa-primary/10 transition-colors"></div>
+        <!-- Coluna de Exportação (Snapshot) -->
+        <div class="sa-card bg-sa-surface-solid/40 border-l-4 border-l-sa-primary relative overflow-hidden flex flex-col">
+            <div class="absolute top-0 right-0 w-48 h-48 bg-sa-primary/10 rounded-full blur-[80px] -mr-24 -mt-24 pointer-events-none"></div>
             
-            <div class="flex items-center gap-4 mb-8">
-                <div class="w-14 h-14 rounded-2xl bg-sa-primary/10 text-sa-primary flex items-center justify-center shadow-inner">
-                    <span class="material-symbols-rounded text-3xl">cloud_download</span>
+            <div class="flex items-center gap-4 mb-8 relative z-10">
+                <div class="w-12 h-12 rounded-xl bg-sa-primary/20 text-sa-primary flex items-center justify-center border border-sa-primary/30">
+                    <span class="material-symbols-rounded text-2xl font-bold">cloud_download</span>
                 </div>
                 <div>
-                    <h2 class="text-xl font-bold text-white">Exportar Ambiente</h2>
-                    <p class="text-sm text-sa-text-muted">Gera um snapshot completo (.sql) com toda estrutura e dados.</p>
+                    <h2 class="text-lg font-bold text-white tracking-tight">Gerar Snapshot de Segurança</h2>
+                    <p class="text-[10px] text-sa-text-muted uppercase font-extrabold tracking-widest">Compilação Integral .SQL</p>
                 </div>
             </div>
 
-            <div class="bg-sa-bg/50 rounded-2xl p-6 border border-sa-border mb-8">
-                <ul class="text-sm text-sa-text-muted space-y-4">
-                    <li class="flex items-center gap-3">
-                        <span class="material-symbols-rounded text-emerald-400 text-lg">check_circle</span>
-                        <span>Formato Universal SQL (Compatível com MySQL 8)</span>
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <span class="material-symbols-rounded text-emerald-400 text-lg">check_circle</span>
-                        <span>Limpeza Preventiva (DROP TABLE automática)</span>
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <span class="material-symbols-rounded text-emerald-400 text-lg">check_circle</span>
-                        <span>Inserção em Lotes Otimizada (Bulk Insert)</span>
-                    </li>
-                </ul>
+            <div class="bg-sa-bg/60 rounded-xl p-5 border border-sa-border mb-8 flex-1 relative z-10">
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full bg-sa-primary shadow-[0_0_8px_var(--sa-primary)] animate-pulse"></div>
+                        <span class="text-xs text-white font-medium">Backup de Estrutura e Inserções Binárias</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full bg-sa-primary shadow-[0_0_8px_var(--sa-primary)] animate-pulse"></div>
+                        <span class="text-xs text-white font-medium">Auto-limpeza (DROP TABLE) embutida</span>
+                    </div>
+                    <div class="flex items-center gap-3 opacity-60">
+                        <div class="w-2 h-2 rounded-full bg-sa-primary"></div>
+                        <span class="text-xs text-white">Otimização de Buffers para MySQL 8.0+</span>
+                    </div>
+                </div>
             </div>
 
-            <a href="/super-admin/migracao/exportar" 
-               class="sa-btn sa-btn-primary w-full py-4 text-lg">
-                <span class="material-symbols-rounded">download</span>
-                Baixar Dump (.sql)
+            <a href="/super-admin/migracao/exportar" class="sa-btn sa-btn-primary w-full py-5 text-sm font-bold tracking-[0.1em] relative z-10 shadow-[0_0_20px_rgba(0,242,255,0.1)]">
+                <span class="material-symbols-rounded text-lg">download</span>
+                INICIAR DUMP ESTRUTURAL
             </a>
         </div>
 
-        <!-- Import Section -->
-        <div class="sa-card relative overflow-hidden border-red-500/20">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
-            
-            <div class="flex items-center gap-4 mb-8">
-                <div class="w-14 h-14 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center shadow-inner">
                     <span class="material-symbols-rounded text-3xl">warning</span>
                 </div>
                 <div>

@@ -1,54 +1,30 @@
 <?php
 /**
- * Super Admin - Support Dashboard View
- * Lists all support tickets with filters and stats
+ * Monitor de Operações e Suporte - HUD v4.0 Master Control
  */
 
 $statusLabels = [
-    'open' => ['label' => 'Aberto', 'class' => 'active', 'icon' => '🟢'],
-    'in_progress' => ['label' => 'Em Andamento', 'class' => 'pending', 'icon' => '🟡'],
-    'waiting' => ['label' => 'Aguardando', 'class' => 'pending', 'icon' => '🟠'],
-    'resolved' => ['label' => 'Resolvido', 'class' => 'active', 'icon' => '✅'],
-    'closed' => ['label' => 'Fechado', 'class' => '', 'icon' => '⚫'],
+    'open' => ['label' => 'Aberto', 'class' => 'sa-tag-error', 'icon' => 'radio_button_checked'],
+    'in_progress' => ['label' => 'Andamento', 'class' => 'sa-tag-warning', 'icon' => 'sync'],
+    'waiting' => ['label' => 'Aguardando', 'class' => 'sa-tag-warning opacity-70', 'icon' => 'hourglass_empty'],
+    'resolved' => ['label' => 'Resolvido', 'class' => 'sa-tag-success', 'icon' => 'verified'],
+    'closed' => ['label' => 'Fechado', 'class' => '', 'icon' => 'lock'],
 ];
 
 $categoryLabels = [
-    'bug' => ['label' => 'Bug', 'icon' => '🐛', 'class' => 'bug'],
-    'question' => ['label' => 'Dúvida', 'icon' => '❓', 'class' => 'question'],
-    'suggestion' => ['label' => 'Sugestão', 'icon' => '💡', 'class' => 'suggestion'],
-    'improvement' => ['label' => 'Melhoria', 'icon' => '🚀', 'class' => 'improvement'],
+    'bug' => ['label' => 'Anomalia', 'icon' => 'bug_report', 'class' => 'text-sa-error'],
+    'question' => ['label' => 'Consulta', 'icon' => 'help_center', 'class' => 'text-sa-primary'],
+    'suggestion' => ['label' => 'Sugestão', 'icon' => 'lightbulb', 'class' => 'text-sa-secondary'],
+    'improvement' => ['label' => 'Otimização', 'icon' => 'rocket_launch', 'class' => 'text-sa-success'],
 ];
 
 $priorityLabels = [
-    'low' => ['label' => 'Baixa', 'class' => 'low'],
-    'medium' => ['label' => 'Média', 'class' => 'medium'],
-    'high' => ['label' => 'Alta', 'class' => 'high'],
+    'low' => ['label' => 'Latência Baixa', 'class' => 'opacity-50', 'color' => '#64748b'],
+    'medium' => ['label' => 'Padrão Operacional', 'class' => '', 'color' => '#3b82f6'],
+    'high' => ['label' => 'Prioridade Alfa', 'class' => 'font-bold text-sa-error', 'color' => '#ef4444'],
 ];
 ?>
 
-<style>
-    .support-stats {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-        margin-bottom: 32px;
-    }
-    .support-stat {
-        background: linear-gradient(145deg, rgba(30,41,59,1) 0%, rgba(15,23,42,1) 100%);
-        border: 1px solid rgba(255,255,255,0.05);
-        border-radius: 16px;
-        padding: 24px;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-    .support-stat::after {
-        content: '';
-        position: absolute;
-        top: 0; right: 0;
-        width: 80px; height: 80px;
-        background: radial-gradient(circle, var(--sa-primary) 0%, transparent 70%);
-        opacity: 0.08;
         transform: translate(20%, -20%);
         border-radius: 50%;
     }

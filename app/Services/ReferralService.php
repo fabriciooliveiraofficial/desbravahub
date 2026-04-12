@@ -304,7 +304,7 @@ class ReferralService
     public static function getUserInvites(int $userId, int $tenantId): array
     {
         return db_fetch_all(
-            "SELECT ri.*, u.name as converted_name 
+            "SELECT ri.*, u.name as converted_name, u.avatar_url as converted_avatar_url 
              FROM referral_invites ri 
              LEFT JOIN users u ON ri.converted_user_id = u.id
              WHERE ri.referrer_id = ? AND ri.tenant_id = ?
@@ -342,8 +342,8 @@ class ReferralService
     {
         $invites = db_fetch_all(
             "SELECT ri.*, 
-                    u.name as referrer_name, u.email as referrer_email,
-                    u_conv.name as converted_name
+                    u.name as referrer_name, u.email as referrer_email, u.avatar_url as referrer_avatar_url,
+                    u_conv.name as converted_name, u_conv.avatar_url as converted_avatar_url
              FROM referral_invites ri
              JOIN users u ON ri.referrer_id = u.id
              LEFT JOIN users u_conv ON ri.converted_user_id = u_conv.id

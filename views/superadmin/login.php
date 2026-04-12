@@ -1,6 +1,6 @@
 <?php
 /**
- * Super Admin Standalone Login View
+ * Acesso ao Núcleo Central - HUD v4.0 Master Control
  */
 ?>
 <!DOCTYPE html>
@@ -8,16 +8,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle ?? 'Super Admin Access') ?> - DesbravaHub</title>
+    <title><?= htmlspecialchars($pageTitle ?? 'Acesso Master') ?> - DesbravaHub</title>
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Google Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     
     <!-- Tailwind CSS via CDN -->
-    <script>/* suppress tw cdn warn */const _cw=console.warn;console.warn=(...a)=>{if(a[0]&&typeof a[0]==='string'&&a[0].includes('cdn.tailwindcss.com'))return;_cw.apply(console,a)};</script>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script>
@@ -31,15 +30,16 @@
                     },
                     colors: {
                         sa: {
-                            purple: '#6d28d9',      /* Violet 700 */
-                            purple_hover: '#5b21b6',/* Violet 800 */
-                            purple_light: '#ede9fe',/* Violet 100 */
-                            purple_border: '#8b5cf6',/* Violet 500 */
-                            dark: '#0f172a',        /* Slate 900 */
-                            card: '#1e293b',        /* Slate 800 */
-                            border: '#334155',      /* Slate 700 */
-                            text: '#f8fafc',        /* Slate 50 */
-                            text_muted: '#94a3b8',  /* Slate 400 */
+                            primary: '#00f2ff',
+                            secondary: '#3b82f6',
+                            bg: '#020617',
+                            surface: '#0f172a',
+                            error: '#ef4444',
+                            border: 'rgba(255,255,255,0.08)',
+                            text: {
+                                dim: '#64748b',
+                                muted: '#94a3b8'
+                            }
                         }
                     }
                 }
@@ -48,15 +48,21 @@
     </script>
     
     <style>
+        :root {
+            --sa-primary: #00f2ff;
+            --sa-secondary: #3b82f6;
+            --sa-bg: #020617;
+        }
+
         body {
-            background-color: #0f172a;
+            background-color: var(--sa-bg);
             color: #f8fafc;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
             background-image: 
-                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
                 radial-gradient(at 50% 0%, hsla(225,39%,30%,0.1) 0, transparent 50%), 
                 radial-gradient(at 100% 0%, hsla(339,49%,30%,0.1) 0, transparent 50%);
         }

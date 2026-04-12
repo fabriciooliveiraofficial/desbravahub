@@ -1,365 +1,388 @@
 <?php
 /**
- * Unidades Admin - Soft SaaS Design v6.0
- * Inspired by User Reference: Clean, Light, Functional
+ * Unidades Admin - Padrão Plataforma v1.0
+ * Design Limpo, Funcional e Localizado em PT-BR
  */
 ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-    .hud-wrapper {
-        padding: 0;
-        animation: fadeEnter 0.6s ease-out;
+    :root {
+        --primary-blue: #3b82f6;
+        --text-main: #0f172a;
+        --text-sub: #64748b;
+        --border-color: #e2e8f0;
+        --card-radius: 24px;
+        --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
     }
 
-    @keyframes fadeEnter {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes slideInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeScaleOut {
-        from { opacity: 1; transform: scale(1); }
-        to { opacity: 0; transform: scale(0.95); }
-    }
-    
-    .animate-modal-in {
-        animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    .animate-modal-out {
-        animation: fadeScaleOut 0.2s ease-in forwards;
-    }
-    
-    /* Toast Animations */
-    .toast-enter {
-        animation: slideInUp 0.3s ease-out forwards;
-    }
-    .toast-exit {
-        animation: fadeScaleOut 0.3s ease-in forwards;
+    .units-container {
+        padding: 16px;
+        width: 100%;
+        min-height: 100vh;
+        background: #f8fafc;
+        font-family: 'Inter', sans-serif;
     }
 
-    /* Page Header Alignments */
-    .page-toolbar {
-        margin-bottom: 24px;
-    }
-
-    /* Units Grid */
-    /* Modern Unit Card - Glass & Glow */
-    .units-grid {
+    /* Stats Grid (Standard Dashboard Style) */
+    .stats-ribbon {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-        gap: 32px;
-        padding-bottom: 40px;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+        margin-bottom: 32px;
     }
 
-    .unit-card-modern {
-        position: relative;
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        border-radius: 24px;
-        padding: 0;
-        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        box-shadow: 
-            0 4px 6px -1px rgba(0, 0, 0, 0.01),
-            0 2px 4px -1px rgba(0, 0, 0, 0.01),
-            0 0 0 1px rgba(0, 0, 0, 0.02);
-    }
-    
-    .unit-card-modern::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg, var(--card-color-bg) 0%, transparent 40%);
-        opacity: 0.08;
-        z-index: 0;
-    }
-
-    .unit-card-modern:hover {
-        transform: translateY(-8px) scale(1.01);
-        box-shadow: 
-            0 20px 40px -8px var(--card-shadow-color),
-            0 8px 16px -6px rgba(0, 0, 0, 0.03);
-        z-index: 10;
-        border-color: rgba(255,255,255, 0.8);
-    }
-
-    .unit-card-content {
-        position: relative;
-        z-index: 1;
-        padding: 28px;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
-
-    .unit-header-modern {
+    .unit-stat-card {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: var(--card-radius);
+        padding: 24px;
         display: flex;
         align-items: center;
         gap: 20px;
-        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        transition: transform 0.3s ease;
     }
 
-    .unit-icon-glass {
-        width: 72px;
-        height: 72px;
-        border-radius: 20px;
-        background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.4));
-        border: 1px solid rgba(255,255,255,0.6);
-        box-shadow: 
-            0 8px 16px -4px var(--card-shadow-color),
-            inset 0 2px 4px rgba(255,255,255,1);
+    .unit-stat-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .stat-icon-box {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2.5rem;
-        color: var(--card-color);
+        background: #f1f5f9;
+        color: var(--accent-color, #64748b);
         flex-shrink: 0;
-        transition: transform 0.4s ease;
     }
 
-    .unit-card-modern:hover .unit-icon-glass {
-        transform: scale(1.1) rotate(-5deg);
+    .stat-info {
+        display: flex;
+        flex-direction: column;
     }
 
-    .unit-info-modern {
+    .stat-count {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--text-main);
+        line-height: 1;
+    }
+
+    .stat-name {
+        font-size: 0.875rem;
+        color: var(--text-sub);
+        font-weight: 500;
+        margin-top: 4px;
+    }
+
+    /* Toolbar Actions */
+    .units-toolbar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 32px;
+    }
+
+    .btn-create-unit {
+        background: var(--text-main);
+        color: white;
+        padding: 12px 28px;
+        border-radius: 14px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
+
+    .btn-create-unit:hover {
+        background: #1e293b;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2);
+    }
+
+    /* Units Main Grid */
+    .units-main-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 24px;
+    }
+
+    .unit-display-card {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: var(--card-radius);
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        transition: all 0.3s ease;
+    }
+
+    .unit-display-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.08);
+    }
+
+    .unit-card-body {
+        padding: 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .unit-identity {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .unit-mascot-box {
+        width: 72px;
+        height: 72px;
+        border-radius: 20px;
+        background: #f8fafc;
+        border: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        color: var(--unit-accent-color);
+        flex-shrink: 0;
+        transition: transform 0.3s ease;
+    }
+
+    .unit-display-card:hover .unit-mascot-box {
+        transform: scale(1.05) rotate(-3deg);
+    }
+
+    .unit-title-info {
         flex: 1;
         min-width: 0;
     }
 
-    .unit-title-modern {
-        font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    .unit-name-standard {
+        font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 1.25rem;
-        font-weight: 800;
-        color: #0f172a;
-        margin: 0 0 6px 0;
-        letter-spacing: -0.02em;
-        line-height: 1.2;
+        font-weight: 700;
+        color: var(--text-main);
+        margin: 0;
+        letter-spacing: -0.01em;
     }
 
-    .unit-motto-modern {
+    .unit-motto-standard {
         font-size: 0.875rem;
-        color: #64748b;
+        color: var(--text-sub);
         font-style: italic;
-        line-height: 1.5;
+        margin-top: 4px;
         display: -webkit-box;
-        -webkit-line-clamp: 2;
+        -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
 
-    .unit-stats-glass {
-        display: flex;
-        background: rgba(255, 255, 255, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        border-radius: 16px;
-        padding: 12px;
-        gap: 12px;
-        margin-top: auto;
+    .unit-metrics-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        background: #f8fafc;
+        padding: 16px;
+        border-radius: 18px;
     }
 
-    .stat-pill {
-        flex: 1;
+    .metric-item {
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        padding: 8px;
-        border-radius: 12px;
-        transition: background 0.2s;
+        text-align: center;
     }
 
-    .stat-pill:hover {
-        background: rgba(255, 255, 255, 0.6);
-    }
-
-    .stat-pill-value {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #0f172a;
+    .metric-value {
         font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-main);
     }
 
-    .stat-pill-label {
+    .metric-label {
         font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        color: #64748b;
+        color: var(--text-sub);
         font-weight: 600;
         margin-top: 2px;
     }
 
-    .unit-actions-overlay {
+    /* Actions */
+    .unit-card-actions {
         position: absolute;
         top: 20px;
         right: 20px;
         display: flex;
         gap: 8px;
         opacity: 0;
-        transform: translateX(10px);
-        transition: all 0.3s ease;
-        z-index: 20;
+        transition: all 0.2s ease;
     }
 
-    .unit-card-modern:hover .unit-actions-overlay {
+    .unit-display-card:hover .unit-card-actions {
         opacity: 1;
-        transform: translateX(0);
     }
 
-    .action-btn-glass {
+    .btn-action-circle {
         width: 36px;
         height: 36px;
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.9);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        border-radius: 50%;
+        background: white;
+        border: 1px solid var(--border-color);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #475569;
+        color: var(--text-sub);
         cursor: pointer;
         transition: all 0.2s;
+        text-decoration: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
-    .action-btn-glass:hover {
+    .btn-action-circle:hover {
+        background: var(--text-main);
+        color: white;
+        border-color: var(--text-main);
         transform: translateY(-2px);
-        color: var(--card-color);
-        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
     }
 
-    .action-btn-glass.delete:hover {
-        color: #ef4444;
-        background: #fef2f2;
+    .btn-action-circle.delete:hover {
+        background: #ef4444;
+        border-color: #ef4444;
+    }
+
+    /* Empty Box */
+    .empty-inventory {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: var(--card-radius);
+        padding: 80px 40px;
+        text-align: center;
+        box-shadow: var(--card-shadow);
     }
 </style>
 
-<div class="hud-wrapper">
-    <!-- Toolbar -->
-    <div class="page-toolbar">
-        <div class="page-info">
-            <p class="text-muted">Visão geral dos agrupamentos do clube.</p>
-        </div>
-        <div class="actions-group">
-            <a href="<?= base_url($tenant['slug'] . '/admin/unidades/criar') ?>" class="btn-toolbar primary">
-                <span class="material-icons-round">add</span> Nova Unidade
-            </a>
-        </div>
-    </div>
-
-    <!-- Summary Stats Row (Computed from PHP) -->
+<div class="units-container">
+    <!-- Ribbon de Resumo -->
     <?php
         $totalUnits = count($units);
         $totalMembers = 0;
         $totalCounselors = 0;
         foreach($units as $u) {
-            $totalMembers += count($u['members']);
-            $totalCounselors += count($u['counselors']);
+            $totalMembers += count($u['members'] ?? []);
+            $totalCounselors += count($u['counselors'] ?? []);
         }
     ?>
-    <div class="stats-grid">
-        <!-- Units -->
-        <div class="stat-card purple">
-            <div class="stat-card-bg-icon purple">
+    <div class="stats-ribbon">
+        <div class="unit-stat-card" style="--accent-color: #8b5cf6;">
+            <div class="stat-icon-box" style="background: rgba(139, 92, 246, 0.1);">
                 <span class="material-icons-round">grid_view</span>
             </div>
-            <div class="stat-icon">
-                <span class="material-icons-round">grid_view</span>
-            </div>
-            <div class="stat-content">
-                <span class="stat-value"><?= $totalUnits ?></span>
-                <span class="stat-label">Unidades Ativas</span>
+            <div class="stat-info">
+                <span class="stat-count counter"><?= $totalUnits ?></span>
+                <span class="stat-name">Unidades Criadas</span>
             </div>
         </div>
-        <!-- Members -->
-        <div class="stat-card blue">
-            <div class="stat-card-bg-icon blue">
+        <div class="unit-stat-card" style="--accent-color: #3b82f6;">
+            <div class="stat-icon-box" style="background: rgba(59, 130, 246, 0.1);">
                 <span class="material-icons-round">groups</span>
             </div>
-            <div class="stat-icon">
-                <span class="material-icons-round">groups</span>
-            </div>
-            <div class="stat-content">
-                <span class="stat-value"><?= $totalMembers ?></span>
-                <span class="stat-label">Total de Membros</span>
+            <div class="stat-info">
+                <span class="stat-count counter"><?= $totalMembers ?></span>
+                <span class="stat-name">Membros Ativos</span>
             </div>
         </div>
-        <!-- Counselors -->
-        <div class="stat-card amber">
-            <div class="stat-card-bg-icon amber">
-                <span class="material-icons-round">admin_panel_settings</span>
+        <div class="unit-stat-card" style="--accent-color: #f59e0b;">
+            <div class="stat-icon-box" style="background: rgba(245, 158, 11, 0.1);">
+                <span class="material-icons-round">military_tech</span>
             </div>
-            <div class="stat-icon">
-                <span class="material-icons-round">admin_panel_settings</span>
-            </div>
-            <div class="stat-content">
-                <span class="stat-value"><?= $totalCounselors ?></span>
-                <span class="stat-label">Conselheiros</span>
+            <div class="stat-info">
+                <span class="stat-count counter"><?= $totalCounselors ?></span>
+                <span class="stat-name">Conselheiros</span>
             </div>
         </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Barra de Ferramentas -->
+    <div class="units-toolbar">
+        <a href="<?= base_url($tenant['slug'] . '/admin/unidades/criar') ?>" class="btn-create-unit">
+            <span class="material-icons-round">add</span> Nova Unidade
+        </a>
+    </div>
+
+    <!-- Grade de Unidades -->
     <?php if (empty($units)): ?>
-        <div class="saas-empty">
-            <div style="font-size: 3rem; margin-bottom: 16px; opacity: 0.5;">📭</div>
-            <h3 style="margin-bottom: 8px; color: var(--text-primary);">Nenhuma unidade encontrada</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 24px;">Comece a estruturar o clube criando a primeira unidade.</p>
-            <a href="<?= base_url($tenant['slug'] . '/admin/unidades/criar') ?>" class="btn-saas-primary">Criar Unidade</a>
+        <div class="empty-inventory">
+            <span class="material-icons-round" style="font-size: 64px; color: #e2e8f0; margin-bottom: 24px;">category</span>
+            <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; margin-bottom: 8px;">Nenhuma unidade ativa</h3>
+            <p style="color: var(--text-sub); margin-bottom: 32px;">Organize o seu clube criando as primeiras unidades de gestão.</p>
+            <a href="<?= base_url($tenant['slug'] . '/admin/unidades/criar') ?>" class="btn-create-unit" style="display: inline-flex;">Adicionar Unidade</a>
         </div>
     <?php else: ?>
-        <div class="units-grid">
+        <div class="units-main-grid">
             <?php foreach ($units as $unit): ?>
-                <?php 
-                    $color = htmlspecialchars($unit['color'] ?? '#3b82f6');
-                ?>
-                <div class="unit-card-modern" style="--card-color: <?= $color ?>; --card-color-bg: <?= $color ?>; --card-shadow-color: <?= $color ?>20;">
-                    <!-- Actions Overlay -->
-                    <div class="unit-actions-overlay">
-                        <a href="<?= base_url($tenant['slug'] . '/admin/unidades/' . $unit['id']) ?>" class="action-btn-glass" title="Editar">
-                            <span class="material-icons-round" style="font-size: 20px;">edit_note</span>
+                <?php $unitAccent = $unit['color'] ?: '#3b82f6'; ?>
+                <div class="unit-display-card">
+                    <!-- Ações de Gestão -->
+                    <div class="unit-card-actions">
+                        <a href="<?= base_url($tenant['slug'] . '/admin/unidades/' . $unit['id']) ?>" class="btn-action-circle" title="Editar">
+                            <span class="material-icons-round" style="font-size: 18px;">edit</span>
                         </a>
-                        <button onclick="deleteUnit(<?= $unit['id'] ?>)" class="action-btn-glass delete" title="Excluir">
-                            <span class="material-icons-round" style="font-size: 20px;">delete_outline</span>
+                        <button onclick="deleteUnit(<?= $unit['id'] ?>)" class="btn-action-circle delete" title="Excluir">
+                            <span class="material-icons-round" style="font-size: 18px;">delete</span>
                         </button>
                     </div>
 
-                    <div class="unit-card-content">
-                        <div class="unit-header-modern">
-                            <div class="unit-icon-glass">
+                    <div class="unit-card-body">
+                        <div class="unit-identity">
+                            <div class="unit-mascot-box" style="--unit-accent-color: <?= $unitAccent ?>; border-color: <?= $unitAccent ?>30;">
                                 <?php if($unit['mascot'] && strpos($unit['mascot'], ':') !== false): ?>
                                     <iconify-icon icon="<?= htmlspecialchars($unit['mascot']) ?>"></iconify-icon>
                                 <?php elseif($unit['mascot'] && strpos($unit['mascot'], 'fa-') !== false): ?>
                                     <i class="<?= htmlspecialchars($unit['mascot']) ?>"></i>
                                 <?php elseif($unit['mascot']): ?>
-                                    <?= htmlspecialchars(substr($unit['mascot'], 0, 2)) ?>
+                                    <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;">
+                                        <?= htmlspecialchars(substr($unit['mascot'], 0, 2)) ?>
+                                    </span>
                                 <?php else: ?>
                                     <span class="material-icons-round">shield</span>
                                 <?php endif; ?>
                             </div>
-                            <div class="unit-info-modern">
-                                <h3 class="unit-title-modern"><?= htmlspecialchars($unit['name']) ?></h3>
-                                <div class="unit-motto-modern">
-                                    <?= $unit['motto'] ? '"'.htmlspecialchars($unit['motto']).'"' : 'Avante!' ?>
+                            <div class="unit-title-info">
+                                <h3 class="unit-name-standard"><?= htmlspecialchars($unit['name']) ?></h3>
+                                <div class="unit-motto-standard">
+                                    <?= $unit['motto'] ? '"'.htmlspecialchars($unit['motto']).'"' : 'Avante e avante!' ?>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="unit-stats-glass">
-                            <div class="stat-pill">
-                                <span class="stat-pill-value"><?= count($unit['members']) ?></span>
-                                <span class="stat-pill-label">Membros</span>
+                        <div class="unit-metrics-row">
+                            <div class="metric-item">
+                                <span class="metric-value counter"><?= count($unit['members'] ?? []) ?></span>
+                                <span class="metric-label">Membros</span>
                             </div>
-                            <div class="stat-pill">
-                                <span class="stat-pill-value"><?= count($unit['counselors']) ?></span>
-                                <span class="stat-pill-label">Líderes</span>
+                            <div class="metric-item" style="border-left: 1px solid #e2e8f0;">
+                                <span class="metric-value counter"><?= count($unit['counselors'] ?? []) ?></span>
+                                <span class="metric-label">Líderes</span>
                             </div>
                         </div>
                     </div>
@@ -369,38 +392,34 @@
     <?php endif; ?>
 </div>
 
-<!-- Modal & Config -->
+<!-- Modais e Notificações -->
 <div id="toast-container" style="position: fixed; bottom: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 10px;"></div>
-<div class="confirm-overlay" id="confirmModal" style="display: none;">
-    <div class="confirm-box" style="background: #fff; border-radius: 16px; padding: 32px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-width: 400px; text-align: center;">
-        <div style="width: 60px; height: 60px; background: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto;">
-            <span class="material-icons-round" style="font-size: 32px;">warning</span>
+<div class="confirm-overlay" id="confirmModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center;">
+    <div class="confirm-box" style="background: white; border-radius: 28px; padding: 40px; max-width: 420px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);">
+        <div style="width: 72px; height: 72px; background: #fff1f2; color: #e11d48; border-radius: 22px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px auto;">
+            <span class="material-icons-round" style="font-size: 36px;">warning</span>
         </div>
-        <h3 style="font-weight: 700; font-size: 1.25rem; color: #111827; margin-bottom: 8px;">Excluir Unidade?</h3>
-        <p style="color: #6b7280; margin-bottom: 24px;">Esta ação é permanente e afetará todos os membros vinculados.</p>
+        <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: #1e293b; font-size: 1.5rem; margin-bottom: 12px;">Excluir Unidade?</h3>
+        <p style="color: #64748b; margin-bottom: 32px; font-size: 0.95rem; line-height: 1.5;">Esta ação é permanente. Todos os membros vinculados a esta unidade serão desvinculados.</p>
         <div style="display: flex; gap: 12px; justify-content: center;">
-             <button onclick="closeConfirmModal()" style="padding: 10px 20px; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff; font-weight: 500; color: #374151; cursor: pointer;">Cancelar</button>
-             <button id="confirmOkBtn" style="padding: 10px 20px; border-radius: 8px; border: none; background: #ef4444; color: #fff; font-weight: 500; cursor: pointer;">Sim, excluir</button>
+             <button onclick="closeConfirmModal()" style="flex: 1; padding: 14px; border-radius: 14px; font-weight: 600; font-size: 0.9rem; border: 1px solid #e2e8f0; background: white; color: #475569; cursor: pointer; transition: all 0.2s;">Cancelar</button>
+             <button id="confirmOkBtn" style="flex: 1; padding: 14px; border-radius: 14px; font-weight: 600; font-size: 0.9rem; border: none; background: #e11d48; color: white; cursor: pointer; transition: all 0.2s;">Sim, Excluir</button>
         </div>
     </div>
 </div>
 
-
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 
 <script>
-    // Stats Counter Animation
-    // Stats Counter Animation
+    // Animação de Contagem
     document.addEventListener('DOMContentLoaded', () => {
-        const stats = document.querySelectorAll('.stat-value');
+        const stats = document.querySelectorAll('.counter');
         stats.forEach(st => {
             const final = parseInt(st.textContent);
             let current = 0;
-            const duration = 1000;
-            const diff = final - current;
-            const steps = 30;
-            const stepDuration = duration / steps;
-            const increment = diff / steps;
+            const duration = 1200;
+            const stepDuration = 20;
+            const increment = final / (duration / stepDuration);
             
             const timer = setInterval(() => {
                 current += increment;
@@ -414,53 +433,37 @@
         });
     });
 
-    // Toast
-    // Toast
+    // Motor de Toast (Padrão)
     window.showToast = function(msg, type = 'success') {
         const c = document.getElementById('toast-container');
         const t = document.createElement('div');
         t.textContent = msg;
-        t.style.cssText = `background: ${type === 'error' ? '#ef4444' : '#10b981'}; color: #fff; padding: 12px 20px; border-radius: 8px; font-weight: 500; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-family: 'Inter'; font-size: 0.9rem; margin-top: 10px;`;
+        t.style.cssText = `background: ${type === 'error' ? '#e11d48' : '#0f172a'}; color: #fff; padding: 16px 28px; border-radius: 16px; font-family: 'Inter'; font-size: 0.9rem; font-weight: 600; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-left: 6px solid ${type === 'error' ? '#fff' : '#3b82f6'}; transform: translateY(20px); opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);`;
         c.appendChild(t);
         
-        t.classList.add('toast-enter');
-        
-        setTimeout(() => { 
-            t.classList.remove('toast-enter');
-            t.classList.add('toast-exit');
-            t.addEventListener('animationend', () => t.remove());
+        requestAnimationFrame(() => {
+            t.style.transform = 'translateY(0)';
+            t.style.opacity = '1';
+        });
+
+        setTimeout(() => {
+            t.style.transform = 'translateY(20px)';
+            t.style.opacity = '0';
+            setTimeout(() => t.remove(), 3000);
         }, 3000);
     }
 
-    // Modal
     var resolveConfirm;
     var modal = document.getElementById('confirmModal');
     
     window.showConfirm = () => new Promise(res => {
         resolveConfirm = res;
         modal.style.display = 'flex';
-        modal.style.position = 'fixed';
-        modal.style.inset = '0';
-        modal.style.background = 'rgba(0,0,0,0.5)';
-        modal.style.zIndex = '9999';
-        modal.style.alignItems = 'center';
-        modal.style.justifyContent = 'center';
-        modal.style.backdropFilter = 'blur(2px)';
-        
-        const box = modal.querySelector('.confirm-box');
-        box.classList.remove('animate-modal-out');
-        box.classList.add('animate-modal-in');
     });
 
     window.closeConfirmModal = () => {
-        const box = modal.querySelector('.confirm-box');
-        box.classList.remove('animate-modal-in');
-        box.classList.add('animate-modal-out');
-        
-        setTimeout(() => {
-            modal.style.display = 'none';
-            if(resolveConfirm) resolveConfirm(false);
-        }, 200);
+        modal.style.display = 'none';
+        if(resolveConfirm) resolveConfirm(false);
     }
 
     document.getElementById('confirmOkBtn').onclick = () => { if(resolveConfirm) resolveConfirm(true); closeConfirmModal(); };
@@ -469,9 +472,9 @@
         if(await showConfirm()) {
             try {
                 const res = await fetch(`<?= base_url($tenant['slug']) ?>/admin/unidades/${id}/delete`, { method: 'POST' });
-                if(res.ok) { showToast('Unidade excluída.'); setTimeout(() => location.reload(), 500); }
-                else showToast('Erro ao excluir.', 'error');
-            } catch { showToast('Erro de conexão.', 'error'); }
+                if(res.ok) { showToast('Unidade removida com sucesso.'); setTimeout(() => location.reload(), 500); }
+                else showToast('Erro ao sincronizar dados.', 'error');
+            } catch { showToast('Falha na conexão com o servidor.', 'error'); }
         }
     }
 </script>

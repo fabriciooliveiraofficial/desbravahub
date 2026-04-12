@@ -349,7 +349,7 @@
 </header>
 
 <div class="ranking-tabs">
-    <a href="<?= base_url($tenant['slug'] . '/ranking') ?>" class="ranking-tab">Geral (Membros)</a>
+    <a href="<?= base_url($tenant['slug'] . '/ranking') ?>" class="ranking-tab">Geral</a>
     <a href="<?= base_url($tenant['slug'] . '/ranking-unidades') ?>" class="ranking-tab">Unidades</a>
     <a href="<?= base_url($tenant['slug'] . '/ranking-recrutamento') ?>" class="ranking-tab active">Recrutamento</a>
 </div>

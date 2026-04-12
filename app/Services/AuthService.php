@@ -101,10 +101,11 @@ class AuthService
         $tokenHash = hash('sha256', $token);
 
         $session = db_fetch_one(
-            "SELECT s.*, u.*, r.name as role_name
+            "SELECT s.*, u.*, r.name as role_name, units.name as unit_name
              FROM user_sessions s
              JOIN users u ON s.user_id = u.id
              JOIN roles r ON u.role_id = r.id
+             LEFT JOIN units ON u.unit_id = units.id
              WHERE s.token_hash = ? AND s.expires_at > NOW() AND u.status = 'active'",
             [$tokenHash]
         );

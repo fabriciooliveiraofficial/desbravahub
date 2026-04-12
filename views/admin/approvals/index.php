@@ -8,6 +8,221 @@ $totalPendingItems = array_sum(array_column($pendingQueue, 'pending_count'));
 $uniqueUnits = count(array_unique(array_column($pendingQueue, 'unit_name')));
 ?>
 
+<style>
+/* ============ LIGHT MINIMAL DESIGN SYSTEM ============ */
+:root {
+    --lm-bg: #ffffff;
+    --lm-border: #f1f5f9;
+    --lm-border-soft: #e2e8f0;
+    --lm-text-main: #1e293b;
+    --lm-text-sec: #64748b;
+    --lm-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    --lm-accent-green: #10b981;
+    --lm-accent-red: #ef4444;
+}
+
+/* History Tab Animation */
+#history-tab {
+    animation: lm-fade-in 0.4s ease-out;
+}
+
+/* Minimal Filter Bar */
+.history-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: var(--lm-bg);
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--lm-border-soft);
+    margin-bottom: 24px;
+    align-items: center;
+    box-shadow: var(--lm-shadow);
+}
+
+.filter-search-group {
+    flex: 1;
+    min-width: 280px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.filter-search-icon {
+    position: absolute;
+    left: 14px;
+    color: var(--lm-text-sec);
+    font-size: 1.1rem;
+    pointer-events: none;
+}
+
+.filter-search-input {
+    width: 100%;
+    background: #f8fafc;
+    border: 1px solid var(--lm-border-soft);
+    border-radius: 10px;
+    padding: 10px 12px 10px 42px;
+    color: var(--lm-text-main);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.filter-search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+}
+
+.filter-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.filter-select, .filter-date {
+    background: #f8fafc;
+    border: 1px solid var(--lm-border-soft);
+    border-radius: 10px;
+    padding: 8px 12px;
+    color: var(--lm-text-main);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-select:hover, .filter-date:hover {
+    border-color: var(--lm-text-sec);
+}
+
+.filter-clear-btn {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #fff1f2;
+    color: #e11d48;
+    border: 1px solid #fecdd3;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-clear-btn:hover {
+    background: #e11d48;
+    color: white;
+}
+
+/* Results Counter */
+.history-result-count {
+    font-size: 0.75rem;
+    color: var(--lm-text-sec);
+    margin: -12px 0 16px 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Minimal Table Styles */
+.history-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.history-table th {
+    padding: 16px 20px;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--lm-text-sec);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-bottom: 2px solid var(--lm-border);
+    background: #fcfdfe;
+}
+
+.history-table td {
+    padding: 14px 20px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--lm-border);
+    transition: background 0.2s;
+}
+
+.history-table tr:hover td {
+    background: #f8fafc;
+}
+
+/* Status High Contrast */
+.status-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-text {
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.status-text.approved { 
+    color: var(--lm-accent-green); 
+    background: rgba(16, 185, 129, 0.08);
+}
+
+.status-text.rejected { 
+    color: var(--lm-accent-red); 
+    background: rgba(239, 68, 68, 0.08);
+}
+
+/* Identity Design */
+.log-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.log-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    border: 1px solid var(--lm-border-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--lm-text-main);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.log-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--lm-text-main);
+}
+
+.log-timestamp {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--lm-text-sec);
+}
+
+@keyframes lm-fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+
 <div class="evaluation-layout">
     <!-- Page Toolbar (Filters & Tabs) -->
     <div class="page-toolbar" style="margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-sidebar); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 24px;">
@@ -162,19 +377,19 @@ $uniqueUnits = count(array_unique(array_column($pendingQueue, 'unit_name')));
             <div class="filter-search-group">
                 <span class="material-icons-round filter-search-icon">search</span>
                 <input type="text" id="historySearch" class="filter-search-input" 
-                       placeholder="Pesquisar por nome, validador..." 
+                       placeholder="Filtrar por nome do membro ou validador..." 
                        oninput="filterHistory()">
             </div>
             <div class="filter-controls">
                 <select id="historyStatusFilter" class="filter-select" onchange="filterHistory()">
-                    <option value="all">Todos os Status</option>
-                    <option value="approved">✅ Aprovados</option>
-                    <option value="rejected">❌ Rejeitados</option>
+                    <option value="all">Filtro: Status</option>
+                    <option value="approved">Aprovados</option>
+                    <option value="rejected">Rejeitados</option>
                 </select>
                 <input type="date" id="historyDateFrom" class="filter-date" onchange="filterHistory()" title="Data inicial">
                 <input type="date" id="historyDateTo" class="filter-date" onchange="filterHistory()" title="Data final">
-                <button class="filter-clear-btn" onclick="clearHistoryFilters()" title="Limpar filtros">
-                    <span class="material-icons-round">filter_list_off</span>
+                <button class="filter-clear-btn" onclick="clearHistoryFilters()" title="Redefinir Filtros">
+                    <span class="material-icons-round">refresh</span>
                 </button>
             </div>
         </div>
@@ -182,18 +397,22 @@ $uniqueUnits = count(array_unique(array_column($pendingQueue, 'unit_name')));
         <!-- Results Counter -->
         <div id="historyResultCount" class="history-result-count"></div>
 
-        <div class="stat-glass-card" style="display: block; padding: 0; overflow: hidden;">
+        <div class="stat-glass-card" style="display: block; padding: 0; overflow: hidden; background: #ffffff; border: 1px solid var(--lm-border-soft); box-shadow: var(--lm-shadow); border-radius: 12px;">
             <?php if (empty($recentApprovals)): ?>
-                <div style="padding: 60px; text-align: center; color: var(--text-secondary);">Nenhum log de atividade detectado.</div>
+                <div style="padding: 100px; text-align: center;">
+                    <span class="material-icons-round" style="font-size: 4rem; color: #cbd5e1; margin-bottom: 16px; display: block;">history_toggle_off</span>
+                    <div style="color: var(--lm-text-main); font-weight: 700; font-size: 1.25rem;">Nenhuma atividade recente</div>
+                    <div style="color: var(--lm-text-sec); margin-top: 8px;">O registro de auditoria está pronto para as próximas ações.</div>
+                </div>
             <?php else: ?>
                 <div style="overflow-x: auto;">
                     <table class="history-table">
                         <thead>
                             <tr>
-                                <th>Evento</th>
-                                <th>Sujeito</th>
+                                <th>Status</th>
+                                <th>Candidato</th>
                                 <th>Validador</th>
-                                <th>Timestamp</th>
+                                <th>Data & Hora</th>
                             </tr>
                         </thead>
                         <tbody id="historyTableBody">
@@ -203,17 +422,44 @@ $uniqueUnits = count(array_unique(array_column($pendingQueue, 'unit_name')));
                                     data-reviewer="<?= htmlspecialchars(strtolower($log['reviewer_name'] ?? '')) ?>"
                                     data-date="<?= date('Y-m-d', strtotime($log['created_at'])) ?>">
                                     <td>
-                                        <div style="display: flex; align-items: center; gap: 12px;">
-                                            <div style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: <?= $log['action'] === 'approved' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' ?>; color: <?= $log['action'] === 'approved' ? '#10b981' : '#f87171' ?>;">
-                                                <span class="material-icons-round" style="font-size: 1.1rem;"><?= $log['action'] === 'approved' ? 'check_circle' : 'cancel' ?></span>
-                                            </div>
-                                            <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);"><?= $log['action'] === 'approved' ? 'APROVADO' : 'REJEITADO' ?></span>
+                                        <div class="status-cell">
+                                            <span class="status-text <?= $log['action'] ?>">
+                                                <span class="material-icons-round" style="vertical-align: middle; font-size: 0.9rem; margin-right: 4px;"><?= $log['action'] === 'approved' ? 'check' : 'close' ?></span>
+                                                <?= $log['action'] === 'approved' ? 'APROVADO' : 'REJEITADO' ?>
+                                            </span>
                                         </div>
                                     </td>
-                                    <td style="font-weight: 500; color: var(--text-main);"><?= htmlspecialchars($log['user_name'] ?? 'N/A') ?></td>
-                                    <td style="color: var(--text-secondary);"><?= htmlspecialchars($log['reviewer_name'] ?? 'Auto-System') ?></td>
-                                    <td style="font-family: 'JetBrains Mono'; font-size: 0.85rem; color: var(--eval-cyan);">
-                                        <?= date('d/m/Y H:i', strtotime($log['created_at'])) ?>
+                                    <td>
+                                        <div class="log-identity">
+                                            <div class="log-avatar">
+                                                <?php if (!empty($log['user_avatar'])): ?>
+                                                    <img src="<?= $log['user_avatar'] ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                    <span style="display:none;"><?= strtoupper(substr($log['user_name'] ?? 'U', 0, 1)) ?></span>
+                                                <?php else: ?>
+                                                    <?= strtoupper(substr($log['user_name'] ?? 'U', 0, 1)) ?>
+                                                <?php endif; ?>
+                                            </div>
+                                            <span class="log-name"><?= htmlspecialchars($log['user_name'] ?? 'N/A') ?></span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="log-identity">
+                                            <div class="log-avatar" style="border-radius: 50%; background: #f8fafc;">
+                                                <?php if (!empty($log['reviewer_avatar'])): ?>
+                                                    <img src="<?= $log['reviewer_avatar'] ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                    <span style="display:none;"><?= strtoupper(substr($log['reviewer_name'] ?? 'A', 0, 1)) ?></span>
+                                                <?php else: ?>
+                                                    <?= strtoupper(substr($log['reviewer_name'] ?? 'A', 0, 1)) ?>
+                                                <?php endif; ?>
+                                            </div>
+                                            <span class="log-name" style="color: var(--lm-text-sec); font-weight: 500; font-size: 0.85rem;"><?= htmlspecialchars($log['reviewer_name'] ?? 'Auto-System') ?></span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="log-timestamp">
+                                            <?= date('d/m/Y', strtotime($log['created_at'])) ?>
+                                            <span style="opacity: 0.7; margin-left: 6px; font-weight: 400;"><?= date('H:i', strtotime($log['created_at'])) ?></span>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -221,13 +467,15 @@ $uniqueUnits = count(array_unique(array_column($pendingQueue, 'unit_name')));
                     </table>
                 </div>
                 <!-- No results state -->
-                <div id="historyNoResults" style="display: none; padding: 60px; text-align: center; color: var(--text-secondary);">
-                    <span class="material-icons-round" style="font-size: 3rem; opacity: 0.3; margin-bottom: 12px; display: block;">search_off</span>
-                    Nenhum resultado encontrado com os filtros atuais.
+                <div id="historyNoResults" style="display: none; padding: 100px; text-align: center;">
+                    <span class="material-icons-round" style="font-size: 4rem; color: #cbd5e1; margin-bottom: 20px; display: block;">search_off</span>
+                    <div style="color: var(--lm-text-main); font-weight: 700; font-size: 1.2rem;">Ops! Nada encontrado</div>
+                    <div style="color: var(--lm-text-sec); margin-top: 10px;">Refine seus filtros para encontrar outros registros.</div>
                 </div>
             <?php endif; ?>
         </div>
     </div>
+
 </div>
 
 

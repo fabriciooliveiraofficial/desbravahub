@@ -258,16 +258,10 @@ class ApiController
             $clubs = db_fetch_all(
                 "SELECT id, name, slug FROM tenants WHERE status = 'active' ORDER BY name ASC"
             );
-            $this->json(['clubs' => $clubs]);
+            App::jsonResponse(['clubs' => $clubs], 200);
         } catch (\Exception $e) {
             http_response_code(500);
-            $this->json(['clubs' => [], 'error' => 'Não foi possível carregar os clubes. Tente novamente.']);
+            App::jsonResponse(['clubs' => [], 'error' => 'Não foi possível carregar os clubes. Tente novamente.'], 200);
         }
-    }
-
-    private function json(array $data): void
-    {
-        header('Content-Type: application/json');
-        echo json_encode($data, JSON_PRETTY_PRINT);
     }
 }

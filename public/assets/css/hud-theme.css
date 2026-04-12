@@ -807,28 +807,45 @@ body.hud-body {
 
 .ranking-tabs {
     display: flex;
-    gap: 6px;
-    margin-bottom: 20px;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 4px;
-    border-radius: 10px;
-    width: fit-content;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 6px;
+    border-radius: 14px;
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .ranking-tab {
-    padding: 8px 16px;
-    border-radius: 7px;
+    padding: 10px 20px;
+    border-radius: 10px;
     text-decoration: none;
     font-family: var(--font-heading);
-    font-weight: 600;
+    font-weight: 700;
     font-size: var(--fs-caption);
-    color: var(--text-secondary, var(--hud-text-dim));
-    transition: all 0.2s;
+    color: var(--hud-text-dim);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    border: 1px solid transparent;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+}
+
+.ranking-tab:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .ranking-tab.active {
-    background: var(--gradient-primary, linear-gradient(135deg, var(--accent-cyan), #0ea5e9));
+    background: linear-gradient(135deg, var(--accent-cyan), #0ea5e9);
     color: var(--bg-dark, #0f172a);
+    box-shadow: 0 4px 15px rgba(0, 217, 255, 0.3);
+    transform: scale(1.05);
 }
 
 @media (max-width: 600px) {

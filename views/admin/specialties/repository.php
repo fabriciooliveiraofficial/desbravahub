@@ -1424,7 +1424,8 @@ $pageIcon = 'school';
             const icon = data.badge_icon || '📘';
             
             if (icon.includes(':')) {
-                modalBadge.innerHTML = `<iconify-icon icon="${icon}"></iconify-icon>`;
+                const iconName = icon.split(' ')[0];
+                modalBadge.innerHTML = `<iconify-icon icon="${iconName}"></iconify-icon>`;
             } else if (icon.startsWith('fa-')) {
                 modalBadge.innerHTML = `<i class="${icon}"></i>`;
             } else {
@@ -1440,7 +1441,8 @@ $pageIcon = 'school';
             if (categoryIcon.startsWith('fa-')) {
                 categoryIconHtml = `<i class="${categoryIcon}"></i>`;
             } else if (categoryIcon.includes(':')) {
-                categoryIconHtml = `<iconify-icon icon="${categoryIcon}"></iconify-icon>`;
+                const iconName = categoryIcon.split(' ')[0];
+                categoryIconHtml = `<iconify-icon icon="${iconName}"></iconify-icon>`;
             } else {
                 categoryIconHtml = categoryIcon;
             }

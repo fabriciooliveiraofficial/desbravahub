@@ -26,13 +26,11 @@ $pageIcon = 'assignment_ind';
 
     /* Layout Structure */
     .content-container {
-        max-width: 1280px;
         margin: 0 auto;
         display: grid;
         grid-template-columns: 320px 1fr;
         gap: 24px;
         align-items: start;
-        padding: 0 20px 40px;
     }
 
     /* Left Sidebar: Specialty Preview */
@@ -607,9 +605,12 @@ $pageIcon = 'assignment_ind';
         <div class="specialty-header">
             <?php 
             $badgeIcon = trim($specialty['badge_icon'] ?? '🎓');
-            if (str_contains($badgeIcon, 'fa-')): 
+            if (str_starts_with($badgeIcon, 'fa-')): 
             ?>
                 <i class="<?= htmlspecialchars($badgeIcon) ?> specialty-icon-large"></i>
+            <?php elseif (str_contains($badgeIcon, ':')): ?>
+                <?php $iconName = explode(' ', $badgeIcon)[0]; ?>
+                <iconify-icon icon="<?= htmlspecialchars($iconName) ?>" class="specialty-icon-large"></iconify-icon>
             <?php else: ?>
                 <span class="specialty-icon-large"><?= $badgeIcon ?></span>
             <?php endif; ?>
@@ -620,9 +621,12 @@ $pageIcon = 'assignment_ind';
                 <div class="specialty-category">
                     <?php 
                     $catIcon = trim($specialty['category']['icon'] ?? '📂');
-                    if (str_contains($catIcon, 'fa-')): 
+                    if (str_starts_with($catIcon, 'fa-')): 
                     ?>
                         <i class="<?= htmlspecialchars($catIcon) ?>"></i>
+                    <?php elseif (str_contains($catIcon, ':')): ?>
+                        <?php $iconPart = explode(' ', $catIcon)[0]; ?>
+                        <iconify-icon icon="<?= htmlspecialchars($iconPart) ?>"></iconify-icon>
                     <?php else: ?>
                         <span><?= $catIcon ?></span>
                     <?php endif; ?>
