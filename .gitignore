@@ -31,6 +31,9 @@ Thumbs.db
 # App Storage
 /storage/*.log
 /storage/cache/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
 /storage/sessions/*
 /storage/views/*
 /public/assets/uploads/*
